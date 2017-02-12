@@ -33,9 +33,12 @@ namespace AI_ROCKS.Drive
         }
 
         //TODO event typing into some new ObstacleAvoidanceDriveState that triggers when the robot needs to avoid an obstacle
-        public Region FindBestGap(Plot obstacles)
+        public Line FindBestGap(Plot obstacles)
         {
-            // Given a Plot representing the obstacles, find Region representing the best gap.
+            // Given a Plot representing the obstacles, find Line representing the best gap.
+
+            // Refer to GPSDriveState's psuedo code. Do we want to account for detecting the gate as a Region 
+            // and actually heading toward it, rather than avoiding it?
 
             // TODO Vision group's algorithm here
 

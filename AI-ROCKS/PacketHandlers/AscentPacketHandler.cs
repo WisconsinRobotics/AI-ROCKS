@@ -69,6 +69,7 @@ namespace AI_ROCKS.PacketHandlers
             IPEndPoint recvAddr = new IPEndPoint(IPAddress.Any, 0);
             byte[] data = socket.EndReceive(result, ref recvAddr);
 
+            socket.BeginReceive(HandleSocketReceive, null);
             // (optional) check recv_addr against ASCENT_CONTROLS_IP_ENDPOINT
             // verify header, ignore crc as over loopback
             // parse opcode
