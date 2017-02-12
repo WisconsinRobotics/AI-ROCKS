@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive
 {
@@ -29,6 +30,16 @@ namespace AI_ROCKS.Drive
         {
             // Logic for finding when state needs to be switched from VisionDriveState to GPSDriveState
             return 0;
+        }
+
+        //TODO event typing into some new ObstacleAvoidanceDriveState that triggers when the robot needs to avoid an obstacle
+        public Region FindBestGap(Plot obstacles)
+        {
+            // Given a Plot representing the obstacles, find Region representing the best gap.
+
+            // TODO Vision group's algorithm here
+
+            return null;
         }
     }
 }

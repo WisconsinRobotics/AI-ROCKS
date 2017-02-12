@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive
 {
@@ -19,5 +20,14 @@ namespace AI_ROCKS.Drive
         /// </summary>
         /// <returns>StateType - the next StateType</returns>
         StateType GetNextStateType();
+
+        //TODO return Region or Line?
+        /// <summary>
+        /// Finds the best gap for a given Plot. This is normally in response to an ObstacleEvent being triggered and
+        /// assumes there in an obstacle within the maximum acceptable distance.
+        /// </summary>
+        /// <param name="obstacles">The Plot containing Regions to analyze to find the best gap.</param>
+        /// <returns>Region - the Region representing the best gap.</returns>
+        Region FindBestGap(Plot obstacles);
     }
 }

@@ -11,14 +11,12 @@ namespace AI_ROCKS.Drive
     {
         private IDriveState driveState;
         private StateType stateType;
-        private DriveHandler driveHandler;
 
 
         public DriveContext()
         {
             // GPSDriveState is default 
             this.driveState = new GPSDriveState();
-            this.driveHandler = new DriveHandler();
         }
 
 
@@ -32,12 +30,22 @@ namespace AI_ROCKS.Drive
         }
 
         /// <summary>
-        /// Issue the specified DriveCommand to ROCKS using DriveHandler
+        /// Issue the specified DriveCommand to ROCKS through AscentShimLayer.
         /// </summary>
         /// <param name="driveCommand">The DriveCommand to be executed.</param>
         public void Drive(DriveCommand driveCommand)
         {
-            driveHandler.SendDriveCommand(driveCommand);
+            // TODO do this? Or just send DriveCommand and convert in DriveHandler like below
+            // Use static DriveHandler function to form BCL drive packet payload from DriveCommand
+
+            // Send this DriveCommand to the AscentShimLayer
+            DriveHandler.SendDriveCommand(driveCommand);
+
+            //TODO return value?
+
+            // ---------------------------------------------------------
+            // Outdated - use AscentShimLayer rather than DriveHandler
+            //DriveHandler.SendDriveCommand(driveCommand);
             //this.driveState.Drive(driveCommand);
         }
 
@@ -50,6 +58,7 @@ namespace AI_ROCKS.Drive
             return driveState.GetNextStateType() != stateType;
         }
 
+        //TODO look at this function
         /// <summary>
         /// Change the current DriveState if required and return the corresponding StateType of the new DriveState.
         /// </summary>
@@ -58,6 +67,8 @@ namespace AI_ROCKS.Drive
         {
             // If change is not required, return current state
             // TODO most likely will be an expensive call, so keep nextStateType as a global here?
+            // TODO even check if state change is required? Or assume this is called after IsStateChangeRequired() has been called -> be safe for calling function or let the call do whatever it wants?
+            // TODO specify param or nah? Need to assume more than two states
             if (!IsStateChangeRequired())
             {
                 return this.stateType;

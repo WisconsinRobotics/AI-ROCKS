@@ -11,8 +11,18 @@ namespace AI_ROCKS
     {
         static void Main(string[] args)
         {
-            // do things
+            // Do things
             AutonomousService autonomousService = new AutonomousService();
+
+            // Set up connection with ROCKS (Service Master?, etc)
+
+            // TODO
+            // While connection is present, run autonomous service
+            // End after ball is found? -> Have Execute() return bool?
+            while (true)
+            {
+                autonomousService.Execute();
+            }
         }
     }
 }

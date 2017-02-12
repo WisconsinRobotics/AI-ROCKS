@@ -14,19 +14,33 @@ namespace AI_ROCKS.PacketHandlers
         }
 
 
-        public bool SendDriveCommand(DriveCommand driveCommand)
+        /// <summary>
+        /// Send a given DriveCommand to ROCKS.
+        /// </summary>
+        /// <param name="driveCommand">The DriveCommand to be executed.</param>
+        /// <returns>bool - If DriveCommand was successfully sent.</returns>
+        public static bool SendDriveCommand(DriveCommand driveCommand)
         {
-            byte[] bclPacket = DriveCommandToBCLPacket(driveCommand);
+            // Form payload for BCL drive command from specified DriveCommand
+            byte[] bclPayload = DriveCommandToBclPayload(driveCommand);
 
-            // Send packet to ROCKS
+            // Send opcode, payload to AscentShimLayer to send drive packet to ROCKS
+            
             // Return result (success, failure)
 
             return true;
         }
 
-        private byte[] DriveCommandToBCLPacket(DriveCommand driveCommand)
+        /// <summary>
+        /// Convert a DriveCommand to a BCL payload in a byte array.
+        /// </summary>
+        /// <param name="driveCommand">The DriveCommand to be executed.</param>
+        /// <returns>byte[] - Byte array representing a BCL payload.</returns>
+        private static byte[] DriveCommandToBclPayload(DriveCommand driveCommand)
         {
             // Convert DriveCommand to byte array BCL packet
+
+            // Return BCL packet
             return new byte[0];
         }
     }
