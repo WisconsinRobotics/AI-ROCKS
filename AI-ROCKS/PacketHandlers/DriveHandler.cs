@@ -7,7 +7,7 @@ using AI_ROCKS.Drive;
 
 namespace AI_ROCKS.PacketHandlers
 {
-    class DriveHandler
+    class DriveHandler : PacketHandler
     {
         public DriveHandler()
         {
@@ -42,6 +42,21 @@ namespace AI_ROCKS.PacketHandlers
 
             // Return BCL packet
             return new byte[0];
+        }
+
+
+        /// <summary>
+        /// Handles receiving a payload from ROCKS representing a DriveCommand.
+        /// </summary>
+        /// <param name="opcode">Opcode for packet received from ROCKS.</param>
+        /// <param name="payload">BCL packets received from ROCKS representing a DriveCommand.</param>
+        /// <returns>bool - Success of receiving and parsing payload into a DriveCommand.</returns>
+        public bool HandlePacket(byte opcode, byte[] payload)
+        {
+            // Will this ever be used? 
+            // If we do vision processing on the base station, this may be useful. Keep just in case?
+
+            throw new NotImplementedException();
         }
     }
 }

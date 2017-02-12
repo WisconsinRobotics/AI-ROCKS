@@ -7,7 +7,7 @@ using AI_ROCKS.Drive;
 
 namespace AI_ROCKS.PacketHandlers
 {
-    class GPSHandler
+    class GPSHandler : PacketHandler
     {
         // TODO use ObstacleLibrary
         //private <?> path      // Current path driven by the cumulative GPS coordinates received, processed by the Ramer Douglass Peucker algorithm
@@ -20,47 +20,43 @@ namespace AI_ROCKS.PacketHandlers
 
 
         /// <summary>
-        /// Send a GPS coordinate to ROCKS.
-        /// //TODO need? Send right to base station? This is mostly just here for continuity's sake
+        /// Handles receiving a payload from ROCKS representing GPS data.
         /// </summary>
-        /// <param name="gps">GPS - the GPS coordinate we are sending.</param>
-        /// <returns>Success or failure of send.</returns>
-        public bool SendGPSCoordinate(GPS gps)
+        /// <param name="opcode">Opcode for packet received from ROCKS.</param>
+        /// <param name="payload">BCL packets received from ROCKS representing GPS data.</param>
+        /// <returns>bool - Success of receiving and parsing payload into a GPS object.</returns>
+        public bool HandlePacket(byte opcode, byte[] payload)
         {
-            // GPS object -> BCL packet
-            
-            // Do sending to ROCKS
+            // Is opcode, payload valid (able to be made into GPS object). If no, return false
 
-            // Return result (true, false)
+            // Make payload into GPS object
+            GPS parsedGPS = BclPayloadToGPS(payload);
+
+            // Set current data to GPS object
+            this.Data = parsedGPS;
+
+            // Return success or not
             return true;
         }
 
         /// <summary>
-        /// Receive a GPS coordinate from ROCKS in the form of a BCL packet. Return the GPS object resulting from this packet.
+        /// Transform a GPS coordinate in the form of a BCL payload into the GPS object resulting from this payload.
         /// </summary>
-        /// <param name="bclPackets">BCL packets received from ROCKS.</param>
-        /// <returns>GPS object created from parsing the BCL packets into a GPS object.</returns>
-        public GPS ReceiveGPSCoordinates(byte[] bclPackets)
-        {
-            // Receive packets from BCL, convert to GPS object, return this object
-            GPS gps = BCLPacketToGPS(bclPackets);
-
-            this.gps = gps;
-
-            return gps;
-        }
-
-        private GPS BCLPacketToGPS(byte[] bclPacket)
+        /// <param name="payload">The payload representing the GPS coordinate.</param>
+        /// <returns>GPS - The GPS coordinate formed from the BCL payload.</returns>
+        private GPS BclPayloadToGPS(byte[] payload)
         {
             // BCL packet -> GPS object
             return null;
         }
 
+        /// <summary>
+        /// Property for the current GPS data.
+        /// </summary>
         public GPS Data
         {
             get { return this.gps; }
             private set { this.gps = value; }
         }
-
     }
 }

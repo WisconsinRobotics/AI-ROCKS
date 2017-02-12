@@ -17,6 +17,7 @@ namespace AI_ROCKS.Drive
         {
             // GPSDriveState is default 
             this.driveState = new GPSDriveState();
+            this.StateType = StateType.GPSState;
         }
 
 

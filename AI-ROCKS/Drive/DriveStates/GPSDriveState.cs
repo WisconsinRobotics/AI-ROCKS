@@ -10,7 +10,6 @@ namespace AI_ROCKS.Drive
 {
     class GPSDriveState : IDriveState
     {
-        
         public GPSDriveState()
         {
 
