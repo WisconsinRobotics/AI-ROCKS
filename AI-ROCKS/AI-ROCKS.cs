@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using AI_ROCKS.Services;
 
 namespace AI_ROCKS
 {
     class Program
     {
+        private const long EXECUTE_INTERVAL_MILLIS = 200;
+
+
         static void Main(string[] args)
         {
             // Parse args
@@ -23,11 +27,15 @@ namespace AI_ROCKS
 
             // TODO
             // While connection is present, run autonomous service
-            // End after ball is found? -> Have Execute() return bool?
-            while (true)
-            {
-                autonomousService.Execute();
-            }
+            
+            // Refer to AWAKE and BadgerJAUS InitializeTimer() -> Execute is hooked up to Timer event executing every x milliseconds
+            Timer timer = new Timer(EXECUTE_INTERVAL_MILLIS);
+            timer.AutoReset = true;
+            timer.Elapsed += autonomousService.Execute;
+            timer.Enabled = true;
+
+            // Create thread for ObstacleEvent
+            // Tie in to autonomousService.DetectObstacleEvent()
         }
     }
 }

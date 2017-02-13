@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
+using AI_ROCKS.Services;
+using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive
 {
@@ -13,11 +16,15 @@ namespace AI_ROCKS.Drive
         private StateType stateType;
 
 
-        public DriveContext()
+        public DriveContext(AutonomousService autonomousService)
         {
             // GPSDriveState is default 
             this.driveState = new GPSDriveState();
             this.StateType = StateType.GPSState;
+
+            autonomousService.ObstacleEvent += HandleObstacleEvent;
+
+
         }
 
 
@@ -36,18 +43,10 @@ namespace AI_ROCKS.Drive
         /// <param name="driveCommand">The DriveCommand to be executed.</param>
         public void Drive(DriveCommand driveCommand)
         {
-            // TODO do this? Or just send DriveCommand and convert in DriveHandler like below
-            // Use static DriveHandler function to form BCL drive packet payload from DriveCommand
-
             // Send this DriveCommand to the AscentShimLayer
             DriveHandler.SendDriveCommand(driveCommand);
 
             //TODO return value?
-
-            // ---------------------------------------------------------
-            // Outdated - use AscentShimLayer rather than DriveHandler
-            //DriveHandler.SendDriveCommand(driveCommand);
-            //this.driveState.Drive(driveCommand);
         }
 
         /// <summary>
@@ -80,6 +79,28 @@ namespace AI_ROCKS.Drive
             driveState = StateTypeHelper.ToDriveState(nextStateType);
 
             return nextStateType;
+        }
+
+        public void HandleObstacleEvent(Object sender, ObstacleEventArgs e)
+        {
+            Plot obstacles = e.Data;
+
+            Line bestGap = this.driveState.FindBestGap(obstacles);
+
+            // Determine how to drive toward best gap:
+            // Get midpoint
+            // Find angle to midpoint
+            // Create DriveCommand from angle and speed
+
+            double angle = 0;   // Determine this
+            byte speed = 2;     // Dtermine this
+
+            DriveCommand driveCommand = new DriveCommand(angle, speed);
+
+            // TODO figure out locking
+            DriveHandler.SendDriveCommand(driveCommand);
+
+            // Return value?
         }
 
         public IDriveState DriveState
