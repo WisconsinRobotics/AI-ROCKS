@@ -53,6 +53,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ObstacleLibrary">
+      <HintPath>..\ObstacleLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -70,6 +73,8 @@
     <Compile Include="Drive\DriveStates\GPSDriveState.cs" />
     <Compile Include="Drive\DriveStates\VisionDriveState.cs" />
     <Compile Include="Drive\Utils\GPS.cs" />
+    <Compile Include="Drive\Utils\ObstacleEventArgs.cs" />
+    <Compile Include="PacketHandlers\AscentPacketHandler.cs" />
     <Compile Include="PacketHandlers\DriveHandler.cs" />
     <Compile Include="PacketHandlers\GPSHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

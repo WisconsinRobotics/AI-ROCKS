@@ -14,7 +14,7 @@ namespace AI_ROCKS.Services
     class AutonomousService
     {
         private DriveContext driveContext;
-        private object obstacleLock;
+        private readonly object sendDriveCommandLock;
         private long lastObstacleDetected;
         private const long OBSTACLE_WATCHDOG_SECONDS = 5;
 
@@ -24,8 +24,7 @@ namespace AI_ROCKS.Services
         public AutonomousService()
         {
             this.driveContext = new DriveContext(this);
-            this.obstacleLock = new object();
-
+            this.sendDriveCommandLock = new object();
         }
 
         /// <summary>
@@ -44,17 +43,13 @@ namespace AI_ROCKS.Services
             // If detected an obstacle within the last 5 seconds, continue straight
             if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() < lastObstacleDetected + OBSTACLE_WATCHDOG_SECONDS)
             {
+                Console.Write("Watchdog caught in Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
+
                 // Send "straight" DriveCommand to AscentShimLayer
                 return;
             }
 
-
-            // If obstacleLock is taken (i.e. if ObstacleEvent is triggered), return
-            if (!Monitor.IsEntered(obstacleLock))
-            {
-                return;
-            }
-
+            Console.Write("Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
 
             // Get DriveCommand from current drive state
             DriveCommand driveCommand = this.driveContext.FindNextDriveCommand();
@@ -84,15 +79,21 @@ namespace AI_ROCKS.Services
         /// Detect if an ObstacleEvent must be raised according to the LRF data being read. Trigger
         /// ObstacleEvent if an obstacle exists within the maximum allowable distance threshold.
         /// </summary>
-        private void DetectObstacleEvent()
+        public void DetectObstacleEvent(Object source, ElapsedEventArgs e)
         {
             // Get LRF data
             Plot plot = new Plot(); //This data would come from LRF
 
             // See if any event within maximum allowed distance
 
-            // Trigger event
-            OnObstacleEvent(new ObstacleEventArgs(plot));
+            // If so, trigger event
+
+            // Test code to trigger event every 10 seconds 
+            // TODO delete
+            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() % 10 == 0)
+            {
+                OnObstacleEvent(new ObstacleEventArgs(plot));
+            }
         }
 
         /// <summary>
@@ -112,7 +113,18 @@ namespace AI_ROCKS.Services
             {
                 // No subscribers, throw exception
                 // This else can be removed once formal structure is figured out
+                Console.Write("No subscribers");
             }
+        }
+
+        public long LastObstacleDetected
+        {
+            set { this.lastObstacleDetected = value; }
+        }
+
+        public Object SendDriveCommandLock
+        {
+            get { return this.sendDriveCommandLock; }
         }
     }
 }

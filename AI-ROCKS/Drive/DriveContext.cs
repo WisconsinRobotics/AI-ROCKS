@@ -14,7 +14,7 @@ namespace AI_ROCKS.Drive
     {
         private IDriveState driveState;
         private StateType stateType;
-
+        private AutonomousService autonomousService;
 
         public DriveContext(AutonomousService autonomousService)
         {
@@ -22,9 +22,11 @@ namespace AI_ROCKS.Drive
             this.driveState = new GPSDriveState();
             this.StateType = StateType.GPSState;
 
+            // Keep track of the autonomous service
+            this.autonomousService = autonomousService;
+            
+            // Subscribe to ObstacleEvent
             autonomousService.ObstacleEvent += HandleObstacleEvent;
-
-
         }
 
 
@@ -44,8 +46,14 @@ namespace AI_ROCKS.Drive
         public void Drive(DriveCommand driveCommand)
         {
             // Send this DriveCommand to the AscentShimLayer
-            DriveHandler.SendDriveCommand(driveCommand);
-
+            Console.Write("Drive - lock\n");
+            // TODO test locking
+            lock (autonomousService.SendDriveCommandLock)
+            {
+                DriveHandler.SendDriveCommand(driveCommand);
+            }
+            Console.Write("Drive - unlock\n");
+            
             //TODO return value?
         }
 
@@ -83,6 +91,8 @@ namespace AI_ROCKS.Drive
 
         public void HandleObstacleEvent(Object sender, ObstacleEventArgs e)
         {
+            Console.Write("In HandleObstacleEvent at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
+
             Plot obstacles = e.Data;
 
             Line bestGap = this.driveState.FindBestGap(obstacles);
@@ -97,9 +107,15 @@ namespace AI_ROCKS.Drive
 
             DriveCommand driveCommand = new DriveCommand(angle, speed);
 
-            // TODO figure out locking
-            DriveHandler.SendDriveCommand(driveCommand);
-
+            // TODO test locking
+            Console.Write("HandleObstacleEvent - lock\n");
+            lock (autonomousService.SendDriveCommandLock)
+            {
+                DriveHandler.SendDriveCommand(driveCommand);
+                autonomousService.LastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            }
+            Console.Write("HandleObstacleEvent - unlock\n");
+            
             // Return value?
         }
 

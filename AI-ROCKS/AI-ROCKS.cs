@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
+using System.Threading;
 using AI_ROCKS.Services;
+using Timer = System.Timers.Timer;
 
 namespace AI_ROCKS
 {
     class Program
     {
-        private const long EXECUTE_INTERVAL_MILLIS = 200;
-
+        private const long EXECUTE_INTERVAL_MILLIS = 2000;  //TODO change
+        private const long OBSTACLE_INTERVAL_MILLIS = 1000; //TODO change
 
         static void Main(string[] args)
         {
@@ -29,13 +29,20 @@ namespace AI_ROCKS
             // While connection is present, run autonomous service
             
             // Refer to AWAKE and BadgerJAUS InitializeTimer() -> Execute is hooked up to Timer event executing every x milliseconds
-            Timer timer = new Timer(EXECUTE_INTERVAL_MILLIS);
-            timer.AutoReset = true;
-            timer.Elapsed += autonomousService.Execute;
-            timer.Enabled = true;
+            Timer executeTimer = new Timer(EXECUTE_INTERVAL_MILLIS);
+            executeTimer.AutoReset = true;
+            executeTimer.Elapsed += autonomousService.Execute;
+            executeTimer.Enabled = true;
 
             // Create thread for ObstacleEvent
             // Tie in to autonomousService.DetectObstacleEvent()
+            Timer obstacleTimer = new Timer(OBSTACLE_INTERVAL_MILLIS);
+            obstacleTimer.AutoReset = true;
+            obstacleTimer.Elapsed += autonomousService.DetectObstacleEvent;
+            obstacleTimer.Enabled = true;
+            
+
+            while (true) { }
         }
     }
 }
