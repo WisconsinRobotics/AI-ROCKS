@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Timers;
 using AI_ROCKS.Drive;
 using AI_ROCKS.Drive.Utils;
@@ -13,10 +11,12 @@ namespace AI_ROCKS.Services
 {
     class AutonomousService
     {
+        private const long OBSTACLE_WATCHDOG_MILLIS = 5000;
+        private const long CLEAR_OBSTACLE_DELAY_MILLIS = 1000;  //TODO verify
+
         private DriveContext driveContext;
         private readonly object sendDriveCommandLock;
         private long lastObstacleDetected;
-        private const long OBSTACLE_WATCHDOG_SECONDS = 5;
 
         public event EventHandler<ObstacleEventArgs> ObstacleEvent;
 
@@ -24,7 +24,7 @@ namespace AI_ROCKS.Services
         public AutonomousService()
         {
             this.driveContext = new DriveContext(this);
-            this.sendDriveCommandLock = new object();
+            this.sendDriveCommandLock = new Object();
         }
 
         /// <summary>
@@ -32,24 +32,29 @@ namespace AI_ROCKS.Services
         /// </summary>
         public void Execute(Object source, ElapsedEventArgs e)
         {
-            // Autononous driving code ...
-            // ...
-            // ...
-            
-
-            // Obstacle avoidance stuff? - Or does that go in DriveContext? -> Look more into events
-            
-
-            // If detected an obstacle within the last 5 seconds, continue straight
-            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() < lastObstacleDetected + OBSTACLE_WATCHDOG_SECONDS)
+            // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
+            if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
-                Console.Write("Watchdog caught in Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
+                //Console.Write("Watchdog caught in Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
 
-                // Send "straight" DriveCommand to AscentShimLayer
+                // If more than 0.5 seconds have passed since last event, it's safe to start issuing drive 
+                // commands - otherwise race condition may occur when continually detecting an obstacle
+                if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
+                {
+                    // Test write - delete
+                    //Console.Write("Watchdog ready to issue straight drive command: " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "\n");
+
+                    // Send "straight" DriveCommand to AscentPacketHandler
+                    this.driveContext.Drive(DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED));
+                }
+                else
+                {
+                    // Test write - delete
+                    //Console.Write("Watchdog caught in Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
+                }
+                
                 return;
             }
-
-            Console.Write("Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
 
             // Get DriveCommand from current drive state
             DriveCommand driveCommand = this.driveContext.FindNextDriveCommand();
@@ -88,7 +93,7 @@ namespace AI_ROCKS.Services
 
             // If so, trigger event
 
-            // Test code to trigger event every 10 seconds 
+            // Test code to trigger event every 10 seconds - delete
             // TODO delete
             if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() % 10 == 0)
             {
@@ -109,12 +114,11 @@ namespace AI_ROCKS.Services
                 // BeginInvoke here? use same thread or spawn new thread?
                 handler(this, e);
             }
-            else
-            {
-                // No subscribers, throw exception
-                // This else can be removed once formal structure is figured out
-                Console.Write("No subscribers");
-            }
+        }
+
+        private bool IsLastObstacleWithinInterval(long milliseconds)
+        {
+            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < lastObstacleDetected + milliseconds;
         }
 
         public long LastObstacleDetected

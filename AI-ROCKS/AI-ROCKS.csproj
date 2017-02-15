@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AI-ROCKS.cs" />
+    <Compile Include="Drive\DriveStates\ObstacleAvoidanceDriveState.cs" />
     <Compile Include="Drive\Utils\DriveCommand.cs" />
     <Compile Include="Drive\DriveContext.cs" />
     <Compile Include="Drive\DriveStates\IDriveState.cs" />

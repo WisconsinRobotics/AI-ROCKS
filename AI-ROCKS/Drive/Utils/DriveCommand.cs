@@ -8,6 +8,9 @@ namespace AI_ROCKS.Drive
 {
     class DriveCommand
     {
+        public const byte CLEAR_OBSTACLE_SPEED = 2;    //TODO verify
+        private const double STRAIGHT = 0;              //TODO look at depending on what we do for angles (i.e. where is 0)
+
         private byte[] magnitude;
         private byte[] direction;
         private double angle;
@@ -26,6 +29,15 @@ namespace AI_ROCKS.Drive
             // Use angle and speed to calculate what the resultant magnitude and direction are for all 6 wheels
 
             // Set magnitude and direction accordingly
+        }
+
+        public static DriveCommand Straight(byte speed)
+        {
+            // Create DriveCommand that represents a Straight command of specified speed
+
+            // TODO verify angle
+            DriveCommand straight = new DriveCommand(STRAIGHT, speed);
+            return straight;
         }
 
 

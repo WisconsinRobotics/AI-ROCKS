@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
 using AI_ROCKS.Services;
@@ -40,21 +40,28 @@ namespace AI_ROCKS.Drive
         }
 
         /// <summary>
-        /// Issue the specified DriveCommand to ROCKS through AscentShimLayer.
+        /// Issue the specified DriveCommand to ROCKS through AscentPacketHandler.
         /// </summary>
         /// <param name="driveCommand">The DriveCommand to be executed.</param>
         public void Drive(DriveCommand driveCommand)
         {
-            // Send this DriveCommand to the AscentShimLayer
-            Console.Write("Drive - lock\n");
-            // TODO test locking
-            lock (autonomousService.SendDriveCommandLock)
+            // Obtain lock
+            bool isLocked = false;
+            Monitor.TryEnter(autonomousService.SendDriveCommandLock, ref isLocked);
+
+            if (isLocked)
             {
+                // Test write - delete
+                //Console.Write("Drive - lock at: " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "\n");
+
+                // Send DriveCommand to AscentPacketHandler
                 DriveHandler.SendDriveCommand(driveCommand);
+
+                // Release lock
+                Monitor.Exit(autonomousService.SendDriveCommandLock);
             }
-            Console.Write("Drive - unlock\n");
             
-            //TODO return value?
+            // Return value?
         }
 
         /// <summary>
@@ -91,8 +98,6 @@ namespace AI_ROCKS.Drive
 
         public void HandleObstacleEvent(Object sender, ObstacleEventArgs e)
         {
-            Console.Write("In HandleObstacleEvent at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
-
             Plot obstacles = e.Data;
 
             Line bestGap = this.driveState.FindBestGap(obstacles);
@@ -107,14 +112,14 @@ namespace AI_ROCKS.Drive
 
             DriveCommand driveCommand = new DriveCommand(angle, speed);
 
-            // TODO test locking
-            Console.Write("HandleObstacleEvent - lock\n");
             lock (autonomousService.SendDriveCommandLock)
             {
+                // Test write - delete
+                //Console.Write("HandleObstacleEvent - lock at: " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "\n");
+
                 DriveHandler.SendDriveCommand(driveCommand);
-                autonomousService.LastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                autonomousService.LastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
-            Console.Write("HandleObstacleEvent - unlock\n");
             
             // Return value?
         }

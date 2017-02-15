@@ -10,8 +10,8 @@ namespace AI_ROCKS
 {
     class Program
     {
-        private const long EXECUTE_INTERVAL_MILLIS = 2000;  //TODO change
-        private const long OBSTACLE_INTERVAL_MILLIS = 1000; //TODO change
+        private const long EXECUTE_INTERVAL_MILLIS = 100;  //TODO change
+        private const long OBSTACLE_INTERVAL_MILLIS = 100; //TODO change
 
         static void Main(string[] args)
         {
@@ -24,25 +24,25 @@ namespace AI_ROCKS
             AutonomousService autonomousService = new AutonomousService();
 
             // Set up connection with ROCKS (Service Master?, etc)
-
             // TODO
+
             // While connection is present, run autonomous service
             
-            // Refer to AWAKE and BadgerJAUS InitializeTimer() -> Execute is hooked up to Timer event executing every x milliseconds
+            // Create Timer for Execute function
             Timer executeTimer = new Timer(EXECUTE_INTERVAL_MILLIS);
             executeTimer.AutoReset = true;
             executeTimer.Elapsed += autonomousService.Execute;
             executeTimer.Enabled = true;
 
-            // Create thread for ObstacleEvent
-            // Tie in to autonomousService.DetectObstacleEvent()
+            // Create timer for ObstacleEvent, tied in to autonomousService.DetectObstacleEvent()
             Timer obstacleTimer = new Timer(OBSTACLE_INTERVAL_MILLIS);
             obstacleTimer.AutoReset = true;
             obstacleTimer.Elapsed += autonomousService.DetectObstacleEvent;
             obstacleTimer.Enabled = true;
-            
 
             while (true) { }
+
+            // TODO when to end? When gate is detected?
         }
     }
 }
