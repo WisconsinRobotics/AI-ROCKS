@@ -4,13 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AI_ROCKS.Drive;
+using AI_ROCKS.Drive.DriveStates;
 
 namespace AI_ROCKS.Drive
 {
     enum StateType
     {
         GPSState = 0,
-        VisionState = 1
+        VisionState = 1,
+        ObstacleAvoidanceState = 2
     }
 
     class StateTypeHelper
@@ -30,6 +32,11 @@ namespace AI_ROCKS.Drive
                         driveState = new VisionDriveState();
                         break;
                     }
+                case StateType.ObstacleAvoidanceState:
+                    {
+                        driveState = new ObstacleAvoidanceDriveState();
+                        break;
+                    }
                 default:
                     {
                         driveState = new GPSDriveState();
@@ -39,6 +46,5 @@ namespace AI_ROCKS.Drive
 
             return driveState;
         }
-
     }
 }
