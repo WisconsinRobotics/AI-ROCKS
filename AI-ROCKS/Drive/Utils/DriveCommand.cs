@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AI_ROCKS.Drive
 {
     class DriveCommand
     {
-        public const byte CLEAR_OBSTACLE_SPEED = 2;    //TODO verify
+        public const byte CLEAR_OBSTACLE_SPEED = 2;     //TODO verify
         private const double STRAIGHT = 0;              //TODO look at depending on what we do for angles (i.e. where is 0)
+        private const double RIGHT = Math.PI / 2;              //TODO look at depending on what we do for angles (i.e. where is 0)
 
         private byte[] magnitude;
         private byte[] direction;
@@ -40,6 +37,14 @@ namespace AI_ROCKS.Drive
             return straight;
         }
 
+        public static DriveCommand Right(byte speed)
+        {
+            // Create DriveCommand that represents a Right command of specified speed
+
+            // TODO verify angle
+            DriveCommand straight = new DriveCommand(STRAIGHT, speed);
+            return straight;
+        }
 
         public byte[] Magnitude
         {

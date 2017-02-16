@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using AI_ROCKS.Services;
 using Timer = System.Timers.Timer;
+
+using AI_ROCKS.Services;
 
 namespace AI_ROCKS
 {

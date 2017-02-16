@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using ObstacleLibrarySharp;
 
-namespace AI_ROCKS.Drive
+namespace AI_ROCKS.Drive.DriveStates
 {
     class VisionDriveState : IDriveState
     {

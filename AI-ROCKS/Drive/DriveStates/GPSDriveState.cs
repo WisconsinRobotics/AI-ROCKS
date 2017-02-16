@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AI_ROCKS.PacketHandlers;
+
 using ObstacleLibrarySharp;
 
-namespace AI_ROCKS.Drive
+namespace AI_ROCKS.Drive.DriveStates
 {
     class GPSDriveState : IDriveState
     {

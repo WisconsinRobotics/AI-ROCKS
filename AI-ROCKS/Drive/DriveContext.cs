@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
+
 using AI_ROCKS.Drive.DriveStates;
 using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
@@ -103,6 +101,8 @@ namespace AI_ROCKS.Drive
 
         public void HandleObstacleEvent(Object sender, ObstacleEventArgs e)
         {
+            byte speed = 2;     // Dtermine this
+
             Plot obstacles = e.Data;
 
             Line bestGap = this.driveState.FindBestGap(obstacles);
@@ -112,23 +112,22 @@ namespace AI_ROCKS.Drive
             // Find angle to midpoint
             // Create DriveCommand from angle and speed
 
-            if (bestGap == null)
+            DriveCommand driveCommand;
+
+            if (bestGap != null)
+            {
+                // Drive toward bestGap's midpoint
+                Coordinate midpoint = bestGap.Midpoint;
+
+                double angle = midpoint.Theta;   // TODO Determine this - how to scale it for our angle representation
+
+                driveCommand = new DriveCommand(angle, speed);
+            }
+            else
             {
                 // Turn right
-
-                // TODO return? Handle this
-                return;
+                driveCommand = DriveCommand.Right(speed);
             }
-
-            // Drive toward bestGap's midpoint
-            Coordinate midpoint = bestGap.Midpoint;
-
-            // Coordinate to DriveCommand
-
-            double angle = 0;   // Determine this
-            byte speed = 2;     // Dtermine this
-
-            DriveCommand driveCommand = new DriveCommand(angle, speed);
 
             lock (autonomousService.SendDriveCommandLock)
             {
