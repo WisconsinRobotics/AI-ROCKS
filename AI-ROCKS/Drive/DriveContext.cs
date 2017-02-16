@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using AI_ROCKS.Drive.DriveStates;
 using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
 using AI_ROCKS.Services;
@@ -18,9 +19,13 @@ namespace AI_ROCKS.Drive
 
         public DriveContext(AutonomousService autonomousService)
         {
-            // GPSDriveState is default 
-            this.driveState = new GPSDriveState();
-            this.StateType = StateType.GPSState;
+            // GPSDriveState is default
+            //this.driveState = new GPSDriveState();
+            //this.StateType = StateType.GPSState;
+
+            // Added for testing
+            this.driveState = new ObstacleAvoidanceDriveState();
+            this.stateType = StateType.ObstacleAvoidanceState;
 
             // Keep track of the autonomous service
             this.autonomousService = autonomousService;
@@ -51,7 +56,7 @@ namespace AI_ROCKS.Drive
 
             if (isLocked)
             {
-                // Test write - delete
+                // TODO delete
                 //Console.Write("Drive - lock at: " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "\n");
 
                 // Send DriveCommand to AscentPacketHandler
@@ -107,6 +112,19 @@ namespace AI_ROCKS.Drive
             // Find angle to midpoint
             // Create DriveCommand from angle and speed
 
+            if (bestGap == null)
+            {
+                // Turn right
+
+                // TODO return? Handle this
+                return;
+            }
+
+            // Drive toward bestGap's midpoint
+            Coordinate midpoint = bestGap.Midpoint;
+
+            // Coordinate to DriveCommand
+
             double angle = 0;   // Determine this
             byte speed = 2;     // Dtermine this
 
@@ -114,7 +132,7 @@ namespace AI_ROCKS.Drive
 
             lock (autonomousService.SendDriveCommandLock)
             {
-                // Test write - delete
+                // TODO delete
                 //Console.Write("HandleObstacleEvent - lock at: " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "\n");
 
                 DriveHandler.SendDriveCommand(driveCommand);

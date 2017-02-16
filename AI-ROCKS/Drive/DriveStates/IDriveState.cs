@@ -23,10 +23,11 @@ namespace AI_ROCKS.Drive
 
         /// <summary>
         /// Finds the best gap for a given Plot. This is normally in response to an ObstacleEvent being triggered and
-        /// assumes there in an obstacle within the maximum acceptable distance.
+        /// assumes there in an obstacle within the maximum acceptable distance. Checking does occur if this function 
+        /// is erroneously called however. Note: This function returns null if no best gap is found.
         /// </summary>
         /// <param name="obstacles">The Plot containing Regions to analyze to find the best gap.</param>
-        /// <returns>Line - the Line representing the best gap.</returns>
+        /// <returns>Line - the Line representing the best gap, or null if no sufficient best gap was found.</returns>
         Line FindBestGap(Plot obstacles);
     }
 }

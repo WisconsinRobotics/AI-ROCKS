@@ -11,8 +11,9 @@ namespace AI_ROCKS.Services
 {
     class AutonomousService
     {
-        private const long OBSTACLE_WATCHDOG_MILLIS = 5000;
-        private const long CLEAR_OBSTACLE_DELAY_MILLIS = 1000;  //TODO verify
+        private const long OBSTACLE_WATCHDOG_MILLIS = 5000;         // 5 second delay   // TODO verify and update
+        private const long CLEAR_OBSTACLE_DELAY_MILLIS = 1000;      // 1 second delay   // TODO verify and update
+        private const long OBSTACLE_DETECTION_DISTANCE = 2000;      // 2 meters         // TODO verify and update
 
         private DriveContext driveContext;
         private readonly object sendDriveCommandLock;
@@ -27,6 +28,7 @@ namespace AI_ROCKS.Services
             this.sendDriveCommandLock = new Object();
         }
 
+
         /// <summary>
         /// Main execution function for AutonomousService.
         /// </summary>
@@ -35,13 +37,14 @@ namespace AI_ROCKS.Services
             // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
+                // TODO delete
                 //Console.Write("Watchdog caught in Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
 
                 // If more than 0.5 seconds have passed since last event, it's safe to start issuing drive 
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
                 {
-                    // Test write - delete
+                    // TODO delete
                     //Console.Write("Watchdog ready to issue straight drive command: " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "\n");
 
                     // Send "straight" DriveCommand to AscentPacketHandler
@@ -49,7 +52,7 @@ namespace AI_ROCKS.Services
                 }
                 else
                 {
-                    // Test write - delete
+                    // TODO delete
                     //Console.Write("Watchdog caught in Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
                 }
                 
@@ -62,22 +65,11 @@ namespace AI_ROCKS.Services
             // Issue drive command
             this.driveContext.Drive(driveCommand);
 
-
-            // Other Autonomous driving code...
-            // ...
-            // ...
-
-
             // If state change is required, change state
             if (this.driveContext.IsStateChangeRequired())
             {
                 this.driveContext.ChangeState();
             }
-
-
-            // Even more Autonomous driving code
-            // ...
-            // ...
         }
 
         /// <summary>
@@ -87,11 +79,35 @@ namespace AI_ROCKS.Services
         public void DetectObstacleEvent(Object source, ElapsedEventArgs e)
         {
             // Get LRF data
-            Plot plot = new Plot(); //This data would come from LRF
+            Plot plot = new Plot(); // TODO this data would come from LRF
 
             // See if any event within maximum allowed distance
+            // Probably add this as a function in ObstacleLibrary:
+            bool obstacleDetected = false;
+            foreach (Region region in plot.Regions)
+            {
+                foreach (Coordinate coordinate in region.ReducedCoordinates)
+                {
+                    // TODO test this logic
+                    if (coordinate.R < OBSTACLE_DETECTION_DISTANCE)
+                    {
+                        obstacleDetected = true;
+                        break;
+                    }
+                }
 
-            // If so, trigger event
+                if (obstacleDetected)
+                {
+                    break;
+                }
+            }
+
+            // If obstacle detected, trigger event
+            if (obstacleDetected)
+            {
+                OnObstacleEvent(new ObstacleEventArgs(plot));
+            }
+
 
             // Test code to trigger event every 10 seconds - delete
             // TODO delete
