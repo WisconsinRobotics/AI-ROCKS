@@ -20,9 +20,9 @@ namespace AI_ROCKS.Services
         public event EventHandler<ObstacleEventArgs> ObstacleEvent;
 
 
-        public AutonomousService()
+        public AutonomousService(StateType initialStateType)
         {
-            this.driveContext = new DriveContext(this);
+            this.driveContext = new DriveContext(this, initialStateType);
             this.sendDriveCommandLock = new Object();
         }
 
@@ -35,23 +35,12 @@ namespace AI_ROCKS.Services
             // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
-                // TODO delete
-                //Console.Write("Watchdog caught in Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
-
                 // If more than 0.5 seconds have passed since last event, it's safe to start issuing drive 
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
                 {
-                    // TODO delete
-                    //Console.Write("Watchdog ready to issue straight drive command: " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "\n");
-
                     // Send "straight" DriveCommand to AscentPacketHandler
                     this.driveContext.Drive(DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED));
-                }
-                else
-                {
-                    // TODO delete
-                    //Console.Write("Watchdog caught in Execute at: " + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + "\n");
                 }
                 
                 return;
@@ -102,14 +91,6 @@ namespace AI_ROCKS.Services
 
             // If obstacle detected, trigger event
             if (obstacleDetected)
-            {
-                OnObstacleEvent(new ObstacleEventArgs(plot));
-            }
-
-
-            // Test code to trigger event every 10 seconds - delete
-            // TODO delete
-            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() % 10 == 0)
             {
                 OnObstacleEvent(new ObstacleEventArgs(plot));
             }

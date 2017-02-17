@@ -11,8 +11,8 @@ namespace AI_ROCKS.Drive.DriveStates
         // TODO move all of these to a more appropriate place
         private const float ASCENT_WIDTH = 200;                 // TODO fill in with actual value
         private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
-        private Line lrfLeftFOV;
-        private Line lrfRightFOV;
+        private Line lrfLeftFOV;                                // TODO put this somewhere else
+        private Line lrfRightFOV;                               // TODO put this somewhere else
 
 
         public ObstacleAvoidanceDriveState()

@@ -1,4 +1,5 @@
 ﻿using System;
+using AI_ROCKS.Drive;
 using Timer = System.Timers.Timer;
 
 using AI_ROCKS.Services;
@@ -15,10 +16,10 @@ namespace AI_ROCKS
             // Parse args
             // -t - test mode
             // -s COMX - COM port LRF is on
-            // -d X - DriveState to start in (according to StateType enum
+            // -d X - DriveState to start in (according to StateType enum). Make default GPS
 
             // Create AutonomousService
-            AutonomousService autonomousService = new AutonomousService();
+            AutonomousService autonomousService = new AutonomousService(StateType.ObstacleAvoidanceState);
 
             // Set up connection with ROCKS (Service Master?, etc)
             // TODO

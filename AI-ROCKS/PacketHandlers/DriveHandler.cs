@@ -6,6 +6,8 @@ namespace AI_ROCKS.PacketHandlers
 {
     class DriveHandler : PacketHandler
     {
+        private const byte OPCODE_ALL_WHEEL_SPEED = 0x2F;
+
         public DriveHandler()
         {
         }
@@ -16,16 +18,13 @@ namespace AI_ROCKS.PacketHandlers
         /// </summary>
         /// <param name="driveCommand">The DriveCommand to be executed.</param>
         /// <returns>bool - If DriveCommand was successfully sent.</returns>
-        public static bool SendDriveCommand(DriveCommand driveCommand)
+        public static void SendDriveCommand(DriveCommand driveCommand)
         {
             // Form payload for BCL drive command from specified DriveCommand
             byte[] bclPayload = DriveCommandToBclPayload(driveCommand);
 
             // Send opcode, payload to AscentShimLayer to send drive packet to ROCKS
-            
-            // Return result (success, failure)
-
-            return true;
+            AscentPacketHandler.SendPayloadToAscentControlSystem(OPCODE_ALL_WHEEL_SPEED, bclPayload);
         }
 
         /// <summary>
@@ -36,9 +35,9 @@ namespace AI_ROCKS.PacketHandlers
         private static byte[] DriveCommandToBclPayload(DriveCommand driveCommand)
         {
             // Convert DriveCommand to byte array BCL packet
-
-            // Return BCL packet
-            return new byte[0];
+            byte[] payload = { (byte)driveCommand.Left, (byte)driveCommand.Right };
+            
+            return payload;
         }
 
 

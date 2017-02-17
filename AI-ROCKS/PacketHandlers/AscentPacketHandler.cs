@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Net;
 
@@ -52,6 +53,72 @@ namespace AI_ROCKS.PacketHandlers
             // compute crc
             // append data
             // append end byte
+
+            /*
+            BCL_STATUS InitializeSetTankDriveSpeedPacket(BclPacket* pkt, TankDrivePayload* payload);
+
+            [ header ] [payload] [end]
+
+            header = [ opcode ][ source ][ dest ][ payload size ][ checksum ]
+            source/dest addr - [ robot ID] [service ID]
+            */
+
+            byte leftSpeed = 0;     // TODO
+            byte rightSpeed = 0;    // TODO
+
+            List<byte> bclPacket = new List<byte>();
+
+            // Header
+            bclPacket.Add(0xBA);
+            bclPacket.Add(0xAD);
+
+            // Opcode - all wheel speed
+            bclPacket.Add(opcode);
+
+            // Source addr - robot ID and service ID
+            bclPacket.Add(ASCENT_ROBOT_ID);
+            bclPacket.Add(1);                   //TODO Service ID
+
+            // Dest addr - robot ID and service ID
+            bclPacket.Add(ASCENT_ROBOT_ID);
+            bclPacket.Add(1);                   //TODO Service ID
+
+            // Payload size and payload
+            bclPacket.Add((byte)data.Length);
+            foreach (byte b in data)
+            {
+                bclPacket.Add(b);
+            }
+            
+            // CRC
+            byte crc = 0;
+            crc ^= leftSpeed;
+            if ((crc & 0x80) != 0)
+            {
+                // Dividend -= divisor
+                crc = (byte) ((crc << 1) ^ 0x07);
+            }
+            else
+            {
+                // Move to the next bit
+                crc <<= 1;
+            }
+
+            crc ^= rightSpeed;
+            if ((crc & 0x80) != 0)
+            {
+                // Dividend -= divisor
+                crc = (byte)((crc << 1) ^ 0x07);
+            }
+            else
+            {
+                // Move to the next bit
+                crc <<= 1;
+            }
+
+            // End
+            bclPacket.Add(0xFE);
+
         }
 
         AscentPacketHandler()

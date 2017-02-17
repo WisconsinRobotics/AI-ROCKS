@@ -11,20 +11,18 @@ namespace AI_ROCKS.Drive
 {
     class DriveContext
     {
+        private const byte OBSTACLE_DRIVE_STATE_SPEED = 2;      // TODO put this somewhere else - Make it work for multiple states too
+
         private IDriveState driveState;
         private StateType stateType;
         private AutonomousService autonomousService;
 
-        public DriveContext(AutonomousService autonomousService)
+        public DriveContext(AutonomousService autonomousService, StateType initialStateType)
         {
-            // GPSDriveState is default
-            //this.driveState = new GPSDriveState();
-            //this.StateType = StateType.GPSState;
-
-            // Added for testing
-            this.driveState = new ObstacleAvoidanceDriveState();
-            this.stateType = StateType.ObstacleAvoidanceState;
-
+            // GPSDriveState is default unless specified
+            this.driveState = StateTypeHelper.ToDriveState(initialStateType);
+            this.stateType = initialStateType;
+            
             // Keep track of the autonomous service
             this.autonomousService = autonomousService;
             
@@ -54,9 +52,6 @@ namespace AI_ROCKS.Drive
 
             if (isLocked)
             {
-                // TODO delete
-                //Console.Write("Drive - lock at: " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "\n");
-
                 // Send DriveCommand to AscentPacketHandler
                 DriveHandler.SendDriveCommand(driveCommand);
 
@@ -101,39 +96,32 @@ namespace AI_ROCKS.Drive
 
         public void HandleObstacleEvent(Object sender, ObstacleEventArgs e)
         {
-            byte speed = 2;     // Dtermine this
-
+            DriveCommand driveCommand;
             Plot obstacles = e.Data;
 
+            // Find the best gap
             Line bestGap = this.driveState.FindBestGap(obstacles);
-
-            // Determine how to drive toward best gap:
-            // Get midpoint
-            // Find angle to midpoint
-            // Create DriveCommand from angle and speed
-
-            DriveCommand driveCommand;
 
             if (bestGap != null)
             {
                 // Drive toward bestGap's midpoint
                 Coordinate midpoint = bestGap.Midpoint;
 
+                // Straight ahead is 0 - calculate angle accordingly
                 double angle = midpoint.Theta;   // TODO Determine this - how to scale it for our angle representation
 
-                driveCommand = new DriveCommand(angle, speed);
+                driveCommand = new DriveCommand(angle, OBSTACLE_DRIVE_STATE_SPEED);
+                
+                //driveCommand = new DriveCommand(midpoint, OBSTACLE_DRIVE_STATE_SPEED);        // Make constructor from Coordinate?
             }
             else
             {
                 // Turn right
-                driveCommand = DriveCommand.Right(speed);
+                driveCommand = DriveCommand.RightTurn(OBSTACLE_DRIVE_STATE_SPEED);      // TODO find appropriate value here - want to be slower?
             }
 
             lock (autonomousService.SendDriveCommandLock)
             {
-                // TODO delete
-                //Console.Write("HandleObstacleEvent - lock at: " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "\n");
-
                 DriveHandler.SendDriveCommand(driveCommand);
                 autonomousService.LastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
