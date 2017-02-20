@@ -23,7 +23,7 @@ namespace AI_ROCKS.PacketHandlers
             // Form payload for BCL drive command from specified DriveCommand
             byte[] bclPayload = DriveCommandToBclPayload(driveCommand);
 
-            // Send opcode, payload to AscentShimLayer to send drive packet to ROCKS
+            // Send opcode, payload to AscentPacketHandler to send drive packet to ROCKS
             AscentPacketHandler.SendPayloadToAscentControlSystem(OPCODE_ALL_WHEEL_SPEED, bclPayload);
         }
 

@@ -53,6 +53,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="LRFLibrarySharp">
+      <HintPath>..\LRFLibrarySharp.dll</HintPath>
+    </Reference>
     <Reference Include="ObstacleLibrary">
       <HintPath>..\ObstacleLibrary.dll</HintPath>
     </Reference>

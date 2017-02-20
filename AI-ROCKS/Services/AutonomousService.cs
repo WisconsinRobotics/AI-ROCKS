@@ -1,19 +1,31 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Timers;
 
 using AI_ROCKS.Drive;
 using AI_ROCKS.Drive.Utils;
+using LRFLibrarySharp;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Services
 {
     class AutonomousService
     {
-        private const long OBSTACLE_WATCHDOG_MILLIS = 5000;         // 5 second delay   // TODO verify and update
+        // TODO update for field testing
+        private const long OBSTACLE_WATCHDOG_MILLIS = 1000;         // 5 second delay   // TODO verify and update
         private const long CLEAR_OBSTACLE_DELAY_MILLIS = 1000;      // 1 second delay   // TODO verify and update
-        private const long OBSTACLE_DETECTION_DISTANCE = 2000;      // 2 meters         // TODO verify and update
+        // TODO update for field testing
+        private const long OBSTACLE_DETECTION_DISTANCE = 500;       // 2 meters         // TODO verify and update
+
+        private const string LRF_SERIAL_PORT = "COM3";                                  // TODO make this better - param?
+        private const int LRF_PORT = 20001;
+        private const double REGION_SEPARATION_DISTANCE = 60.0;                         // TODO verify, move somewhere?
+        private const double RDP_THRESHOLD = 5.0;
 
         private DriveContext driveContext;
+        private LRF lrf;
+
         private readonly object sendDriveCommandLock;
         private long lastObstacleDetected;
 
@@ -24,6 +36,10 @@ namespace AI_ROCKS.Services
         {
             this.driveContext = new DriveContext(this, initialStateType);
             this.sendDriveCommandLock = new Object();
+
+            this.lrf = new LRF();
+            lrf.Initialize(LRF_SERIAL_PORT);    // For getting LRF data over serial
+            //lrf.Initialize(LRF_PORT);         // For getting LRF data over UDP
         }
 
 
@@ -35,6 +51,7 @@ namespace AI_ROCKS.Services
             // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
+                Console.WriteLine("Watchdog");
                 // If more than 0.5 seconds have passed since last event, it's safe to start issuing drive 
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
@@ -66,7 +83,16 @@ namespace AI_ROCKS.Services
         public void DetectObstacleEvent(Object source, ElapsedEventArgs e)
         {
             // Get LRF data
-            Plot plot = new Plot(); // TODO this data would come from LRF
+            lrf.RefreshData();
+            // TODO figure out why we can't use CoordinateFilter over UDP
+            //List<Coordinate> coordinates = lrf.GetCoordinates(CoordinateFilter.Front);    // For serial
+            List<Coordinate> coordinates = lrf.GetCoordinates();                            // For over UDP
+
+            //coordinates = coordinates.Where(coord => coord.Theta < Math.PI / 2 || coord.Theta > 3 * Math.PI / 2).OrderBy(c1 => c1.Theta).ToList();    // For serial
+            coordinates = coordinates.Where(coord => coord.Theta < Math.PI / 2 || coord.Theta > 3 * Math.PI / 2).ToList();
+
+            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, DriveContext.ASCENT_WIDTH, RDP_THRESHOLD); //REGION_SEPARATION_DISTANCE, RDP_THRESHOLD);            
+            Plot plot = new Plot(regions);
 
             // See if any event within maximum allowed distance
             // Probably add this as a function in ObstacleLibrary:

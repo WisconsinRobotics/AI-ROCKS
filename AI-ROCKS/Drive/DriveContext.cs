@@ -11,7 +11,7 @@ namespace AI_ROCKS.Drive
 {
     class DriveContext
     {
-        private const byte OBSTACLE_DRIVE_STATE_SPEED = 2;      // TODO put this somewhere else - Make it work for multiple states too
+        public const float ASCENT_WIDTH = 1168.4f;//1.1684f                 // TODO fill in with actual value
 
         private IDriveState driveState;
         private StateType stateType;
@@ -23,7 +23,6 @@ namespace AI_ROCKS.Drive
             this.driveState = StateTypeHelper.ToDriveState(initialStateType);
             this.stateType = initialStateType;
             
-            // Keep track of the autonomous service
             this.autonomousService = autonomousService;
             
             // Subscribe to ObstacleEvent
@@ -79,9 +78,10 @@ namespace AI_ROCKS.Drive
         public StateType ChangeState()
         {
             // If change is not required, return current state
-            // TODO most likely will be an expensive call, so keep nextStateType as a global here?
-            // TODO even check if state change is required? Or assume this is called after IsStateChangeRequired() has been called -> be safe for calling function or let the call do whatever it wants?
-            // TODO specify param or nah? Need to assume more than two states
+            // TODO: ALL BELOW THINGS:
+            // - Most likely will be an expensive call, so keep nextStateType as a global here?
+            // - Even check if state change is required? Or assume this is called after IsStateChangeRequired() has been called -> be safe for calling function or let the call do whatever it wants?
+            // - Specify param or nah? Need to assume more than two states
             if (!IsStateChangeRequired())
             {
                 return this.stateType;
@@ -90,7 +90,6 @@ namespace AI_ROCKS.Drive
             StateType nextStateType = driveState.GetNextStateType();
 
             driveState = StateTypeHelper.ToDriveState(nextStateType);
-
             return nextStateType;
         }
 
@@ -105,19 +104,16 @@ namespace AI_ROCKS.Drive
             if (bestGap != null)
             {
                 // Drive toward bestGap's midpoint
-                Coordinate midpoint = bestGap.Midpoint;
+                Coordinate midpoint = bestGap.FindMidpoint();
 
                 // Straight ahead is 0 - calculate angle accordingly
                 double angle = midpoint.Theta;   // TODO Determine this - how to scale it for our angle representation
-
-                driveCommand = new DriveCommand(angle, OBSTACLE_DRIVE_STATE_SPEED);
-                
-                //driveCommand = new DriveCommand(midpoint, OBSTACLE_DRIVE_STATE_SPEED);        // Make constructor from Coordinate?
+                driveCommand = new DriveCommand(angle, DriveCommand.OBSTACLE_DRIVE_STATE_SPEED);
             }
             else
             {
                 // Turn right
-                driveCommand = DriveCommand.RightTurn(OBSTACLE_DRIVE_STATE_SPEED);      // TODO find appropriate value here - want to be slower?
+                driveCommand = DriveCommand.RightTurn(DriveCommand.OBSTACLE_DRIVE_STATE_SPEED);      // TODO find appropriate value here - want to be slower?
             }
 
             lock (autonomousService.SendDriveCommandLock)

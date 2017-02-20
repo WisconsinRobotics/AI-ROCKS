@@ -4,17 +4,20 @@ namespace AI_ROCKS.Drive
 {
     class DriveCommand
     {
-        public const byte CLEAR_OBSTACLE_SPEED = 2;     //TODO verify
+        public const byte CLEAR_OBSTACLE_SPEED = 10;            //TODO verify
+        public const byte OBSTACLE_DRIVE_STATE_SPEED = 20;      // TODO put this somewhere else - Make it work for multiple states too
+
         private const double STRAIGHT = 0;              //TODO look at depending on what we do for angles (i.e. where is 0)
         private const double RIGHT = Math.PI / 2;       //TODO look at depending on what we do for angles (i.e. where is 0)
-        private const byte SPEED = 2;                   // TODO put this somewhere else
 
         private sbyte left;
         private sbyte right;
-        private double angle;
+        //private double angle;
 
 
-        public DriveCommand(sbyte left, sbyte right)
+        // Make constructor from Coordinate?
+
+        public DriveCommand(sbyte left, sbyte right, byte speed)
         {
             this.left = left;
             this.right = right;
@@ -26,22 +29,24 @@ namespace AI_ROCKS.Drive
 
             // Use angle and speed to calculate what the resultant magnitude and direction are for all 6 wheels
 
-            if (angle == 0)
+            if (angle.Equals(0))
             {
-                // drive straight
+                // Drive straight
+                this.left = (sbyte)speed;
+                this.right = (sbyte)speed;
             }
             else if (angle < Math.PI/2)
             {
                 // Turn right
-                this.left = (sbyte)SPEED;
-                this.right = -SPEED;
+                this.left = (sbyte)speed;
+                this.right = (sbyte)-speed;
 
             }
-            else if (angle < 2 * Math.PI && angle > 3 * Math.PI / 2)
+            else if (angle > 3 * Math.PI / 2 && angle < 2 * Math.PI)
             {
                 // Turn left
-                this.left = -SPEED;
-                this.right = (sbyte)SPEED;
+                this.left = (sbyte)-speed;
+                this.right = (sbyte)speed;
             }
             else
             {
@@ -53,8 +58,6 @@ namespace AI_ROCKS.Drive
         public static DriveCommand Straight(byte speed)
         {
             // Create DriveCommand that represents a Straight command of specified speed
-
-            // TODO verify angle
             DriveCommand straight = new DriveCommand(STRAIGHT, speed);
             return straight;
         }
@@ -62,8 +65,6 @@ namespace AI_ROCKS.Drive
         public static DriveCommand RightTurn(byte speed)
         {
             // Create DriveCommand that represents a Right command of specified speed
-
-            // TODO verify angle
             DriveCommand right = new DriveCommand(RIGHT, speed);
             return right;
         }
@@ -80,11 +81,13 @@ namespace AI_ROCKS.Drive
             set { this.right = value; }
         }
 
+        /*
         public double Angle
         {
             get { return this.angle; }
             set { this.angle = value; }
         }
+        */
 
         public Tuple<sbyte, sbyte> Command
         {
