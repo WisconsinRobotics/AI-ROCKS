@@ -1,15 +1,25 @@
 ﻿using System;
 
 using ObstacleLibrarySharp;
-using LRFLibrary;
+using LRFLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
     class GPSDriveState : IDriveState
     {
+        GPS finalGPS;
+
+        PacketHandlers.GPSHandler gpsHandler;
+        GPS currGPS;
+        //PacketHandlers.CompassHandler compassHandler;  NOT IMPLEMENTED YET
+        // Compass currCompass;
+
+        DriveCommand command;
+
         public GPSDriveState()
         {
-
+            this.gpsHandler = new PacketHandlers.GPSHandler();
+            // this.compassHandler = new PacketHandlers.compassHandler();
         }
 
 
@@ -19,13 +29,24 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>DriveCommand - the next drive command for ROCKS to execute.</returns>
         public DriveCommand FindNextDriveCommand()
         {
-            
             // Get "current" data from AscentShimLayer in form of GPS object
-            
-            // Do GPS driving (get from GPS group):
-            // ..
-            // ..
+            currGPS = gpsHandler.Data;
+            // currCompass = compassHandler.Data;
 
+            // Do GPS driving
+            // find angle between our gps and the end gps with trig 
+            double idealDirection = Math.Atan2((finalGPS.Latitude - currGPS.Latitude), (finalGPS.Longitude - finalGPS.Longitude));
+            idealDirection = idealDirection * (180 / Math.PI);
+            idealDirection = -idealDirection;
+            idealDirection = idealDirection + 90;
+            if (idealDirection < 0)
+                idealDirection = idealDirection + 360;
+
+            // if lined up within numeric precision, drive straight
+            if (Math.Abs(idealDirection - currCompass) < .001 || Math.Abs(idealDirection - currCompass) > 359.999)
+            {
+                return command = new DriveCommand(1, 1, 1);
+            }
             // Form DriveCommand for where to drive the robot
 
             // Return Drive Command (it is sent by DriveContext)
