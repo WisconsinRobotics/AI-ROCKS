@@ -67,15 +67,24 @@ namespace AI_ROCKS.Drive.DriveStates
         //TODO event typing into some new ObstacleAvoidanceDriveState that triggers when the robot needs to avoid an obstacle
         public Line FindBestGap(Plot obstacles)
         {
-            // Given a Plot representing the obstacles, find Line representing the best gap.
+			List<Region> regions = obstacles.Regions;
+			Line threshold = new Line(DriveContext.ASCENT_WIDTH); //in mm 
+			Line bestGap;
+			//start to iterate through the list to find the bestGap
+			while ()
+			{
+			}
 
-            // Do GPS driving according to our rendition of the "Follow the Gap" algorithm:
-            // Reference here: https://pdfs.semanticscholar.org/c432/3017af7bce46fc7574ada008b8af1011e614.pdf
-            //
-            // This algorithm avoids obstacles by finding the gap between them. It has a threshold gap (i.e. robot width),
-            // and if the measured gap is greater than the threshold gap, the robot follows the calculated gap angle. 
-            // In our case, the best gap will also be the one with the smallest displacement from the goal (the gate).
-            //
+
+			// Given a Plot representing the obstacles, find Line representing the best gap.
+
+			// Do GPS driving according to our rendition of the "Follow the Gap" algorithm:
+			// Reference here: https://pdfs.semanticscholar.org/c432/3017af7bce46fc7574ada008b8af1011e614.pdf
+			//
+			// This algorithm avoids obstacles by finding the gap between them. It has a threshold gap (i.e. robot width),
+			// and if the measured gap is greater than the threshold gap, the robot follows the calculated gap angle. 
+			// In our case, the best gap will also be the one with the smallest displacement from the goal (the gate).
+
             // 1) Get LRF, GPS data 
             // 2) Calculate valid (large enough) gaps as Line objects, store in a list
             // 3) Find which gap is "best" (gap center angle has smallest deviation from straight line to goal)
