@@ -5,8 +5,11 @@ using LRFLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
+    // CURRENTLY WORKING AS IF COMPASS RETURNS ASMUTH (COMPASS NOT UNIT CIRCLE)
     class GPSDriveState : IDriveState
     {
+        private const float DIRECTION_VATIANCE_NOISE = .001f; // gives threshold that "straight" is considered
+
         GPS finalGPS;
 
         PacketHandlers.GPSHandler gpsHandler;
@@ -43,15 +46,19 @@ namespace AI_ROCKS.Drive.DriveStates
                 idealDirection = idealDirection + 360;
 
             // if lined up within numeric precision, drive straight
-            if (Math.Abs(idealDirection - currCompass) < .001 || Math.Abs(idealDirection - currCompass) > 359.999)
+            if (Math.Abs(idealDirection - currCompass) < DIRECTION_VATIANCE_NOISE 
+                || Math.Abs(idealDirection - currCompass) > (360 - DIRECTION_VATIANCE_NOISE))
             {
-                return command = new DriveCommand(1, 1, 1);
+                return command = DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED);
             }
-            // Form DriveCommand for where to drive the robot
-
-            // Return Drive Command (it is sent by DriveContext)
-
-            return null;
+            else if (((currCompass - idealDirection) % 360) < 180) // heading east of ideal, need to turn left
+            {
+                return command = new DriveCommand(-1, 1, 1);
+            }
+            else // heading east of ideal
+            {
+                return command = new DriveCommand(1, -1, 1);
+            }
         }
 
         /// <summary>
