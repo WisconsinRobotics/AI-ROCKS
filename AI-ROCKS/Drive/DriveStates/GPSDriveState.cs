@@ -2,6 +2,7 @@
 
 using ObstacleLibrarySharp;
 using LRFLibrarySharp;
+using System.Collections.Generic;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
@@ -64,41 +65,52 @@ namespace AI_ROCKS.Drive.DriveStates
             return 0;
         }
 
+        // Given a Plot representing the obstacles, find Line representing the best gap.
+
+        // Do GPS driving according to our rendition of the "Follow the Gap" algorithm:
+        // Reference here: https://pdfs.semanticscholar.org/c432/3017af7bce46fc7574ada008b8af1011e614.pdf
+        //
+        // This algorithm avoids obstacles by finding the gap between them. It has a threshold gap (i.e. robot width),
+        // and if the measured gap is greater than the threshold gap, the robot follows the calculated gap angle. 
+        // In our case, the best gap will also be the one with the smallest displacement from the goal (the gate).
+
+        // 1) Get LRF, GPS data 
+        // 2) Calculate valid (large enough) gaps as Line objects, store in a list
+        // 3) Find which gap is "best" (gap center angle has smallest deviation from straight line to goal)
+        // 4) Find heading angle (actual angle to more according to combination of gap center and goal angles)
+        // 5) Make DriveCommand for this angle and speed, return it
         //TODO event typing into some new ObstacleAvoidanceDriveState that triggers when the robot needs to avoid an obstacle
         public Line FindBestGap(Plot obstacles)
         {
-			List<Region> regions = obstacles.Regions;
-			Line threshold = new Line(DriveContext.ASCENT_WIDTH); //in mm 
-			Line bestGap = new Line (0);
-			//start to iterate through the list to find the bestGap
-			for (int i = 0; i < regions.count - 1; i++)
-			{
-				if (Plot.GapDistanceBetweenRegions(regions[i], regions[i + 1]) >= (double) DriveContext.ASCENT_WIDTH && 
-				bestGap = new Line(regions[i].
-				Line tempGap = 
-				Plot.GapDistanceBetweenRegions();
-				if (better angle) 
-					bestGap = tempGap; 
-				}
-			}
+            List<Region> regions = obstacles.Regions;
+            double threshold = DriveContext.ASCENT_WIDTH; //in mm 
+            Line bestGap = null;
+            Line gapLine;
+            //start to iterate through the list to find the bestGap
+            for (int i = 0; i < regions.Count - 1; i++)
+            {
+                Region leftRegion = regions[i];
+                Region rightRegion = regions[i+1];
+                // gap is distance, just needs to be big enough, maybe 1.5 times width of robot
+                // also doesn't get gap distance for between first or last with the ends
+                double gap = Plot.GapDistanceBetweenRegions(leftRegion, rightRegion); // this returns true gap distance, not horizontal distance
+                if (gap >= threshold)
+                {
+                    gapLine = new Line(new Coordinate(leftRegion.EndCoordinate.X, leftRegion.EndCoordinate.Y, CoordSystem.Cartesian),
+                                       new Coordinate(rightRegion.StartCoordinate.X, rightRegion.StartCoordinate.Y, CoordSystem.Cartesian));
 
-
-			// Given a Plot representing the obstacles, find Line representing the best gap.
-
-			// Do GPS driving according to our rendition of the "Follow the Gap" algorithm:
-			// Reference here: https://pdfs.semanticscholar.org/c432/3017af7bce46fc7574ada008b8af1011e614.pdf
-			//
-			// This algorithm avoids obstacles by finding the gap between them. It has a threshold gap (i.e. robot width),
-			// and if the measured gap is greater than the threshold gap, the robot follows the calculated gap angle. 
-			// In our case, the best gap will also be the one with the smallest displacement from the goal (the gate).
-
-            // 1) Get LRF, GPS data 
-            // 2) Calculate valid (large enough) gaps as Line objects, store in a list
-            // 3) Find which gap is "best" (gap center angle has smallest deviation from straight line to goal)
-            // 4) Find heading angle (actual angle to more according to combination of gap center and goal angles)
-            // 5) Make DriveCommand for this angle and speed, return it
-
-            return null;
+                    Coordinate midpoint = new Coordinate((gapLine.EndCoordinate.X - gapLine.StartCoordinate.X) / 2, (gapLine.EndCoordinate.Y - gapLine.StartCoordinate.Y) / 2, CoordSystem.Cartesian);
+                    if(bestGap == null)
+                    {
+                        bestGap = gapLine;
+                    }
+                }
+            }
+        return bestGap;
         }
-    }
-}
+         
+
+            
+
+         
+        }
