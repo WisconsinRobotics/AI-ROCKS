@@ -48,10 +48,17 @@ namespace AI_ROCKS.Drive.DriveStates
         {
 			List<Region> regions = obstacles.Regions;
 			Line threshold = new Line(DriveContext.ASCENT_WIDTH); //in mm 
-			Line bestGap;
+			Line bestGap = new Line (0);
 			//start to iterate through the list to find the bestGap
-			while ()
+			for (int i = 0; i < regions.count - 1; i++)
 			{
+				if (Plot.GapDistanceBetweenRegions(regions[i], regions[i + 1]) >= (double) DriveContext.ASCENT_WIDTH && 
+				bestGap = new Line(regions[i].
+				Line tempGap = 
+				Plot.GapDistanceBetweenRegions();
+				if (better angle) 
+					bestGap = tempGap; 
+				}
 			}
 
 
