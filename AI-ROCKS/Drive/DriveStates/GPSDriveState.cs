@@ -47,7 +47,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 idealDirection = idealDirection + 360;
 
             // if lined up within numeric precision, drive straight
-            if (Math.Abs(idealDirection - currCompass) < DIRECTION_VATIANCE_NOISE 
+            if (Math.Abs(idealDirection - currCompass) < DIRECTION_VATIANCE_NOISE
                 || Math.Abs(idealDirection - currCompass) > (360 - DIRECTION_VATIANCE_NOISE))
             {
                 return command = DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED);
@@ -97,7 +97,7 @@ namespace AI_ROCKS.Drive.DriveStates
             for (int i = 0; i < regions.Count - 1; i++)
             {
                 Region leftRegion = regions[i];
-                Region rightRegion = regions[i+1];
+                Region rightRegion = regions[i + 1];
                 // gap is distance, just needs to be big enough, maybe 1.5 times width of robot
                 // also doesn't get gap distance for between first or last with the ends
                 double gap = Plot.GapDistanceBetweenRegions(leftRegion, rightRegion); // this returns true gap distance, not horizontal distance
@@ -107,17 +107,18 @@ namespace AI_ROCKS.Drive.DriveStates
                                        new Coordinate(rightRegion.StartCoordinate.X, rightRegion.StartCoordinate.Y, CoordSystem.Cartesian));
 
                     Coordinate midpoint = new Coordinate((gapLine.EndCoordinate.X - gapLine.StartCoordinate.X) / 2, (gapLine.EndCoordinate.Y - gapLine.StartCoordinate.Y) / 2, CoordSystem.Cartesian);
-                    if(bestGap == null)
+                    if (bestGap == null)
                     {
                         bestGap = gapLine;
                     }
                 }
             }
-        return bestGap;
+            return bestGap;
         }
-         
 
-            
 
-         
-        }
+
+
+
+    }
+}
