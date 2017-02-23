@@ -52,13 +52,30 @@ namespace AI_ROCKS.Drive.DriveStates
             {
                 return command = DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED);
             }
-            else if (((currCompass - idealDirection) % 360) < 180) // heading east of ideal, need to turn left
+
+            // not aligned with endGPS point, need to turn
+            double opposite = (idealDirection + 180) % 360;
+            if (idealDirection < opposite) // this means that modulo was not necessary ie ideal direction < 180
             {
-                return command = new DriveCommand(-1, 1, 1);
+                if (currCompass > idealDirection && currCompass < opposite) // turn left
+                {
+                    return command = new DriveCommand(-1, 1, 1);
+                }
+                else // turn right
+                {
+                    return command = new DriveCommand(1, -1, 1);
+                }
             }
-            else // heading east of ideal
+            else // modulo necessary
             {
-                return command = new DriveCommand(1, -1, 1);
+                if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite)) // turn left
+                {
+                    return command = new DriveCommand(-1, 1, 1);
+                }
+                else // turn right
+                {
+                    return command = new DriveCommand(1, -1, 1);
+                }
             }
         }
 
