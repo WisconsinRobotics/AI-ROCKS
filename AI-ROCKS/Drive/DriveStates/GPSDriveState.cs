@@ -110,24 +110,31 @@ namespace AI_ROCKS.Drive.DriveStates
             List<Region> regions = obstacles.Regions;
             double threshold = DriveContext.ASCENT_WIDTH; //in mm 
             Line bestGap = null;
+            double gap;
             Line gapLine;
+            Coordinate midpoint;
             double bestAngle = Double.MaxValue;
             double angle;
+
+            // initial and final gaps
+
+
             //start to iterate through the list to find the bestGap
-            for (int i = 0; i < regions.Count - 1; i++)
+            for (int i = 0; i < regions.Count - 2; i++) // don't iterate through entire list, will result in index out of bounds error on rightRegion assignment
             {
                 Region leftRegion = regions[i];
                 Region rightRegion = regions[i + 1];
                 
                 // gap is distance, just needs to be big enough, maybe 1.5 times width of robot
                 // also doesn't get gap distance for between first or last with the ends
-                double gap = Plot.GapDistanceBetweenRegions(leftRegion, rightRegion); // this returns true gap distance, not horizontal distance
+                // I have a qualm with get gap distance, raw distance is returned, no projection is done
+                gap = Plot.GapDistanceBetweenRegions(leftRegion, rightRegion); // this returns true gap distance, not horizontal distance
                 if (gap >= threshold)
                 {
                     gapLine = new Line(new Coordinate(leftRegion.EndCoordinate.X, leftRegion.EndCoordinate.Y, CoordSystem.Cartesian),
                                        new Coordinate(rightRegion.StartCoordinate.X, rightRegion.StartCoordinate.Y, CoordSystem.Cartesian));
 
-                    Coordinate midpoint = gapLine.FindMidpoint();
+                    midpoint = gapLine.FindMidpoint();
                     if (bestGap == null)
                     {
                         bestGap = gapLine;
@@ -139,12 +146,15 @@ namespace AI_ROCKS.Drive.DriveStates
                            angle = currCompass + (90 - (Math.Atan2(midpoint.Y, midpoint.X) * (180 / Math.PI)));
                            angle = angle % 360;
                         }
-                        else if (midpoint.X < 0) // probably just need to be else
+                        else if (midpoint.X < 0)
                         {
                             angle = currCompass - (90 - (Math.Atan2(-1 * midpoint.Y, midpoint.X) * (180 / Math.PI)));
                             angle = angle % 360;
                         }
-
+                        else // midpoint.X is 0
+                        {
+                            angle = currCompass; // so elegant :)
+                        }
                         if (Math.Abs(idealDirection - angle) < bestAngle)
                         {
                             bestAngle = angle;
