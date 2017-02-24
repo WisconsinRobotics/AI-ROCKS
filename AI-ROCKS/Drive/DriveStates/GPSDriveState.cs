@@ -36,7 +36,7 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             // Get "current" data from AscentShimLayer in form of GPS object
             currGPS = gpsHandler.Data;
-            // currCompass = compassHandler.Data;
+            currCompass = compassHandler.Data;
 
             // Do GPS driving
             // find angle between our gps and the end gps with trig 
