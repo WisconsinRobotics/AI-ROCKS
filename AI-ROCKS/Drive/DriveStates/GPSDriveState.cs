@@ -11,6 +11,7 @@ namespace AI_ROCKS.Drive.DriveStates
     {
         private const float DIRECTION_VATIANCE_NOISE = .001f; // gives threshold that "straight" is considered
 
+        private double idealDirection;
         GPS finalGPS;
 
         PacketHandlers.GPSHandler gpsHandler;
@@ -39,7 +40,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             // Do GPS driving
             // find angle between our gps and the end gps with trig 
-            double idealDirection = Math.Atan2((finalGPS.Latitude - currGPS.Latitude), (finalGPS.Longitude - finalGPS.Longitude));
+            idealDirection = Math.Atan2((finalGPS.Latitude - currGPS.Latitude), (finalGPS.Longitude - finalGPS.Longitude));
             idealDirection = idealDirection * (180 / Math.PI);
             idealDirection = -idealDirection;
             idealDirection = idealDirection + 90;
@@ -110,11 +111,14 @@ namespace AI_ROCKS.Drive.DriveStates
             double threshold = DriveContext.ASCENT_WIDTH; //in mm 
             Line bestGap = null;
             Line gapLine;
+            double bestAngle = Double.MaxValue;
+            double angle;
             //start to iterate through the list to find the bestGap
             for (int i = 0; i < regions.Count - 1; i++)
             {
                 Region leftRegion = regions[i];
                 Region rightRegion = regions[i + 1];
+                
                 // gap is distance, just needs to be big enough, maybe 1.5 times width of robot
                 // also doesn't get gap distance for between first or last with the ends
                 double gap = Plot.GapDistanceBetweenRegions(leftRegion, rightRegion); // this returns true gap distance, not horizontal distance
@@ -123,10 +127,29 @@ namespace AI_ROCKS.Drive.DriveStates
                     gapLine = new Line(new Coordinate(leftRegion.EndCoordinate.X, leftRegion.EndCoordinate.Y, CoordSystem.Cartesian),
                                        new Coordinate(rightRegion.StartCoordinate.X, rightRegion.StartCoordinate.Y, CoordSystem.Cartesian));
 
-                    Coordinate midpoint = new Coordinate((gapLine.EndCoordinate.X - gapLine.StartCoordinate.X) / 2, (gapLine.EndCoordinate.Y - gapLine.StartCoordinate.Y) / 2, CoordSystem.Cartesian);
+                    Coordinate midpoint = gapLine.FindMidpoint();
                     if (bestGap == null)
                     {
                         bestGap = gapLine;
+                    }
+                    else
+                    {
+                        if (midpoint.X > 0)
+                        {
+                           angle = currCompass + (90 - (Math.Atan2(midpoint.Y, midpoint.X) * (180 / Math.PI)));
+                           angle = angle % 360;
+                        }
+                        else if (midpoint.X < 0) // probably just need to be else
+                        {
+                            angle = currCompass - (90 - (Math.Atan2(-1 * midpoint.Y, midpoint.X) * (180 / Math.PI)));
+                            angle = angle % 360;
+                        }
+
+                        if (Math.Abs(idealDirection - angle) < bestAngle)
+                        {
+                            bestAngle = angle;
+                            bestGap = gapLine;
+                        }
                     }
                 }
             }
