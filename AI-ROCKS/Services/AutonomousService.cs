@@ -16,7 +16,7 @@ namespace AI_ROCKS.Services
         private const long OBSTACLE_WATCHDOG_MILLIS = 1000;         // 5 second delay   // TODO verify and update
         private const long CLEAR_OBSTACLE_DELAY_MILLIS = 1000;      // 1 second delay   // TODO verify and update
         // TODO update for field testing
-        private const long OBSTACLE_DETECTION_DISTANCE = 500;       // 2 meters         // TODO verify and update
+        public const long OBSTACLE_DETECTION_DISTANCE = 2000;       // 2 meters         // TODO verify and update
 
         private const string LRF_SERIAL_PORT = "COM3";                                  // TODO make this better - param?
         private const int LRF_PORT = 20001;
@@ -85,11 +85,7 @@ namespace AI_ROCKS.Services
             // Get LRF data
             lrf.RefreshData();
             // TODO figure out why we can't use CoordinateFilter over UDP
-            //List<Coordinate> coordinates = lrf.GetCoordinates(CoordinateFilter.Front);    // For serial
-            List<Coordinate> coordinates = lrf.GetCoordinates();                            // For over UDP
-
-            //coordinates = coordinates.Where(coord => coord.Theta < Math.PI / 2 || coord.Theta > 3 * Math.PI / 2).OrderBy(c1 => c1.Theta).ToList();    // For serial
-            coordinates = coordinates.Where(coord => coord.Theta < Math.PI / 2 || coord.Theta > 3 * Math.PI / 2).ToList();
+            List<Coordinate> coordinates = lrf.GetCoordinates(CoordinateFilter.Front);
 
             List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, DriveContext.ASCENT_WIDTH, RDP_THRESHOLD); //REGION_SEPARATION_DISTANCE, RDP_THRESHOLD);            
             Plot plot = new Plot(regions);

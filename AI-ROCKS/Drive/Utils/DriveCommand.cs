@@ -7,8 +7,8 @@ namespace AI_ROCKS.Drive
         public const byte CLEAR_OBSTACLE_SPEED = 10;            //TODO verify
         public const byte OBSTACLE_DRIVE_STATE_SPEED = 20;      // TODO put this somewhere else - Make it work for multiple states too
 
-        private const double STRAIGHT = 0;              //TODO look at depending on what we do for angles (i.e. where is 0)
-        private const double RIGHT = Math.PI / 2;       //TODO look at depending on what we do for angles (i.e. where is 0)
+        private const double STRAIGHT = Math.PI / 2;              //TODO look at depending on what we do for angles (i.e. where is 0)
+        private const double RIGHT = 0;       //TODO look at depending on what we do for angles (i.e. where is 0)
 
         private sbyte left;
         private sbyte right;
@@ -29,20 +29,20 @@ namespace AI_ROCKS.Drive
 
             // Use angle and speed to calculate what the resultant magnitude and direction are for all 6 wheels
 
-            if (angle.Equals(0))
+            if (angle.CompareTo(Math.PI / 2) == 0)
             {
                 // Drive straight
                 this.left = (sbyte)speed;
                 this.right = (sbyte)speed;
             }
-            else if (angle < Math.PI/2)
+            else if (angle.CompareTo(Math.PI/2) < 0)
             {
                 // Turn right
                 this.left = (sbyte)speed;
                 this.right = (sbyte)-speed;
 
             }
-            else if (angle > 3 * Math.PI / 2 && angle < 2 * Math.PI)
+            else if (angle.CompareTo(Math.PI / 2) > 0 && angle.CompareTo(Math.PI) < 0)
             {
                 // Turn left
                 this.left = (sbyte)-speed;

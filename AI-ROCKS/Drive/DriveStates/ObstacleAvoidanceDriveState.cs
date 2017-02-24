@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using AI_ROCKS.Services;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
@@ -9,7 +9,7 @@ namespace AI_ROCKS.Drive.DriveStates
     class ObstacleAvoidanceDriveState : IDriveState
     {
         // TODO move all of these to a more appropriate place
-        private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
+        private const long LRF_MAX_RELIABLE_DISTANCE = 2000;//6000;    // TODO get from LRFLibrary
         private Line lrfLeftFOV;                                // TODO put this somewhere else
         private Line lrfRightFOV;                               // TODO put this somewhere else
 
@@ -58,14 +58,24 @@ namespace AI_ROCKS.Drive.DriveStates
             Region firstRegion = regions.ElementAt(0);
             Region lastRegion = regions.ElementAt(regions.Count - 1);
 
-            // Gap distance - first region to left FOV edge
+            // Check if leftmost Coordinate in the leftmost Region is on the right half of the entire FOV. If it is, make leftEdgeCoordinate where the 
+            // max -acceptable-range meets the left FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
             Coordinate leftEdgeCoordinate = Line.FindClosestPointOnLine(lrfLeftFOV, firstRegion.StartCoordinate);
+            if (firstRegion.StartCoordinate.X > 0)
+            {
+                leftEdgeCoordinate = new Coordinate(-AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
+            }
             Line leftEdgeGap = new Line(leftEdgeCoordinate, firstRegion.StartCoordinate);
 
-            // Gap distance - last region to right FOV edge
+            // Check if rightmost Coordinate in the rightmost Region is on the left half of the entire FOV. If it is, make rightEdgeCoordinate where the
+            // max -acceptable-range meets the right FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
             Coordinate rightEdgeCoordinate = Line.FindClosestPointOnLine(lrfRightFOV, lastRegion.EndCoordinate);
+            if (lastRegion.EndCoordinate.X < 0)
+            {
+                rightEdgeCoordinate = new Coordinate(AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
+            }
             Line rightEdgeGap = new Line(rightEdgeCoordinate, lastRegion.EndCoordinate);
-
+            
             // Check two possible edge gaps for bestGap
             Line bestEdgeGap = leftEdgeGap.Length > rightEdgeGap.Length ? leftEdgeGap : rightEdgeGap;
             if (bestEdgeGap.Length > DriveContext.ASCENT_WIDTH)
