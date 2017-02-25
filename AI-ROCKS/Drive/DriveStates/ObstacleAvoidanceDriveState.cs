@@ -9,7 +9,7 @@ namespace AI_ROCKS.Drive.DriveStates
     class ObstacleAvoidanceDriveState : IDriveState
     {
         // TODO move all of these to a more appropriate place
-        private const long LRF_MAX_RELIABLE_DISTANCE = 2000;//6000;    // TODO get from LRFLibrary
+        private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
         private Line lrfLeftFOV;                                // TODO put this somewhere else
         private Line lrfRightFOV;                               // TODO put this somewhere else
 
@@ -27,7 +27,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         public DriveCommand FindNextDriveCommand()
         {
-            return DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED);
+            return DriveCommand.Straight(DriveCommand.OBSTACLE_DRIVE_STATE_SPEED);
         }
 
         public StateType GetNextStateType()

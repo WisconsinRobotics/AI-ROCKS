@@ -97,11 +97,13 @@ namespace AI_ROCKS.Services
             {
                 foreach (Coordinate coordinate in region.ReducedCoordinates)
                 {
-                    // TODO test this logic
                     if (coordinate.R < OBSTACLE_DETECTION_DISTANCE)
                     {
-                        obstacleDetected = true;
-                        break;
+                        if (Math.Abs(coordinate.X) < DriveContext.ASCENT_WIDTH / 2)
+                        {
+                            obstacleDetected = true;
+                            break;
+                        }
                     }
                 }
 
