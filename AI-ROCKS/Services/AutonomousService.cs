@@ -32,14 +32,16 @@ namespace AI_ROCKS.Services
         public event EventHandler<ObstacleEventArgs> ObstacleEvent;
 
 
-        public AutonomousService(StateType initialStateType)
+        public AutonomousService(String lrfPort, StateType initialStateType)
         {
             this.driveContext = new DriveContext(this, initialStateType);
             this.sendDriveCommandLock = new Object();
 
             this.lrf = new LRF();
-            lrf.Initialize(LRF_SERIAL_PORT);    // For getting LRF data over serial
-            //lrf.Initialize(LRF_PORT);         // For getting LRF data over UDP
+            //lrf.Initialize(lrfPort);    // For getting LRF data over serial
+            int lrfUDPPort = 0;
+            Int32.TryParse(lrfPort, out lrfUDPPort);
+            lrf.Initialize(lrfUDPPort);         // For getting LRF data over UDP
         }
 
 
@@ -56,17 +58,14 @@ namespace AI_ROCKS.Services
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
                 {
-                    // Send "straight" DriveCommand to AscentPacketHandler
                     this.driveContext.Drive(DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED));
                 }
                 
                 return;
             }
 
-            // Get DriveCommand from current drive state
+            // Get DriveCommand from current drive state, issue DriveCommand
             DriveCommand driveCommand = this.driveContext.FindNextDriveCommand();
-
-            // Issue drive command
             this.driveContext.Drive(driveCommand);
 
             // If state change is required, change state
@@ -84,9 +83,7 @@ namespace AI_ROCKS.Services
         {
             // Get LRF data
             lrf.RefreshData();
-            // TODO figure out why we can't use CoordinateFilter over UDP
             List<Coordinate> coordinates = lrf.GetCoordinates(CoordinateFilter.Front);
-
             List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, DriveContext.ASCENT_WIDTH, RDP_THRESHOLD); //REGION_SEPARATION_DISTANCE, RDP_THRESHOLD);            
             Plot plot = new Plot(regions);
 
