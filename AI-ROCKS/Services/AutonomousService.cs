@@ -38,10 +38,10 @@ namespace AI_ROCKS.Services
             this.sendDriveCommandLock = new Object();
 
             this.lrf = new LRF();
-            //lrf.Initialize(lrfPort);    // For getting LRF data over serial
-            int lrfUDPPort = 0;
-            Int32.TryParse(lrfPort, out lrfUDPPort);
-            lrf.Initialize(lrfUDPPort);         // For getting LRF data over UDP
+            lrf.Initialize(lrfPort);    // For getting LRF data over serial
+            //int lrfUDPPort = 0;
+            //Int32.TryParse(lrfPort, out lrfUDPPort);
+            //lrf.Initialize(lrfUDPPort);         // For getting LRF data over UDP
         }
 
 

@@ -6,7 +6,7 @@ namespace AI_ROCKS.PacketHandlers
 {
     class DriveHandler : PacketHandler
     {
-        private const byte OPCODE_ALL_WHEEL_SPEED = 0x2F;
+        private const byte OPCODE_ALL_WHEEL_SPEED = 0x2E;
 
         public DriveHandler()
         {

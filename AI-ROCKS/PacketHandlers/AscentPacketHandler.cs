@@ -31,8 +31,7 @@ namespace AI_ROCKS.PacketHandlers
         const string LAUNCHPAD_COM_PORT = "COM4";       //TODO make from param? Update after knowing COM port if nothing else
 
         // For ROCKS - send to Launchpad
-        //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = 
-        //new IPEndPoint(IPAddress.Loopback, ASCENT_CONTROLS_PORT);
+        //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Loopback, ASCENT_CONTROLS_PORT);
         
         // For Gazebo
         static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.22"), ASCENT_CONTROLS_PORT);
@@ -70,8 +69,8 @@ namespace AI_ROCKS.PacketHandlers
             // source/dest addr - [ robot ID] [service ID]
 
 
-            byte leftSpeed = data[0];       // TODO
-            byte rightSpeed = data[1];            // TODO
+            byte leftSpeed = data[0];     // TODO
+            byte rightSpeed = data[1];    // TODO
 
             List<byte> bclPacket = new List<byte>();
 
@@ -92,35 +91,35 @@ namespace AI_ROCKS.PacketHandlers
 
             // Payload size and payload
             bclPacket.Add((byte)data.Length);
+           
+            // CRC
+            int crc = 0;
+            for (int i = 0; i < data.Length; i++)
+            {
+                // Set up the dividend
+                crc ^= data[i];
+
+                for (int j = 0; j < 8; j++)
+                {
+                    // Does the divisor go into the dividend?
+                    if ((crc & 0x80) > 1)
+                    {
+                        // Dividend -= divisor
+                        crc = (crc << 1) ^ 0x07;
+                    }
+                    else
+                    {
+                        // Move to the next bit
+                        crc <<= 1;
+                    }
+                }
+            }
+            bclPacket.Add((byte)crc);
+
+            // Add data to payload
             foreach (byte b in data)
             {
                 bclPacket.Add(b);
-            }
-            
-            // CRC
-            byte crc = 0;
-            crc ^= leftSpeed;
-            if ((crc & 0x80) != 0)
-            {
-                // Dividend -= divisor
-                crc = (byte) ((crc << 1) ^ 0x07);
-            }
-            else
-            {
-                // Move to the next bit
-                crc <<= 1;
-            }
-
-            crc ^= rightSpeed;
-            if ((crc & 0x80) != 0)
-            {
-                // Dividend -= divisor
-                crc = (byte)((crc << 1) ^ 0x07);
-            }
-            else
-            {
-                // Move to the next bit
-                crc <<= 1;
             }
 
             // End
@@ -130,16 +129,16 @@ namespace AI_ROCKS.PacketHandlers
             Console.WriteLine("left: " + (sbyte)leftSpeed + " | right: " + (sbyte)rightSpeed);
 
             // Send over Serial on the COM port of the launchpad
-            //GetInstance().launchpad.WriteLine(bclPacket.ToString());
+            //GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count); // bclPacket.ToString());
 
             // Send over UDP to Gazebo
-            GetInstance().socket.Send(data, 2, ASCENT_CONTROLS_IP_ENDPOINT);
+            //GetInstance().socket.Send(data, 2, ASCENT_CONTROLS_IP_ENDPOINT);
         }
 
         AscentPacketHandler()
         {
             this.socket = new UdpClient(AI_PORT);
-            //this.launchpad = new SerialPort(LAUNCHPAD_COM_PORT, 115200);
+            //this.launchpad = new SerialPort(LAUNCHPAD_COM_PORT, 115200, Parity.None, 8, StopBits.One);
             //this.launchpad.Open();
 
             // Initialize handlers

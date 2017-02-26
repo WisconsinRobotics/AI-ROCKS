@@ -11,7 +11,7 @@ namespace AI_ROCKS.Drive
 {
     class DriveContext
     {
-        public const float ASCENT_WIDTH = 200f;//1168.4f;//1.1684f                 // TODO fill in with actual value
+        public const float ASCENT_WIDTH = 1168.4f;
 
         private IDriveState driveState;
         private StateType stateType;
