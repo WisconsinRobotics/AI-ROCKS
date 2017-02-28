@@ -38,6 +38,9 @@ namespace AI_ROCKS.Drive.DriveStates
         public Line FindBestGap(Plot obstacles)
         {
             List<Region> regions = obstacles.Regions;
+
+            //regions.RemoveAt(regions.Count - 1);
+            //regions.RemoveAt(0);
             
             double bestGapDistance = 0;
             Line bestGap = null;

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Ports;
+using System.Linq;
 using System.Net.Sockets;
 using System.Net;
 
-using AI_ROCKS.Drive;
+using AI_ROCKS.Drive.Utils;
 
 namespace AI_ROCKS.PacketHandlers
 {
@@ -20,26 +21,31 @@ namespace AI_ROCKS.PacketHandlers
 
     class AscentPacketHandler
     {
+        // Opcodes
+        const byte OPCODE_REPORT_GPS = 0x51;
+        const byte OPCODE_REPORT_IMU = 0x55;
+
         // Constants for communicating with ROCKS
         const int AI_PORT = 15000;
         const int ASCENT_CONTROLS_PORT = 10000;
-        const int ASCENT_ROBOT_ID = 15;
-        const int ASCENT_AI_SERVICE_ID = 3;
+        const int ROCKS_ROBOT_ID = 15;
+        const int ROCKS_AI_SERVICE_ID = 3;
         const int AI_ROCKS_ROBOT_ID = 16;
         const int AI_ROCKS_AI_SERVICE_ID = 0;
         
+        // For ROCKS - receive using BCL from ROCKS
+        static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Loopback, ASCENT_CONTROLS_PORT);
+
+        // For Gazebo
+        //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.80"), ASCENT_CONTROLS_PORT);
         const string LAUNCHPAD_COM_PORT = "COM4";       //TODO make from param? Update after knowing COM port if nothing else
 
-        // For ROCKS - send to Launchpad
-        //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Loopback, ASCENT_CONTROLS_PORT);
-        
-        // For Gazebo
-        static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.22"), ASCENT_CONTROLS_PORT);
-
-        UdpClient socket;
-        SerialPort launchpad;
-        GPSHandler gpsHandler;
-        DriveHandler driveHandler;
+        // 
+        private UdpClient socket;
+        private SerialPort launchpad;
+        private GPSHandler gpsHandler;
+        private IMUHandler imuHandler;
+        private DriveHandler driveHandler;
 
         static AscentPacketHandler instance;
 
@@ -56,22 +62,9 @@ namespace AI_ROCKS.PacketHandlers
 
         public static void SendPayloadToAscentControlSystem(byte opcode, byte[] data)
         {
-            // append header bytes
-            // set src addr to {16, 0}
-            // set dest addr to {15, AI_SHIM}
-            // set size
-            // compute crc
-            // append data
-            // append end byte
-            
-            // [header] [payload] [end]
-            // header = [ opcode ][ source ][ dest ][ payload size ][ checksum ]
-            // source/dest addr - [ robot ID] [service ID]
+            // header = [header] [opcode] [source robot ID = 16] [source service ID = 0] [dest robot ID = 15] [dest service ID = 3] [payload size] [checksum] [payload] [footer]
 
-
-            byte leftSpeed = data[0];     // TODO
-            byte rightSpeed = data[1];    // TODO
-
+            // BCL packet to be formed and sent
             List<byte> bclPacket = new List<byte>();
 
             // Header
@@ -82,12 +75,12 @@ namespace AI_ROCKS.PacketHandlers
             bclPacket.Add(opcode);
 
             // Source addr - robot ID and service ID
-            bclPacket.Add(AI_ROCKS_ROBOT_ID);                  //TODO robot ID
-            bclPacket.Add(AI_ROCKS_AI_SERVICE_ID);                   //TODO Service ID
+            bclPacket.Add(AI_ROCKS_ROBOT_ID);
+            bclPacket.Add(AI_ROCKS_AI_SERVICE_ID);
 
             // Dest addr - robot ID and service ID
-            bclPacket.Add(ASCENT_ROBOT_ID);
-            bclPacket.Add(ASCENT_AI_SERVICE_ID);                   //TODO Service ID
+            bclPacket.Add(ROCKS_ROBOT_ID);
+            bclPacket.Add(ROCKS_AI_SERVICE_ID);
 
             // Payload size and payload
             bclPacket.Add((byte)data.Length);
@@ -116,7 +109,7 @@ namespace AI_ROCKS.PacketHandlers
             }
             bclPacket.Add((byte)crc);
 
-            // Add data to payload
+            // Add data[] to payload
             foreach (byte b in data)
             {
                 bclPacket.Add(b);
@@ -125,11 +118,8 @@ namespace AI_ROCKS.PacketHandlers
             // End
             bclPacket.Add(0xFE);
 
-            // For Gazebo debugging
-            Console.WriteLine("left: " + (sbyte)leftSpeed + " | right: " + (sbyte)rightSpeed);
-
             // Send over Serial on the COM port of the launchpad
-            //GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count); // bclPacket.ToString());
+            GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count);
 
             // Send over UDP to Gazebo
             //GetInstance().socket.Send(data, 2, ASCENT_CONTROLS_IP_ENDPOINT);
@@ -138,37 +128,90 @@ namespace AI_ROCKS.PacketHandlers
         AscentPacketHandler()
         {
             this.socket = new UdpClient(AI_PORT);
-            //this.launchpad = new SerialPort(LAUNCHPAD_COM_PORT, 115200, Parity.None, 8, StopBits.One);
-            //this.launchpad.Open();
+            this.launchpad = new SerialPort(LAUNCHPAD_COM_PORT, 115200, Parity.None, 8, StopBits.One);
+            this.launchpad.Open();
 
             // Initialize handlers
             this.gpsHandler = new GPSHandler();
+            this.imuHandler = new IMUHandler();
             this.driveHandler = new DriveHandler();
 
             // Initialize async receive
-            //socket.BeginReceive(HandleSocketReceive, null);
+            socket.BeginReceive(HandleSocketReceive, null);
         }
 
         void HandleSocketReceive(IAsyncResult result)
         {
             IPEndPoint recvAddr = new IPEndPoint(IPAddress.Any, 0);
-            //byte[] data = socket.EndReceive(result, ref recvAddr);
+            byte[] data = socket.EndReceive(result, ref recvAddr);
 
-            //socket.BeginReceive(HandleSocketReceive, null);
-            
+            socket.BeginReceive(HandleSocketReceive, null);
+
             // (optional) check recv_addr against ASCENT_CONTROLS_IP_ENDPOINT
             // verify header, ignore crc as over loopback
             // parse opcode
             // ignore crc
             // route payload to appropriate handler based on parsed opcode
+
+            // Check header bytes
+            if (data[0] != 0xBA || data[1] != 0xAD)
+            {
+                return;
+            }
+
+            // Ignore 3, 4, 5, 6, -> dest, src IDs and 8 -> CRC
+
+            // Get payload size and start index of payload
+            int payloadSize = data[7];
+            int payloadIndex = 9;
+
+            if (data[payloadIndex + payloadSize + 1] != 0xFE)
+            {
+                return;
+            }
+            byte[] payload = data.Skip(payloadIndex).Take(payloadSize).ToArray();
+
+            // Switch on opcode, route payload to appropriate handler
+            byte opcode = data[2];
+            switch (opcode)
+            {
+                case OPCODE_REPORT_GPS:
+                {
+                    gpsHandler.HandlePacket(OPCODE_REPORT_GPS, payload);
+                    break;
+                }
+                case OPCODE_REPORT_IMU:
+                {
+                    imuHandler.HandlePacket(OPCODE_REPORT_IMU, payload);
+                    break;
+                }
+                default:
+                    return;
+            }
         }
 
         /// <summary>
         /// Property to get current GPS data.
         /// </summary>
-        public GPS GPSData
+        public static GPS GPSData
         {
-            get { return this.gpsHandler.Data; }
+            get { return GetInstance().gpsHandler.Data; }
+        }
+
+        /// <summary>
+        /// Property to get current IMU data.
+        /// </summary>
+        public static IMU IMUData
+        {
+            get { return GetInstance().imuHandler.Data; }
+        }
+
+        /// <summary>
+        /// Property to get current Compass data, which is the ZOrient of the IMU.
+        /// </summary>
+        public static short Compass
+        {
+            get { return GetInstance().imuHandler.Compass; }
         }
     }
 }

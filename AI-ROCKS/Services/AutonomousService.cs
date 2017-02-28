@@ -18,8 +18,7 @@ namespace AI_ROCKS.Services
         // TODO update for field testing
         public const long OBSTACLE_DETECTION_DISTANCE = 2000;       // 2 meters         // TODO verify and update
 
-        private const string LRF_SERIAL_PORT = "COM3";                                  // TODO make this better - param?
-        private const int LRF_PORT = 20001;
+        // For RDP
         private const double REGION_SEPARATION_DISTANCE = 60.0;                         // TODO verify, move somewhere?
         private const double RDP_THRESHOLD = 5.0;
 
@@ -84,7 +83,7 @@ namespace AI_ROCKS.Services
             // Get LRF data
             lrf.RefreshData();
             List<Coordinate> coordinates = lrf.GetCoordinates(CoordinateFilter.Front);
-            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, DriveContext.ASCENT_WIDTH, RDP_THRESHOLD); //REGION_SEPARATION_DISTANCE, RDP_THRESHOLD);            
+            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, REGION_SEPARATION_DISTANCE, RDP_THRESHOLD); //DriveContext.ASCENT_WIDTH, RDP_THRESHOLD);
             Plot plot = new Plot(regions);
 
             // See if any event within maximum allowed distance
@@ -96,11 +95,14 @@ namespace AI_ROCKS.Services
                 {
                     if (coordinate.R < OBSTACLE_DETECTION_DISTANCE)
                     {
-                        if (Math.Abs(coordinate.X) < DriveContext.ASCENT_WIDTH / 2)
-                        {
-                            obstacleDetected = true;
-                            break;
-                        }
+                        //if (coordinate.Theta > 1.0472 && coordinate.Theta < 2.0944)
+                        //{
+                            if (Math.Abs(coordinate.X) < DriveContext.ASCENT_WIDTH/2)
+                            {
+                                obstacleDetected = true;
+                                break;
+                            }
+                        //}
                     }
                 }
 

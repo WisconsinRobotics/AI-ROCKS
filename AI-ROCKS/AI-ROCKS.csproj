@@ -71,6 +71,7 @@
   <ItemGroup>
     <Compile Include="AI-ROCKS.cs" />
     <Compile Include="Drive\DriveStates\ObstacleAvoidanceDriveState.cs" />
+    <Compile Include="Drive\Utils\IMU.cs" />
     <Compile Include="Drive\Utils\DriveCommand.cs" />
     <Compile Include="Drive\DriveContext.cs" />
     <Compile Include="Drive\DriveStates\IDriveState.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="PacketHandlers\AscentPacketHandler.cs" />
     <Compile Include="PacketHandlers\DriveHandler.cs" />
     <Compile Include="PacketHandlers\GPSHandler.cs" />
+    <Compile Include="PacketHandlers\IMUHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\AutonomousService.cs" />
     <Compile Include="Drive\Utils\StateType.cs" />
