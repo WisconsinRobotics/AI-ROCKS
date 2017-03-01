@@ -6,7 +6,7 @@ namespace AI_ROCKS.PacketHandlers
 {
     class DriveHandler : PacketHandler
     {
-        private const byte OPCODE_ALL_WHEEL_SPEED = 0x2F;
+        private const byte OPCODE_ALL_WHEEL_SPEED = 0x2E;
 
         public DriveHandler()
         {
@@ -25,6 +25,9 @@ namespace AI_ROCKS.PacketHandlers
 
             // Send opcode, payload to AscentPacketHandler to send drive packet to ROCKS
             AscentPacketHandler.SendPayloadToAscentControlSystem(OPCODE_ALL_WHEEL_SPEED, bclPayload);
+
+            // For debugging
+            Console.WriteLine("left: " + (sbyte)driveCommand.Left + " | right: " + (sbyte)driveCommand.Right);
         }
 
         /// <summary>

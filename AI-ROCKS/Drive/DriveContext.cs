@@ -11,7 +11,7 @@ namespace AI_ROCKS.Drive
 {
     class DriveContext
     {
-        public const float ASCENT_WIDTH = 1168.4f;//1.1684f                 // TODO fill in with actual value
+        public const float ASCENT_WIDTH = 1168.4f;
 
         private IDriveState driveState;
         private StateType stateType;
@@ -108,12 +108,12 @@ namespace AI_ROCKS.Drive
 
                 // Straight ahead is 0 - calculate angle accordingly
                 double angle = midpoint.Theta;   // TODO Determine this - how to scale it for our angle representation
-                driveCommand = new DriveCommand(angle, DriveCommand.OBSTACLE_DRIVE_STATE_SPEED);
+                driveCommand = new DriveCommand(angle, DriveCommand.CLEAR_OBSTACLE_SPEED);
             }
             else
             {
                 // Turn right
-                driveCommand = DriveCommand.RightTurn(DriveCommand.OBSTACLE_DRIVE_STATE_SPEED);      // TODO find appropriate value here - want to be slower?
+                driveCommand = DriveCommand.RightTurn(DriveCommand.CLEAR_OBSTACLE_SPEED);      // TODO find appropriate value here - want to be slower?
             }
 
             lock (autonomousService.SendDriveCommandLock)

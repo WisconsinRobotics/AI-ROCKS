@@ -16,10 +16,9 @@ namespace AI_ROCKS.Services
         private const long OBSTACLE_WATCHDOG_MILLIS = 1000;         // 5 second delay   // TODO verify and update
         private const long CLEAR_OBSTACLE_DELAY_MILLIS = 1000;      // 1 second delay   // TODO verify and update
         // TODO update for field testing
-        private const long OBSTACLE_DETECTION_DISTANCE = 500;       // 2 meters         // TODO verify and update
+        public const long OBSTACLE_DETECTION_DISTANCE = 2000;       // 2 meters         // TODO verify and update
 
-        private const string LRF_SERIAL_PORT = "COM3";                                  // TODO make this better - param?
-        private const int LRF_PORT = 20001;
+        // For RDP
         private const double REGION_SEPARATION_DISTANCE = 60.0;                         // TODO verify, move somewhere?
         private const double RDP_THRESHOLD = 5.0;
 
@@ -32,14 +31,16 @@ namespace AI_ROCKS.Services
         public event EventHandler<ObstacleEventArgs> ObstacleEvent;
 
 
-        public AutonomousService(StateType initialStateType)
+        public AutonomousService(String lrfPort, StateType initialStateType)
         {
             this.driveContext = new DriveContext(this, initialStateType);
             this.sendDriveCommandLock = new Object();
 
             this.lrf = new LRF();
-            lrf.Initialize(LRF_SERIAL_PORT);    // For getting LRF data over serial
-            //lrf.Initialize(LRF_PORT);         // For getting LRF data over UDP
+            lrf.Initialize(lrfPort);    // For getting LRF data over serial
+            //int lrfUDPPort = 0;
+            //Int32.TryParse(lrfPort, out lrfUDPPort);
+            //lrf.Initialize(lrfUDPPort);         // For getting LRF data over UDP
         }
 
 
@@ -56,17 +57,14 @@ namespace AI_ROCKS.Services
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
                 {
-                    // Send "straight" DriveCommand to AscentPacketHandler
                     this.driveContext.Drive(DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED));
                 }
                 
                 return;
             }
 
-            // Get DriveCommand from current drive state
+            // Get DriveCommand from current drive state, issue DriveCommand
             DriveCommand driveCommand = this.driveContext.FindNextDriveCommand();
-
-            // Issue drive command
             this.driveContext.Drive(driveCommand);
 
             // If state change is required, change state
@@ -84,14 +82,8 @@ namespace AI_ROCKS.Services
         {
             // Get LRF data
             lrf.RefreshData();
-            // TODO figure out why we can't use CoordinateFilter over UDP
-            //List<Coordinate> coordinates = lrf.GetCoordinates(CoordinateFilter.Front);    // For serial
-            List<Coordinate> coordinates = lrf.GetCoordinates();                            // For over UDP
-
-            //coordinates = coordinates.Where(coord => coord.Theta < Math.PI / 2 || coord.Theta > 3 * Math.PI / 2).OrderBy(c1 => c1.Theta).ToList();    // For serial
-            coordinates = coordinates.Where(coord => coord.Theta < Math.PI / 2 || coord.Theta > 3 * Math.PI / 2).ToList();
-
-            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, DriveContext.ASCENT_WIDTH, RDP_THRESHOLD); //REGION_SEPARATION_DISTANCE, RDP_THRESHOLD);            
+            List<Coordinate> coordinates = lrf.GetCoordinates(CoordinateFilter.Front);
+            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, REGION_SEPARATION_DISTANCE, RDP_THRESHOLD); //DriveContext.ASCENT_WIDTH, RDP_THRESHOLD);
             Plot plot = new Plot(regions);
 
             // See if any event within maximum allowed distance
@@ -101,11 +93,16 @@ namespace AI_ROCKS.Services
             {
                 foreach (Coordinate coordinate in region.ReducedCoordinates)
                 {
-                    // TODO test this logic
                     if (coordinate.R < OBSTACLE_DETECTION_DISTANCE)
                     {
-                        obstacleDetected = true;
-                        break;
+                        //if (coordinate.Theta > 1.0472 && coordinate.Theta < 2.0944)
+                        //{
+                            if (Math.Abs(coordinate.X) < DriveContext.ASCENT_WIDTH/2)
+                            {
+                                obstacleDetected = true;
+                                break;
+                            }
+                        //}
                     }
                 }
 

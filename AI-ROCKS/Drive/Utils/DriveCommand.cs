@@ -4,16 +4,14 @@ namespace AI_ROCKS.Drive
 {
     class DriveCommand
     {
-        public const byte CLEAR_OBSTACLE_SPEED = 10;            //TODO verify
-        public const byte OBSTACLE_DRIVE_STATE_SPEED = 20;      // TODO put this somewhere else - Make it work for multiple states too
+        public const byte CLEAR_OBSTACLE_SPEED = 30;            //TODO verify
+        public const byte OBSTACLE_DRIVE_STATE_SPEED = 50;      // TODO put this somewhere else - Make it work for multiple states too
 
-        private const double STRAIGHT = 0;              //TODO look at depending on what we do for angles (i.e. where is 0)
-        private const double RIGHT = Math.PI / 2;       //TODO look at depending on what we do for angles (i.e. where is 0)
+        private const double STRAIGHT = Math.PI / 2;              //TODO look at depending on what we do for angles (i.e. where is 0)
+        private const double RIGHT = 0;       //TODO look at depending on what we do for angles (i.e. where is 0)
 
         private sbyte left;
         private sbyte right;
-        //private double angle;
-
 
         // Make constructor from Coordinate?
 
@@ -27,22 +25,21 @@ namespace AI_ROCKS.Drive
         {
             // Value checking for valid speed - change speed to be not a byte? Enum, something else?
 
-            // Use angle and speed to calculate what the resultant magnitude and direction are for all 6 wheels
-
-            if (angle.Equals(0))
+            // Use angle and speed to calculate what the resultant magnitude and direction are for left and right sides
+            if (angle.CompareTo(Math.PI / 2) == 0)
             {
                 // Drive straight
                 this.left = (sbyte)speed;
                 this.right = (sbyte)speed;
             }
-            else if (angle < Math.PI/2)
+            else if (angle.CompareTo(Math.PI/2) < 0)
             {
                 // Turn right
                 this.left = (sbyte)speed;
                 this.right = (sbyte)-speed;
 
             }
-            else if (angle > 3 * Math.PI / 2 && angle < 2 * Math.PI)
+            else if (angle.CompareTo(Math.PI / 2) > 0 && angle.CompareTo(Math.PI) < 0)
             {
                 // Turn left
                 this.left = (sbyte)-speed;
@@ -80,15 +77,7 @@ namespace AI_ROCKS.Drive
             get { return this.right; }
             set { this.right = value; }
         }
-
-        /*
-        public double Angle
-        {
-            get { return this.angle; }
-            set { this.angle = value; }
-        }
-        */
-
+        
         public Tuple<sbyte, sbyte> Command
         {
             get { return new Tuple<sbyte, sbyte>(left, right); }

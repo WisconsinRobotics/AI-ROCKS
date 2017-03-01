@@ -1,12 +1,11 @@
 ﻿using System;
 
-using AI_ROCKS.Drive;
+using AI_ROCKS.Drive.Utils;
 
 namespace AI_ROCKS.PacketHandlers
 {
     class GPSHandler : PacketHandler
     {
-        // TODO use ObstacleLibrary
         //private <?> path      // Current path driven by the cumulative GPS coordinates received, processed by the Ramer Douglass Peucker algorithm
         private GPS gps;
 
@@ -26,13 +25,11 @@ namespace AI_ROCKS.PacketHandlers
         {
             // Is opcode, payload valid (able to be made into GPS object). If no, return false
 
-            // Make payload into GPS object
+            // Form payload into GPS object, update current data
             GPS parsedGPS = BclPayloadToGPS(payload);
+            this.gps = parsedGPS;
 
-            // Set current data to GPS object
-            this.Data = parsedGPS;
-
-            // Return success or not
+            //TODO return value
             return true;
         }
 
@@ -43,8 +40,18 @@ namespace AI_ROCKS.PacketHandlers
         /// <returns>GPS - The GPS coordinate formed from the BCL payload.</returns>
         private GPS BclPayloadToGPS(byte[] payload)
         {
+            //TODO validity checking
+            
             // BCL packet -> GPS object
-            return null;
+            short latDegrees = (short)((payload[0] << 8) | (payload[1]));
+            short latMinutes = (short)((payload[2] << 8) | (payload[3]));
+            short latSeconds = (short)((payload[4] << 8) | (payload[5]));
+            short longDegrees = (short)((payload[6] << 8) | (payload[7]));
+            short longMinutes = (short)((payload[8] << 8) | (payload[9]));
+            short longSeconds = (short)((payload[10] << 8) | (payload[11]));
+
+            GPS parsedGPS = new GPS(latDegrees, latMinutes, latSeconds, longDegrees, longMinutes, longSeconds);
+            return parsedGPS;
         }
 
         /// <summary>
@@ -53,7 +60,6 @@ namespace AI_ROCKS.PacketHandlers
         public GPS Data
         {
             get { return this.gps; }
-            private set { this.gps = value; }
         }
     }
 }
