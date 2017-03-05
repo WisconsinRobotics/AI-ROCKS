@@ -26,22 +26,23 @@ namespace AI_ROCKS.PacketHandlers
         const byte OPCODE_REPORT_IMU = 0x55;
 
         // Constants for communicating with ROCKS
-        const int AI_PORT = 15000;
-        const int ASCENT_CONTROLS_PORT = 10000;
+        const int AI_ROCKS_PORT = 15000;
+        const int ROCKS_PORT = 10000;
         const int ROCKS_ROBOT_ID = 15;
         const int ROCKS_AI_SERVICE_ID = 3;
         const int AI_ROCKS_ROBOT_ID = 16;
         const int AI_ROCKS_AI_SERVICE_ID = 0;
         
         // For ROCKS - receive using BCL from ROCKS
-        static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Loopback, ASCENT_CONTROLS_PORT);
+        static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Loopback, ROCKS_PORT);
 
         // For Gazebo
         //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.80"), ASCENT_CONTROLS_PORT);
         const string LAUNCHPAD_COM_PORT = "COM4";       //TODO make from param? Update after knowing COM port if nothing else
 
         // 
-        private UdpClient socket;
+        private UdpClient rocksSocket;
+        private UdpClient ai_rocksSocket;
         private SerialPort launchpad;
         private GPSHandler gpsHandler;
         private IMUHandler imuHandler;
@@ -121,13 +122,14 @@ namespace AI_ROCKS.PacketHandlers
             // Send over Serial on the COM port of the launchpad
             GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count);
 
-            // Send over UDP to Gazebo
-            //GetInstance().socket.Send(data, 2, ASCENT_CONTROLS_IP_ENDPOINT);
+            // Send over UDP to Gazebo or ROCKS
+            GetInstance().rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ASCENT_CONTROLS_IP_ENDPOINT);
         }
 
         AscentPacketHandler()
         {
-            this.socket = new UdpClient(AI_PORT);
+            this.ai_rocksSocket = new UdpClient(AI_ROCKS_PORT);
+            this.rocksSocket = new UdpClient(ROCKS_PORT);
             this.launchpad = new SerialPort(LAUNCHPAD_COM_PORT, 115200, Parity.None, 8, StopBits.One);
             this.launchpad.Open();
 
@@ -137,15 +139,15 @@ namespace AI_ROCKS.PacketHandlers
             this.driveHandler = new DriveHandler();
 
             // Initialize async receive
-            socket.BeginReceive(HandleSocketReceive, null);
+            ai_rocksSocket.BeginReceive(HandleSocketReceive, null);
         }
 
         void HandleSocketReceive(IAsyncResult result)
         {
             IPEndPoint recvAddr = new IPEndPoint(IPAddress.Any, 0);
-            byte[] data = socket.EndReceive(result, ref recvAddr);
+            byte[] data = ai_rocksSocket.EndReceive(result, ref recvAddr);
 
-            socket.BeginReceive(HandleSocketReceive, null);
+            ai_rocksSocket.BeginReceive(HandleSocketReceive, null);
 
             // (optional) check recv_addr against ASCENT_CONTROLS_IP_ENDPOINT
             // verify header, ignore crc as over loopback
