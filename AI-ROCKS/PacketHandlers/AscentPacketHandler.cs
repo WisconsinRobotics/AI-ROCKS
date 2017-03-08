@@ -37,7 +37,7 @@ namespace AI_ROCKS.PacketHandlers
         static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Loopback, ROCKS_PORT);
 
         // For Gazebo
-        //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.80"), ASCENT_CONTROLS_PORT);
+        //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.80"), ROCKS_PORT);
         const string LAUNCHPAD_COM_PORT = "COM4";       //TODO make from param? Update after knowing COM port if nothing else
 
         // 
@@ -123,7 +123,7 @@ namespace AI_ROCKS.PacketHandlers
             GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count);
 
             // Send over UDP to Gazebo or ROCKS
-            GetInstance().rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ASCENT_CONTROLS_IP_ENDPOINT);
+            GetInstance().ai_rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ASCENT_CONTROLS_IP_ENDPOINT);
         }
 
         AscentPacketHandler()
