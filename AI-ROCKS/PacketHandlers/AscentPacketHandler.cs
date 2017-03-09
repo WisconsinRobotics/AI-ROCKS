@@ -34,10 +34,10 @@ namespace AI_ROCKS.PacketHandlers
         const int AI_ROCKS_AI_SERVICE_ID = 0;
         
         // For ROCKS - receive using BCL from ROCKS
-        static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Loopback, ROCKS_PORT);
+        //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Loopback, ROCKS_PORT);
 
         // For Gazebo
-        //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.80"), ROCKS_PORT);
+        static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.125"), ROCKS_PORT);
         const string LAUNCHPAD_COM_PORT = "COM4";       //TODO make from param? Update after knowing COM port if nothing else
 
         // 
@@ -120,7 +120,7 @@ namespace AI_ROCKS.PacketHandlers
             bclPacket.Add(0xFE);
 
             // Send over Serial on the COM port of the launchpad
-            GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count);
+            //GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count);
 
             // Send over UDP to Gazebo or ROCKS
             GetInstance().ai_rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ASCENT_CONTROLS_IP_ENDPOINT);
@@ -130,8 +130,8 @@ namespace AI_ROCKS.PacketHandlers
         {
             this.ai_rocksSocket = new UdpClient(AI_ROCKS_PORT);
             this.rocksSocket = new UdpClient(ROCKS_PORT);
-            this.launchpad = new SerialPort(LAUNCHPAD_COM_PORT, 115200, Parity.None, 8, StopBits.One);
-            this.launchpad.Open();
+            //this.launchpad = new SerialPort(LAUNCHPAD_COM_PORT, 115200, Parity.None, 8, StopBits.One);
+            //this.launchpad.Open();
 
             // Initialize handlers
             this.gpsHandler = new GPSHandler();
