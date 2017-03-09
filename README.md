@@ -14,9 +14,10 @@ Refer to each library's README for more complete build details. Summaries of bui
 
 #### ObstacleLibrary:
 ```
-- Open `csharp/ObstacleLibrary.sln` in Visual Studio															  |
+Buildling ObstacleLibrary:
+- Open `csharp/ObstacleLibrary.sln` in Visual Studio
 - Ensure you are building in x64: Navigate to Build > Configuration Manager. 
-Set `Active Solution Platform` to x64 and both `ObstacleLibrary` and `ObstacleLibraryNative` projects to x64.
+  Set `Active Solution Platform` to x64 and both `ObstacleLibrary` and `ObstacleLibraryNative` projects to x64.
 - Build solution, or if there are issues, `ObstacleLibraryNative` and then `ObstacleLibrary` in that order
 - Resultant `ObstacleLibrary.dll` and `ObstacleLibraryNative.lib` are in the `csharp/x64/Debug` directory
 - Copy `ObstacleLibrary.dll` into top level of AI-ROCKS
@@ -25,17 +26,19 @@ Set `Active Solution Platform` to x64 and both `ObstacleLibrary` and `ObstacleLi
 #### LRFLibrary (Windows):
 LRFLibrary has ObstacleLibrary as a dependency itself. As a result, do the following for ObstacleLibrary:
 ```
+Building ObstacleLibrary for LRFLibrary:
 - Clone ObstacleLibrary into the top level of LRFLibrary
-(Note: required to clone into top level - cannot just copy .dlls)
+  (Note: required to clone into top level - cannot just copy .dlls)
 - Complete the above build instructions for ObstacleLibrary (which is cloned in LRFLibrary top level)
 - Copy the `ObstacleLibrary.dll` and `ObstacleLibraryNative.lib` files into the top level of LRFLibrary
 ```
 
 Now, build LRFLibrary:
 ```
+Building LRFLibrary:
 - Open `build/windows/LRFLibrary.sln` in Vision Studio
 - Ensure you are building in x64: Navigate to Build > Configuration Manager.
-Set `Active Solution Platform` to x64 and both `LRFLibrarySharp` and `LRFLibrary` projects to x64.
+  Set `Active Solution Platform` to x64 and both `LRFLibrarySharp` and `LRFLibrary` projects to x64.
 - Build solution, or if there are issues, `LRFLibrary` and then `LRFLibrarySharp` in that order
 - Resultant `LRFLibrarySharp.dll` is in the `build/windows/x64/Debug` directory
 - Copy `LRFLibrarySharp.dll` into top level of AI-ROCKS
@@ -50,10 +53,11 @@ TODO
 ### Building AI-ROCKS
 Once all dependencies are in the top level of AI-ROCKS (above), build AI-ROCKS:
 ```
+Building AI-ROCKS:
 - Open `AI-ROCKS.sln`
 - Ensure you are building in x64: Navigate to Build > Configuration Manager.
-Set `Active Solution Platform` to x64 and the `AI-ROCKS` project to x64.
--- Build solution
+  Set `Active Solution Platform` to x64 and the `AI-ROCKS` project to x64.
+- Build solution
 ```
 
 ## References:
