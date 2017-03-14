@@ -37,11 +37,9 @@ namespace AI_ROCKS.PacketHandlers
         //static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Loopback, ROCKS_PORT);
 
         // For Gazebo
-        static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.125"), ROCKS_PORT);
+        static readonly IPEndPoint ASCENT_CONTROLS_IP_ENDPOINT = new IPEndPoint(IPAddress.Parse("192.168.1.80"), ROCKS_PORT);
         const string LAUNCHPAD_COM_PORT = "COM4";       //TODO make from param? Update after knowing COM port if nothing else
 
-        // 
-        private UdpClient rocksSocket;
         private UdpClient ai_rocksSocket;
         private SerialPort launchpad;
         private GPSHandler gpsHandler;
@@ -50,6 +48,13 @@ namespace AI_ROCKS.PacketHandlers
 
         static AscentPacketHandler instance;
 
+        public static void Initialize()
+        {
+            if (instance == null)
+            {
+                instance = new AscentPacketHandler();
+            }
+        }
 
         public static AscentPacketHandler GetInstance()
         {
@@ -126,10 +131,9 @@ namespace AI_ROCKS.PacketHandlers
             GetInstance().ai_rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ASCENT_CONTROLS_IP_ENDPOINT);
         }
 
-        AscentPacketHandler()
+        private AscentPacketHandler()
         {
             this.ai_rocksSocket = new UdpClient(AI_ROCKS_PORT);
-            this.rocksSocket = new UdpClient(ROCKS_PORT);
             //this.launchpad = new SerialPort(LAUNCHPAD_COM_PORT, 115200, Parity.None, 8, StopBits.One);
             //this.launchpad.Open();
 

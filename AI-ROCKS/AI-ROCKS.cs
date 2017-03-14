@@ -42,6 +42,7 @@ namespace AI_ROCKS
 
             // Create AutonomousService
             AutonomousService autonomousService = new AutonomousService(lrfPort, initialStateType);
+            AscentPacketHandler.Initialize();
 
             // Set up connection with ROCKS (Service Master?, etc)
             // TODO

@@ -11,6 +11,8 @@ namespace AI_ROCKS.PacketHandlers
 
         public IMUHandler()
         {
+            // TODO better way of doing this to avoid null pointers?
+            this.imu = new IMU(0, 0, 0, 0, 0, 0);
         }
 
 
