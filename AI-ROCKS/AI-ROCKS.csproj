@@ -71,14 +71,15 @@
   <ItemGroup>
     <Compile Include="AI-ROCKS.cs" />
     <Compile Include="Drive\DriveStates\ObstacleAvoidanceDriveState.cs" />
-    <Compile Include="Drive\Utils\IMU.cs" />
+    <Compile Include="Drive\Models\IMU.cs" />
     <Compile Include="Drive\Utils\DriveCommand.cs" />
     <Compile Include="Drive\DriveContext.cs" />
     <Compile Include="Drive\DriveStates\IDriveState.cs" />
     <Compile Include="Drive\DriveStates\GPSDriveState.cs" />
     <Compile Include="Drive\DriveStates\VisionDriveState.cs" />
-    <Compile Include="Drive\Utils\GPS.cs" />
+    <Compile Include="Drive\Models\GPS.cs" />
     <Compile Include="Drive\Utils\ObstacleEventArgs.cs" />
+    <Compile Include="Drive\Models\TennisBall.cs" />
     <Compile Include="PacketHandlers\AscentPacketHandler.cs" />
     <Compile Include="PacketHandlers\DriveHandler.cs" />
     <Compile Include="PacketHandlers\GPSHandler.cs" />
