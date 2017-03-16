@@ -86,7 +86,7 @@ COM ports are specfied like eg. `COM4` and UDP ports are specified by their numb
 	Note: COM ports are primarily used when the LRF is connected to the computer which is running AI-ROCKS (i.e. Ascent),
 	while UDP ports are primarly used when the LRF data is coming from some other source over UDP (i.e. Gazebo).
 	
-	Note 2: This is the only required command line argument!
+	Note 2: This is the **only required command line argument!**
 - `-d <state>`		- Initial `DriveState` to start AI-ROCKS in, according to `StateType` enum.
 	
 	Note: 0 = `GPSDriveState`, 1 = `VisionDriveState`, and 2 = `ObstacleAvoidanceDriveState`.

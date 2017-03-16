@@ -50,11 +50,12 @@ namespace AI_ROCKS.Services
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
                 Console.WriteLine("Watchdog");
+
                 // If more than 0.5 seconds have passed since last event, it's safe to start issuing drive 
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
                 {
-                    this.driveContext.Drive(DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED));
+                    this.driveContext.Drive(DriveCommand.Straight(DriveCommand.SPEED_CLEAR_OBSTACLE));
                 }
                 
                 return;
