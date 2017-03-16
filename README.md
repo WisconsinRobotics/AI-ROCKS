@@ -80,22 +80,22 @@ AI-ROCKS is currently run from Visual Studio in Windows. To run, do the followin
 The command line arguments to AI-ROCKS are as follows:
 - `-l <port>`		- COM or UDP port that the LRF is communicating over. 
 COM ports are specfied like eg. `COM4` and UDP ports are specified by their number, eg `20001`.
-
-Note: COM ports are primarily used when the LRF is connected to the computer which is running AI-ROCKS (i.e. Ascent),
-while UDP ports are primarly used when the LRF data is coming from some other source over UDP (i.e. Gazebo).
+	
+	Note: COM ports are primarily used when the LRF is connected to the computer which is running AI-ROCKS (i.e. Ascent),
+	while UDP ports are primarly used when the LRF data is coming from some other source over UDP (i.e. Gazebo).
 
 - `-d <state>`		- Initial `DriveState` to start AI-ROCKS in, according to `StateType` enum.
-
-Note: 0 = `GPSDriveState`, 1 = `VisionDriveState`, and 2 = `ObstacleAvoidanceDriveState`.
-The default `DriveState` is `GPSDriveState`.
+	
+	Note: 0 = `GPSDriveState`, 1 = `VisionDriveState`, and 2 = `ObstacleAvoidanceDriveState`.
+	The default `DriveState` is `GPSDriveState`.
 
 - `-g <address>`	- IP address to communicate to ROCKS over. 
-
-The default is Loopback (127.0.0.1) as this is used
-for communicating to Ascent, so if no value is specified, Loopback is used. If using Gazebo (i.e. testing), 
-specify the IP address of the computer running Gazebo (i.e. the IP of the comupter acting as Ascent) in dot notation. 
-
-Example: `-g 192.168.1.80`.
+	
+	The default is Loopback (127.0.0.1) as this is used
+	for communicating to Ascent, so if no value is specified, Loopback is used. If using Gazebo (i.e. testing), 
+	specify the IP address of the computer running Gazebo (i.e. the IP of the comupter acting as Ascent) in dot notation. 
+	
+	Example: `-g 192.168.1.80`.
 
 
 ## References:
