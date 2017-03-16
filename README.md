@@ -1,6 +1,11 @@
 # AI-ROCKS
 
-Readme yet to come..
+Readme in progress...
+
+This README has various sections:
+- Building (and dependencies)
+- Running
+- References
 
 ## Building:
 
@@ -59,6 +64,34 @@ Building AI-ROCKS:
   Set `Active Solution Platform` to x64 and the `AI-ROCKS` project to x64.
 - Build solution
 ```
+
+## Running:
+### Running AI-ROCKS
+AI-ROCKS is currently run from Visual Studio in Windows. To run, do the following:
+```
+- Open `AI-ROCKS.sln` in Visual Studio (VS).
+- Ensure AI-ROCKS builds. Refer to 'Building' for details.
+- Navigate to Solution Explorer in VS. Right click on AI-ROCKS project > Properties.
+- Navigate to 'Debug' tab. Under 'Start options', specify required command line args. These are specified below.
+- Hit 'Start' and AI-ROCKS should run.
+```
+
+### Command line arguments
+The command line arguments to AI-ROCKS are as follows:
+- `-l <port>`		- COM or UDP port that the LRF is communicating over. 
+COM ports are specfied like eg. `COM4` and UDP ports are specified by their number, eg `20001`.
+Note: COM ports are primarily used when the LRF is plugged into the computer running AI-ROCKS (i.e. Ascent),
+while UDP ports are primarly used when the LRF data is coming from some other source over UDP (i.e. Gazebo).
+
+- `-d <state>`		- Initial `DriveState` to start AI-ROCKS in, according to `StateType` enum.
+Currently 0 = `GPSDriveState`, 1 = `VisionDriveState`, and 2 = `ObstacleAvoidanceDriveState`.
+The default `DriveState` is `GPSDriveState`.
+
+- `-g <address>`	- IP address to communicate to ROCKS over. The default is loopback (127.0.0.1) as this is used
+for communicating to Ascent, so if no value is specified, this is what's used. If using Gazebo (i.e. testing), 
+specify the IP address of the computer running Gazebo (i.e. the IP of the comupter acting as Ascent) in dot notation. 
+Example: `-g 192.168.1.80`.
+
 
 ## References:
 (Pretty much just a dump of useful resources for now)
