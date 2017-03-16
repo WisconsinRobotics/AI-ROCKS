@@ -15,7 +15,7 @@ namespace AI_ROCKS.Drive
 
         private IDriveState driveState;
         private StateType stateType;
-        private AutonomousService autonomousService;
+        private AutonomousService autonomousService;    //TODO pass this? Shouldn't a service not be accessible to it's members? -> pass things I need to constructor rather than whole service?
 
         public DriveContext(AutonomousService autonomousService, StateType initialStateType)
         {
@@ -41,6 +41,8 @@ namespace AI_ROCKS.Drive
 
         /// <summary>
         /// Issue the specified DriveCommand to ROCKS through AscentPacketHandler.
+        /// 
+        /// If the SendDriveCommandLock cannot be obtained, do not send the DriveCommand. TODO why? Shore this up
         /// </summary>
         /// <param name="driveCommand">The DriveCommand to be executed.</param>
         public void Drive(DriveCommand driveCommand)
@@ -57,8 +59,6 @@ namespace AI_ROCKS.Drive
                 // Release lock
                 Monitor.Exit(autonomousService.SendDriveCommandLock);
             }
-            
-            // Return value?
         }
 
         /// <summary>
@@ -93,6 +93,14 @@ namespace AI_ROCKS.Drive
             return nextStateType;
         }
 
+        /// <summary>
+        /// Function subscribed to AutonomousService's ObstacleEvent to handle an ObstacleEvent when it's triggered.
+        /// 
+        /// This function gets the Plot representing the detected obstacles and uses the current DriveState's 
+        /// FindBestGap() to determine the best gap to drive toward. It then issues the corresponding DriveCommand.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e">ObstacleEventArgs that contains the Plot representing the detected obstacles.</param>
         public void HandleObstacleEvent(Object sender, ObstacleEventArgs e)
         {
             DriveCommand driveCommand;
@@ -101,36 +109,39 @@ namespace AI_ROCKS.Drive
             // Find the best gap
             Line bestGap = this.driveState.FindBestGap(obstacles);
 
+            // If bestGap exists, drive toward it's midpoint. Otherwise, turn right
             if (bestGap != null)
             {
-                // Drive toward bestGap's midpoint
                 Coordinate midpoint = bestGap.FindMidpoint();
+                double angle = midpoint.Theta;
 
-                // Straight ahead is 0 - calculate angle accordingly
-                double angle = midpoint.Theta;   // TODO Determine this - how to scale it for our angle representation
-                driveCommand = new DriveCommand(angle, DriveCommand.CLEAR_OBSTACLE_SPEED);
+                driveCommand = new DriveCommand(angle, DriveCommand.SPEED_CLEAR_OBSTACLE);
             }
             else
             {
-                // Turn right
-                driveCommand = DriveCommand.RightTurn(DriveCommand.CLEAR_OBSTACLE_SPEED);      // TODO find appropriate value here - want to be slower?
+                driveCommand = DriveCommand.RightTurn(DriveCommand.SPEED_CLEAR_OBSTACLE);
             }
 
+            // Send driveCommand
             lock (autonomousService.SendDriveCommandLock)
             {
                 DriveHandler.SendDriveCommand(driveCommand);
                 autonomousService.LastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
-            
-            // Return value?
         }
 
+        /// <summary>
+        /// Property for the current DriveState.
+        /// </summary>
         public IDriveState DriveState
         {
             get { return this.driveState; }
             set { this.driveState = value; }
         }
 
+        /// <summary>
+        /// Property for the current StateType.
+        /// </summary>
         public StateType StateType
         {
             get { return stateType; }

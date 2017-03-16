@@ -4,11 +4,12 @@ namespace AI_ROCKS.Drive
 {
     class DriveCommand
     {
-        public const byte CLEAR_OBSTACLE_SPEED = 30;            //TODO verify
-        public const byte OBSTACLE_DRIVE_STATE_SPEED = 50;      // TODO put this somewhere else - Make it work for multiple states too
+        public const byte SPEED_NORMAL_OPERATION = 50;
+        public const byte SPEED_CLEAR_OBSTACLE = 40;
+        public const byte SPEED_AVOID_OBSTACLE = 30;
 
-        private const double STRAIGHT = Math.PI / 2;              //TODO look at depending on what we do for angles (i.e. where is 0)
-        private const double RIGHT = 0;       //TODO look at depending on what we do for angles (i.e. where is 0)
+        private const double STRAIGHT = Math.PI / 2;
+        private const double RIGHT = 0;
 
         private sbyte left;
         private sbyte right;

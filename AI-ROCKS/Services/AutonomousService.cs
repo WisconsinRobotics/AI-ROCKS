@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Timers;
 
 using AI_ROCKS.Drive;
@@ -12,23 +11,21 @@ namespace AI_ROCKS.Services
 {
     class AutonomousService
     {
-        // TODO update for field testing
+        // Obstacle avoidance
         private const long OBSTACLE_WATCHDOG_MILLIS = 1000;         // 5 second delay   // TODO verify and update
         private const long CLEAR_OBSTACLE_DELAY_MILLIS = 1000;      // 1 second delay   // TODO verify and update
-        // TODO update for field testing
         public const long OBSTACLE_DETECTION_DISTANCE = 2000;       // 2 meters         // TODO verify and update
 
-        // For RDP
+        public event EventHandler<ObstacleEventArgs> ObstacleEvent;
+        private readonly object sendDriveCommandLock;
+        private long lastObstacleDetected;
+
+        // RDP
         private const double REGION_SEPARATION_DISTANCE = 60.0;                         // TODO verify, move somewhere?
         private const double RDP_THRESHOLD = 5.0;
 
         private DriveContext driveContext;
         private LRF lrf;
-
-        private readonly object sendDriveCommandLock;
-        private long lastObstacleDetected;
-
-        public event EventHandler<ObstacleEventArgs> ObstacleEvent;
 
 
         public AutonomousService(String lrfPort, StateType initialStateType)
@@ -37,10 +34,10 @@ namespace AI_ROCKS.Services
             this.sendDriveCommandLock = new Object();
 
             this.lrf = new LRF();
-            lrf.Initialize(lrfPort);    // For getting LRF data over serial
-            //int lrfUDPPort = 0;
-            //Int32.TryParse(lrfPort, out lrfUDPPort);
-            //lrf.Initialize(lrfUDPPort);         // For getting LRF data over UDP
+            //lrf.Initialize(lrfPort);    // For getting LRF data over serial
+            int lrfUDPPort = 0;
+            Int32.TryParse(lrfPort, out lrfUDPPort);
+            lrf.Initialize(lrfUDPPort);         // For getting LRF data over UDP
         }
 
 
@@ -53,11 +50,12 @@ namespace AI_ROCKS.Services
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
                 Console.WriteLine("Watchdog");
+
                 // If more than 0.5 seconds have passed since last event, it's safe to start issuing drive 
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
                 {
-                    this.driveContext.Drive(DriveCommand.Straight(DriveCommand.CLEAR_OBSTACLE_SPEED));
+                    this.driveContext.Drive(DriveCommand.Straight(DriveCommand.SPEED_CLEAR_OBSTACLE));
                 }
                 
                 return;
@@ -134,16 +132,28 @@ namespace AI_ROCKS.Services
             }
         }
 
+        /// <summary>
+        /// If the last obstacle detected happened within a specified threshold of time, in milliseconds.
+        /// </summary>
+        /// <param name="milliseconds">Threshold used to test if the last obstacle occured within a certain
+        /// amount of time.</param>
+        /// <returns>bool - true if the last obstacle was detected within threshold time, false otherwise</returns>
         private bool IsLastObstacleWithinInterval(long milliseconds)
         {
             return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < lastObstacleDetected + milliseconds;
         }
 
+        /// <summary>
+        /// Property representing when the last obstacle was detected (unix time in milliseconds).
+        /// </summary>
         public long LastObstacleDetected
         {
             set { this.lastObstacleDetected = value; }
         }
 
+        /// <summary>
+        /// Property to get the sendDriveCommandLock.
+        /// </summary>
         public Object SendDriveCommandLock
         {
             get { return this.sendDriveCommandLock; }

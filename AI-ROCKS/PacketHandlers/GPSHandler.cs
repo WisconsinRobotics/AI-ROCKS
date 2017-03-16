@@ -1,6 +1,6 @@
 ﻿using System;
 
-using AI_ROCKS.Drive.Utils;
+using AI_ROCKS.Drive.Models;
 
 namespace AI_ROCKS.PacketHandlers
 {
@@ -11,7 +11,9 @@ namespace AI_ROCKS.PacketHandlers
 
 
         public GPSHandler()
-        {   
+        {
+            // TODO better way of doing this to avoid null pointers?
+            this.gps = new GPS(0, 0, 0, 0, 0, 0);
         }
 
 
