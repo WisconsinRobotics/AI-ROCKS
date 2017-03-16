@@ -15,11 +15,6 @@ namespace AI_ROCKS
 
         static void Main(string[] args)
         {
-            // Parse args:
-            // -l COMX          - COM or UDP port LRF is on
-            // -d X             - DriveState to start in (according to StateType enum). Default GPSDriveState
-            // -g <address>     - using Gazebo (i.e. testing)
-
             String lrfPort = "";
             StateType initialStateType = StateType.GPSState;
             IPAddress destinationIP = IPAddress.Loopback;
@@ -39,19 +34,36 @@ namespace AI_ROCKS
                     {
                         // StateType
                         int res = 0;
-                        Int32.TryParse(args[++i], out res);
-                        initialStateType = (StateType)res;
+                        
+                        // If valid int
+                        if (!Int32.TryParse(args[++i], out res))
+                        {
+                            ExitFromInvalidArgrument("Invalid integer for StateType parsing: " + args[i]);
+                        }
+
+                        // If valid StateType from int
+                        try
+                        {
+                            initialStateType = StateTypeHelper.FromInteger(res);
+                        }
+                        catch (Exception e)
+                        {
+                            ExitFromInvalidArgrument(e.Message);
+                        }
+                        
                         break;
                     }
                     case "-g":
                     {
+                        // Gazebo address
+                        
+                        // If valid IP
                         try
                         {
                             destinationIP = IPAddress.Parse(args[++i]);
                         }
                         catch (Exception)
                         {
-                            // Invalid IP for Gazebo testing
                             ExitFromInvalidArgrument("Invalid IP address for Gazebo testing: " + args[i]);
                         }
                         
@@ -66,11 +78,11 @@ namespace AI_ROCKS
                 }
             }
 
-            // Create AutonomousService
-            AutonomousService autonomousService = new AutonomousService(lrfPort, initialStateType);
-
             // Initialize AscentPacketHandler
             AscentPacketHandler.Initialize(destinationIP);
+
+            // Create AutonomousService
+            AutonomousService autonomousService = new AutonomousService(lrfPort, initialStateType);
 
             // Set up connection with ROCKS (Service Master?, etc)
             // TODO
@@ -101,7 +113,7 @@ namespace AI_ROCKS
             System.Diagnostics.Debug.Write(errorMessage + "\n");
 
             // Exit with Windows ERROR_BAD_ARGUMENTS system error code
-            System.Environment.Exit(160);
+            Environment.Exit(160);
         }
     }
 }
