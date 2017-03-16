@@ -15,7 +15,7 @@ namespace AI_ROCKS
 
         static void Main(string[] args)
         {
-            String lrfPort = "";
+            String lrfPort = String.Empty;
             StateType initialStateType = StateType.GPSState;
             IPAddress destinationIP = IPAddress.Loopback;
 
@@ -76,6 +76,11 @@ namespace AI_ROCKS
                         break;
                     }
                 }
+            }
+
+            if (lrfPort.Equals(String.Empty))
+            {
+                ExitFromInvalidArgrument("Command line argument for LRF port is required!");
             }
 
             // Initialize AscentPacketHandler

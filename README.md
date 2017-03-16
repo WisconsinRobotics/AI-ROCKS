@@ -10,7 +10,7 @@ This README has various sections:
 ## Building:
 
 To build AI-ROCKS, all dependencies must have their `.dll`s in the top level of AI-ROCKS.
-AI-ROCKS has the following dependencies: **ObstacleLibrary**, **LRFLibrary**, **EmguCV**, and <other things from Vision>.
+AI-ROCKS has the following dependencies: **ObstacleLibrary**, **LRFLibrary**, **EmguCV**, and {other things from Vision - TODO}.
 
 **Build everything in x64.**
 
@@ -69,6 +69,7 @@ Building AI-ROCKS:
 ### Running AI-ROCKS
 AI-ROCKS is currently run from Visual Studio in Windows. To run, do the following:
 ```
+Running AI-ROCKS:
 - Open `AI-ROCKS.sln` in Visual Studio (VS).
 - Ensure AI-ROCKS builds. Refer to 'Building' for details.
 - Navigate to Solution Explorer in VS. Right click on AI-ROCKS project > Properties.
@@ -77,13 +78,15 @@ AI-ROCKS is currently run from Visual Studio in Windows. To run, do the followin
 ```
 
 ### Command line arguments
-The command line arguments to AI-ROCKS are as follows:
+The only required command line arg is for the LRF port, or `-l <port>` as shown below. All possible command line arguments 
+to AI-ROCKS are as follows:
 - `-l <port>`		- COM or UDP port that the LRF is communicating over. 
 COM ports are specfied like eg. `COM4` and UDP ports are specified by their number, eg `20001`.
 	
 	Note: COM ports are primarily used when the LRF is connected to the computer which is running AI-ROCKS (i.e. Ascent),
 	while UDP ports are primarly used when the LRF data is coming from some other source over UDP (i.e. Gazebo).
-
+	
+	Note 2: This is the only required command line argument!
 - `-d <state>`		- Initial `DriveState` to start AI-ROCKS in, according to `StateType` enum.
 	
 	Note: 0 = `GPSDriveState`, 1 = `VisionDriveState`, and 2 = `ObstacleAvoidanceDriveState`.
