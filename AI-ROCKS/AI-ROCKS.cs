@@ -1,8 +1,9 @@
 ﻿using System;
-using AI_ROCKS.Drive;
-using AI_ROCKS.PacketHandlers;
+using System.Net;
 using Timer = System.Timers.Timer;
 
+using AI_ROCKS.Drive;
+using AI_ROCKS.PacketHandlers;
 using AI_ROCKS.Services;
 
 namespace AI_ROCKS
@@ -14,35 +15,62 @@ namespace AI_ROCKS
 
         static void Main(string[] args)
         {
-            // Parse args
-            // -t       - test mode (unimplemented)
-            // -l COMX  - COM port LRF is on
-            // -d X     - DriveState to start in (according to StateType enum). Default GPSDriveState
+            // Parse args:
+            // -l COMX          - COM or UDP port LRF is on
+            // -d X             - DriveState to start in (according to StateType enum). Default GPSDriveState
+            // -g <address>     - using Gazebo (i.e. testing)
 
             String lrfPort = "";
             StateType initialStateType = StateType.GPSState;
+            IPAddress destinationIP = IPAddress.Loopback;
 
             for (int i = 0; i < args.Length; i++)
             {
-                string curr = args[i];
-                
-                if (curr.Equals("-l"))
+                String curr = args[i];
+                switch (curr)
                 {
-                    // LRF
-                    lrfPort = args[++i];
-                }
-                else if (curr.Equals("-d"))
-                {
-                    // StateType
-                    int res = 0;
-                    Int32.TryParse(args[++i], out res);
-                    initialStateType = (StateType) res;
+                    case "-l":
+                    {
+                        // LRF
+                        lrfPort = args[++i];
+                        break;
+                    }
+                    case "-d":
+                    {
+                        // StateType
+                        int res = 0;
+                        Int32.TryParse(args[++i], out res);
+                        initialStateType = (StateType)res;
+                        break;
+                    }
+                    case "-g":
+                    {
+                        try
+                        {
+                            destinationIP = IPAddress.Parse(args[++i]);
+                        }
+                        catch (Exception)
+                        {
+                            // Invalid IP for Gazebo testing
+                            ExitFromInvalidArgrument("Invalid IP address for Gazebo testing: " + args[i]);
+                        }
+                        
+                        break;
+                    }
+                    default:
+                    {
+                        // Invalid command line argument
+                        ExitFromInvalidArgrument("Unrecognized command line argument: " + curr);
+                        break;
+                    }
                 }
             }
 
             // Create AutonomousService
             AutonomousService autonomousService = new AutonomousService(lrfPort, initialStateType);
-            AscentPacketHandler.Initialize();
+
+            // Initialize AscentPacketHandler
+            AscentPacketHandler.Initialize(destinationIP);
 
             // Set up connection with ROCKS (Service Master?, etc)
             // TODO
@@ -64,6 +92,16 @@ namespace AI_ROCKS
             while (true) { }
 
             // TODO when to end? When gate is detected?
+        }
+
+        private static void ExitFromInvalidArgrument(String errorMessage)
+        {
+            // Invalid command line argument - write to both error and debug outputs
+            Console.Error.Write(errorMessage + "\n");
+            System.Diagnostics.Debug.Write(errorMessage + "\n");
+
+            // Exit with Windows ERROR_BAD_ARGUMENTS system error code
+            System.Environment.Exit(160);
         }
     }
 }
