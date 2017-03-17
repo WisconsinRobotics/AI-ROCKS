@@ -1,14 +1,14 @@
 ﻿using System;
-
-using ObstacleLibrarySharp;
+using System.Drawing;
 using AForge.Video;
 using Emgu.CV;
 using Emgu.CV.Structure;
-using System.Drawing;
+
+using AI_ROCKS.Drive.Models;
+using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
-
     class VisionDriveState : IDriveState
     {
         MJPEGStream stream;
@@ -30,7 +30,7 @@ namespace AI_ROCKS.Drive.DriveStates
         const int leftThreshold = 200;
         const int rightThreshold = 300;
 
-        float X;
+        TennisBall ball;
         DriveCommand command;
 
         public VisionDriveState()
@@ -41,7 +41,9 @@ namespace AI_ROCKS.Drive.DriveStates
             stream.ForceBasicAuthentication = true;
             stream.NewFrame += NetworkCamGrab;
             stream.Start();
-            X = 0;
+            
+            // Ball not detected at start, so initialize to null
+            ball = null;
         }
 
         /// <summary>
@@ -50,25 +52,29 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>DriveCommand - the next drive command for ROCKS to execute.</returns>
         public DriveCommand FindNextDriveCommand()
         {
-            if (X < 0)
+            // Ball not detected
+            if (ball == null)
             {
-                // Ball not found
-                return command = new DriveCommand(0, 0, 0);
+                // Don't drive
+                return DriveCommand.Straight(DriveCommand.SPEED_HALT);
             }
-            else if (X < leftThreshold) 
+
+            // Ball detected
+            float ballX = ball.CenterPoint.X;
+            if (ballX < leftThreshold) 
             {
                 // Ball is to the left of us
-                return command = new DriveCommand(-1, 1, 1);
+                return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION);
             }
-            else if (X > rightThreshold)
+            else if (ballX > rightThreshold)
             {
                 // Ball is to the right of us
-                return command = new DriveCommand(1, -1, 1);
+                return DriveCommand.RightTurn(DriveCommand.SPEED_VISION);
             }
             else 
             {
                 // Ball is straight ahead
-                return command = new DriveCommand(0, 0, 1);
+                return DriveCommand.Straight(DriveCommand.SPEED_VISION);
             }
         }
 
@@ -207,7 +213,10 @@ namespace AI_ROCKS.Drive.DriveStates
 
             CircleF[] c = grayMask.Convert<Gray, byte>().HoughCircles(new Gray(param1), new Gray(param2), dp, minDist, minRadius)[0];
             if (c.Length > 0)
-                X = c[0].Center.X;
+            {
+                //X = c[0].Center.X;
+                //TODO update ball accordingly here, rather than X
+            }
         }
     }
 }

@@ -7,9 +7,12 @@ namespace AI_ROCKS.Drive
         public const byte SPEED_NORMAL_OPERATION = 50;
         public const byte SPEED_CLEAR_OBSTACLE = 40;
         public const byte SPEED_AVOID_OBSTACLE = 30;
+        public const byte SPEED_VISION = 30;
+        public const byte SPEED_HALT = 0;
 
         private const double STRAIGHT = Math.PI / 2;
         private const double RIGHT = 0;
+        private const double LEFT = Math.PI;
 
         private sbyte left;
         private sbyte right;
@@ -65,6 +68,13 @@ namespace AI_ROCKS.Drive
             // Create DriveCommand that represents a Right command of specified speed
             DriveCommand right = new DriveCommand(RIGHT, speed);
             return right;
+        }
+
+        public static DriveCommand LeftTurn(byte speed)
+        {
+            // Create DriveCommand that represents a Left command of specified speed
+            DriveCommand left = new DriveCommand(LEFT, speed);
+            return left;
         }
 
         public sbyte Left
