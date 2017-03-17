@@ -129,6 +129,24 @@ namespace AI_ROCKS.Drive.DriveStates
             double bestAngle = Double.MaxValue;
             double angle;
 
+            currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
+            currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
+
+            // get data in good form 
+            float finalLat, finalLong, currLat, currLong;
+            finalLat = finalGPS.LatDegrees + (finalGPS.LatMinutes / 60f) + (finalGPS.LatSeconds / 60f / 60f);
+            finalLong = finalGPS.LongDegrees + (finalGPS.LongMinutes / 60f) + (finalGPS.LongSeconds / 60f / 60f);
+            currLat = currGPS.LatDegrees + (currGPS.LatMinutes / 60f) + (currGPS.LatSeconds / 60f / 60f);
+            currLong = currGPS.LongDegrees + (currGPS.LongMinutes / 60f) + (currGPS.LongSeconds / 60f / 60f);
+
+            // calculate ideal direction
+            idealDirection = Math.Atan2((finalLat - currLat), (finalLong - currLong));
+            idealDirection = idealDirection * (180 / Math.PI);
+            idealDirection = -idealDirection;
+            idealDirection = idealDirection + 90;
+            if (idealDirection < 0)
+                idealDirection = idealDirection + 360;
+
             // Check first and last Region gaps (may be same Region if only one Region)
             Region firstRegion = regions.ElementAt(0);
             Region lastRegion = regions.ElementAt(regions.Count - 1);
