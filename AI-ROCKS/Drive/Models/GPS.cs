@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AI_ROCKS.Drive.Utils
+namespace AI_ROCKS.Drive.Models
 {
     class GPS
     {

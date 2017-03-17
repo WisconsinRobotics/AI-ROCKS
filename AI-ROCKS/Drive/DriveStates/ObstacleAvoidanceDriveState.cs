@@ -27,7 +27,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         public DriveCommand FindNextDriveCommand()
         {
-            return DriveCommand.Straight(DriveCommand.OBSTACLE_DRIVE_STATE_SPEED);
+            return DriveCommand.Straight(DriveCommand.SPEED_NORMAL_OPERATION);
         }
 
         public StateType GetNextStateType()

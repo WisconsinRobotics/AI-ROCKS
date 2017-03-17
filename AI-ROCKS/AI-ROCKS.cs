@@ -1,8 +1,9 @@
 ﻿using System;
-using AI_ROCKS.Drive;
-using AI_ROCKS.PacketHandlers;
+using System.Net;
 using Timer = System.Timers.Timer;
 
+using AI_ROCKS.Drive;
+using AI_ROCKS.PacketHandlers;
 using AI_ROCKS.Services;
 
 namespace AI_ROCKS
@@ -14,31 +15,76 @@ namespace AI_ROCKS
 
         static void Main(string[] args)
         {
-            // Parse args
-            // -t       - test mode (unimplemented)
-            // -l COMX  - COM port LRF is on
-            // -d X     - DriveState to start in (according to StateType enum). Default GPSDriveState
-
-            String lrfPort = "";
+            String lrfPort = String.Empty;
             StateType initialStateType = StateType.GPSState;
+            IPAddress destinationIP = IPAddress.Loopback;
 
             for (int i = 0; i < args.Length; i++)
             {
-                string curr = args[i];
-                
-                if (curr.Equals("-l"))
+                String curr = args[i];
+                switch (curr)
                 {
-                    // LRF
-                    lrfPort = args[++i];
-                }
-                else if (curr.Equals("-d"))
-                {
-                    // StateType
-                    int res = 0;
-                    Int32.TryParse(args[++i], out res);
-                    initialStateType = (StateType) res;
+                    case "-l":
+                    {
+                        // LRF
+                        lrfPort = args[++i];
+                        break;
+                    }
+                    case "-d":
+                    {
+                        // StateType
+                        int res = 0;
+                        
+                        // If valid int
+                        if (!Int32.TryParse(args[++i], out res))
+                        {
+                            ExitFromInvalidArgrument("Invalid integer for StateType parsing: " + args[i]);
+                        }
+
+                        // If valid StateType from int
+                        try
+                        {
+                            initialStateType = StateTypeHelper.FromInteger(res);
+                        }
+                        catch (Exception e)
+                        {
+                            ExitFromInvalidArgrument(e.Message);
+                        }
+                        
+                        break;
+                    }
+                    case "-g":
+                    {
+                        // Gazebo address
+                        
+                        // If valid IP
+                        try
+                        {
+                            destinationIP = IPAddress.Parse(args[++i]);
+                        }
+                        catch (Exception)
+                        {
+                            ExitFromInvalidArgrument("Invalid IP address for Gazebo testing: " + args[i]);
+                        }
+                        
+                        break;
+                    }
+                    default:
+                    {
+                        // Invalid command line argument
+                        ExitFromInvalidArgrument("Unrecognized command line argument: " + curr);
+                        break;
+                    }
                 }
             }
+
+            if (lrfPort.Equals(String.Empty))
+            {
+                ExitFromInvalidArgrument("Command line argument for LRF port is required!");
+            }
+
+            // Initialize AscentPacketHandler
+            AscentPacketHandler.Initialize(destinationIP);
 
             // Create AutonomousService
             AutonomousService autonomousService = new AutonomousService(lrfPort, initialStateType);
@@ -63,6 +109,16 @@ namespace AI_ROCKS
             while (true) { }
 
             // TODO when to end? When gate is detected?
+        }
+
+        private static void ExitFromInvalidArgrument(String errorMessage)
+        {
+            // Invalid command line argument - write to both error and debug outputs
+            Console.Error.Write(errorMessage + "\n");
+            System.Diagnostics.Debug.Write(errorMessage + "\n");
+
+            // Exit with Windows ERROR_BAD_ARGUMENTS system error code
+            Environment.Exit(160);
         }
     }
 }
