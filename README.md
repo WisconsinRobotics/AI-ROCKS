@@ -61,7 +61,7 @@ Add .dlls:
 	- `Emgu.CV.World.dll`
 	- {TODO more to come?}
 - (TODO below is for VisionGUI. Transfer to AI-ROCKS? Look for update)
-Navigate to `/bin/x64:
+Navigate to `/bin/x64`:
 - Copy all four .dlls (below) to the top level of AI-ROCKS:
 	- `cvextern.dll`
 	- `msvcp140.dll`
@@ -139,40 +139,59 @@ How To Install and Setup OpenCV For Python.
 1. Install Python 2.7 (32 bit version)
 
 2. Install OpenCV
+  
   Follow this link: 
-  https://sourceforge.net/projects/opencvlibrary/files/opencv-win/
-  Or search for "OpenCV" on google and get to the sourceforge site.  Download "opencv-2.4.13.exe".
-  After downloading, look in the opencv directory: opencv\build\python\2.7\x86
-  Copy the file "cv2.pyd" into your "Python27\Lib\site-packages directory".
+  https://sourceforge.net/projects/opencvlibrary/files/opencv-win/.
+  
+  Or search for "OpenCV" on Google and get to the sourceforge site.
+  
+  Download `opencv-2.4.13.exe`.
+  
+  After downloading, look in the OpenCV directory: `opencv/build/python/2.7/x86`.
+  
+  Copy the file `cv2.pyd` into your `Python27/Lib/site-packages` directory.
   
 3. Install NumPy 
+  
   Follow this link:
-  https://sourceforge.net/projects/numpy/files/NumPy/
+  https://sourceforge.net/projects/numpy/files/NumPy/.
+  
   Or search for "NumPy" on google and get to the sourcefore site.
-  Download "numpy-1.9.2-win32-superpack-python2.7.exe".
+  
+  Download `numpy-1.9.2-win32-superpack-python2.7.exe`.
+  
   Run the installer by executing the downloaded binary.
   
 4. Test installation
+  
   At the python terminal, type the following commands:
+  ```
   >>import cv2
   >>import numpy
+  ```
   If these commands produce no output, the packages are successfully installed.
 
 5. PIP Install
-From cmd run: 
->python -m pip install -U pip setuptools
 
-Add the folder C:\Python27\Scripts to your PATH (Environment variables)
+  From cmd run: 
+  ```
+  >python -m pip install -U pip setuptools
+  ```
 
-From cmd run
->pip install imutils
+  Add the folder `C:\Python27\Scripts` (or whereever else you installed Python) to your PATH (Environment variables)
+
+  From cmd run
+  ```
+  >pip install imutils
+  ```
 
 ### EmguCV (Windows) (still in progress):
 EmguCV is the C# wrapper of OpenCV:
-- Download: https://sourceforge.net/projects/emgucv/
+Download: https://sourceforge.net/projects/emgucv/.
+
 Version we use: 3.1.0.2504.
 
-- Install:
+Install:
 ```
 Install EmguCV:
 - Download from above link
@@ -182,10 +201,10 @@ Install EmguCV:
 
 ### AForge.NET (Windows) (still in progress):
 AForge.NET is {TODO}
-- Download: http://www.aforgenet.com/framework/downloads.html
+Download: http://www.aforgenet.com/framework/downloads.html.
 Click 'Download Installer'
 
-- Install:
+Install:
 ```
 Install AForge.NET:
 - Download from above link
