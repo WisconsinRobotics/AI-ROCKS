@@ -139,51 +139,47 @@ How To Install and Setup OpenCV For Python.
 1. Install Python 2.7 (32 bit version)
 
 2. Install OpenCV
-  
-  Follow this link: 
-  https://sourceforge.net/projects/opencvlibrary/files/opencv-win/.
-  
-  Or search for "OpenCV" on Google and get to the sourceforge site.
-  
-  Download `opencv-2.4.13.exe`.
-  
-  After downloading, look in the OpenCV directory: `opencv/build/python/2.7/x86`.
-  
-  Copy the file `cv2.pyd` into your `Python27/Lib/site-packages` directory.
-  
+	Follow this link: 
+	https://sourceforge.net/projects/opencvlibrary/files/opencv-win/.
+	
+	Or search for "OpenCV" on Google and get to the sourceforge site.
+	
+	Download `opencv-2.4.13.exe`.
+	
+	After downloading, look in the OpenCV directory: `opencv/build/python/2.7/x86`.
+	
+	Copy the file `cv2.pyd` into your `Python27/Lib/site-packages` directory.
+	
 3. Install NumPy 
-  
-  Follow this link:
-  https://sourceforge.net/projects/numpy/files/NumPy/.
-  
-  Or search for "NumPy" on google and get to the sourcefore site.
-  
-  Download `numpy-1.9.2-win32-superpack-python2.7.exe`.
-  
-  Run the installer by executing the downloaded binary.
-  
+	Follow this link:
+	https://sourceforge.net/projects/numpy/files/NumPy/.
+	
+	Or search for "NumPy" on google and get to the sourcefore site.
+	
+	Download `numpy-1.9.2-win32-superpack-python2.7.exe`.
+	
+	Run the installer by executing the downloaded binary.
+	
 4. Test installation
-  
-  At the python terminal, type the following commands:
-  ```
-  >>import cv2
-  >>import numpy
-  ```
-  If these commands produce no output, the packages are successfully installed.
-
+	At the python terminal, type the following commands:
+	```
+	>>import cv2
+	>>import numpy
+	```
+	If these commands produce no output, the packages are successfully installed.
+	
 5. PIP Install
-
-  From cmd run: 
-  ```
-  >python -m pip install -U pip setuptools
-  ```
-
-  Add the folder `C:\Python27\Scripts` (or whereever else you installed Python) to your PATH (Environment variables)
-
-  From cmd run
-  ```
-  >pip install imutils
-  ```
+	From cmd run: 
+	```
+	>python -m pip install -U pip setuptools
+	```
+	
+	Add the folder `C:\Python27\Scripts` (or whereever else you installed Python) to your PATH (Environment variables)
+	
+	From cmd run
+	```
+	>pip install imutils
+	```
 
 ### EmguCV (Windows) (still in progress):
 EmguCV is the C# wrapper of OpenCV:
