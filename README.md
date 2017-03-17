@@ -5,12 +5,14 @@ Readme in progress...
 This README has various sections:
 - Building (and dependencies)
 - Running
+- Necessary installations
 - References
 
 ## Building:
 
 To build AI-ROCKS, all dependencies must have their `.dll`s in the top level of AI-ROCKS.
-AI-ROCKS has the following dependencies: **ObstacleLibrary**, **LRFLibrary**, **EmguCV**, and {other things from Vision - TODO}.
+AI-ROCKS has the following dependencies: **ObstacleLibrary**, **LRFLibrary**, **EmguCV**, **AForge.NET**, and 
+{other things from Vision - TODO}.
 
 **Build everything in x64.**
 
@@ -49,8 +51,34 @@ Building LRFLibrary:
 - Copy `LRFLibrarySharp.dll` into top level of AI-ROCKS
 ```
 
-#### EmguCV: <Joe has instructions>
-TODO 
+#### EmguCV (Windows):
+If EmguCV has not been installed, refer to the install guides for required Vision dependencies (below).
+```
+Add .dlls:
+- Open your EmguCV install location in the file explorer
+- Navigate to the `/bin` directory
+- Find and copy the following .dlls to the top-level of AI-ROCKS:
+	- `Emgu.CV.World.dll`
+	- {TODO more to come?}
+- (TODO below is for VisionGUI. Transfer to AI-ROCKS? Look for update)
+Navigate to `/bin/x64:
+- Copy all four .dlls (below) to the top level of AI-ROCKS:
+	- `cvextern.dll`
+	- `msvcp140.dll`
+	- `opencv_ffmpeg310_64.dll`
+	- `vcruntime140.dll`
+```
+
+#### AForge.NET (Windows):
+If AForge.NET has not been installed, refer to the install guides for required Vision dependencies (below).
+```
+- Open your AForge.NET install location in the file explorer
+- Navigate to `/Framework/Release` directory
+- Find and copy the following .dlls to the top-level of AI-ROCKS:
+	- `AForge.dll`
+	- `AForge.Video.dll`
+	- `AForge.Vision.dll`
+```
 
 #### Other (yet to come...)
 TODO
@@ -100,11 +128,82 @@ COM ports are specfied like eg. `COM4` and UDP ports are specified by their numb
 	
 	Example: `-g 192.168.1.80`.
 
+## Necessary installations:
 
+AI-ROCKS requires installing certain frameworks to resolve dependencies and build. The following gives brief explanations
+of these frameworks and describes short summaries for install processes.
+
+### OpenCV (Windows)
+How To Install and Setup OpenCV For Python.
+
+1. Install Python 2.7 (32 bit version)
+
+2. Install OpenCV
+  Follow this link: 
+  https://sourceforge.net/projects/opencvlibrary/files/opencv-win/
+  Or search for "OpenCV" on google and get to the sourceforge site.  Download "opencv-2.4.13.exe".
+  After downloading, look in the opencv directory: opencv\build\python\2.7\x86
+  Copy the file "cv2.pyd" into your "Python27\Lib\site-packages directory".
+  
+3. Install NumPy 
+  Follow this link:
+  https://sourceforge.net/projects/numpy/files/NumPy/
+  Or search for "NumPy" on google and get to the sourcefore site.
+  Download "numpy-1.9.2-win32-superpack-python2.7.exe".
+  Run the installer by executing the downloaded binary.
+  
+4. Test installation
+  At the python terminal, type the following commands:
+  >>import cv2
+  >>import numpy
+  If these commands produce no output, the packages are successfully installed.
+
+5. PIP Install
+From cmd run: 
+>python -m pip install -U pip setuptools
+
+Add the folder C:\Python27\Scripts to your PATH (Environment variables)
+
+From cmd run
+>pip install imutils
+
+### EmguCV (Windows) (still in progress):
+EmguCV is the C# wrapper of OpenCV:
+- Download: https://sourceforge.net/projects/emgucv/
+Version we use: 3.1.0.2504.
+
+- Install:
+```
+Install EmguCV:
+- Download from above link
+- Run `.exe` downloaded to install. Change destination directory if desired.
+- {TODO more?}
+```
+
+### AForge.NET (Windows) (still in progress):
+AForge.NET is {TODO}
+- Download: http://www.aforgenet.com/framework/downloads.html
+Click 'Download Installer'
+
+- Install:
+```
+Install AForge.NET:
+- Download from above link
+- Run `.exe` downloaded to install. Change destination directory if desired.
+- {TODO more?}
+```
+	
 ## References:
 (Pretty much just a dump of useful resources for now)
 
-We will use our own rendition of the Follow the Gap method.
+Follow the Gap obstacle avoidance method: 
+- Here is a reference: https://pdfs.semanticscholar.org/c432/3017af7bce46fc7574ada008b8af1011e614.pdf
+- Here is a YouTube video: https://www.youtube.com/watch?v=TohW9xokbaM
 
-Here is a reference: https://pdfs.semanticscholar.org/c432/3017af7bce46fc7574ada008b8af1011e614.pdf
-Here is a YouTube video: https://www.youtube.com/watch?v=TohW9xokbaM
+EmguCV:
+- Follow this for installing EmguCV: http://www.emgu.com/wiki/index.php/Setting_up_EMGU_C_Sharp
+(May be out of date for our current version though)
+- The primary resource for everything EmguCV: http://www.emgu.com/wiki/index.php/Main_Page
+- Good for searching specific OpenCV functions: http://docs.opencv.org/2.4/index.html
+- This site has some good tutorials: 
+http://www.pyimagesearch.com/2015/01/19/find-distance-camera-objectmarker-using-python-opencv/
