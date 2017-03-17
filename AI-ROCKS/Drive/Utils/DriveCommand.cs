@@ -10,6 +10,7 @@ namespace AI_ROCKS.Drive
 
         private const double STRAIGHT = Math.PI / 2;
         private const double RIGHT = 0;
+        private const double LEFT = Math.PI;
 
         private sbyte left;
         private sbyte right;
@@ -65,6 +66,12 @@ namespace AI_ROCKS.Drive
             // Create DriveCommand that represents a Right command of specified speed
             DriveCommand right = new DriveCommand(RIGHT, speed);
             return right;
+        }
+
+        public static DriveCommand LeftTurn(byte speed)
+        {
+            DriveCommand left = new DriveCommand(LEFT, speed);
+            return left;
         }
 
         public sbyte Left
