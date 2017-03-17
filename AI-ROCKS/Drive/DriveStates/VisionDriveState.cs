@@ -82,7 +82,6 @@ namespace AI_ROCKS.Drive.DriveStates
             return 0;
         }
 
-        //TODO event typing into some new ObstacleAvoidanceDriveState that triggers when the robot needs to avoid an obstacle
         public Line FindBestGap(Plot obstacles)
         {
             // Given a Plot representing the obstacles, find Line representing the best gap.
@@ -91,7 +90,102 @@ namespace AI_ROCKS.Drive.DriveStates
             // and actually heading toward it, rather than avoiding it?
 
             // TODO Vision group's algorithm here
+            /*
+            Overview:
+            
+            See ball:
+                1) Open path to ball?
+                2) Region = ball?
+                3) Kick back to GPS (?) (for now)
 
+            Don't see ball:
+                4) Turn camera mast - drive accordingly
+                5) Compare IMU/GPS - orient accordingly and drive straight
+
+            ------
+            Psuedocode:
+            // NOTE: (1) and (2) above can be combined. This psuedocode gives them separate for simplicity's sake but for efficiency they should most likely be combined
+
+            TennisBall ball = get current tennis ball (from class variable, VisionHelper, etc)
+            List<Region> regions = obstacles.Regions;
+            
+            if (regions.Count == 0)
+                // Drive straight
+                Return line representing gap straight in front of us (refer to ObstacleAvoidanceDriveState)
+
+            // Ball is detected
+            if (ball != null)
+
+                // (1) If path straight to ball is open, drive toward it
+
+                // Get angles corresponding to Coordiante at minimum "left" and "right" clearance on sides of tennis ball (i.e. ASCENT_WIDTH / 2 on either side, perpendicular to the path we'd take - easiest shown in diagram)
+                // Can probably use function for checking, or at least consolidate this with the below for loop to be more optimal
+                
+                leftClearanceAngle = get left clearance angle
+                rightClearanceAngle = get right clearance angle
+                bool isImpedingRegionDetected = false;      // Probably name better but you get the point
+                for each region in regions
+                    regionStartAngle = region.StartCoordinate.Angle     // left-most point - be careful with less than/greater than comparision since we use unit circle which increases right to left
+                    regionEndAngle = region.EndCoordinate.Angle
+                    if regionStartAngle is within leftClearanceAngle and rightClearanceAngle
+                        // region exists in straight path to ball - check if it is the ball as a region (see (2) below)
+                        isImpedingRegionDetected = true;
+                        break;
+                    if regionEndAngle is within leftClearanceAngle and rightClearanceAngle
+                        // region exists in straight path to ball - check if it is the ball as a region (see (2) below)
+                        isImpedingRegionDetected = true;
+                        break;
+                    if regionStartAngle > leftClearanceAngle and regionEndAngle < rightClearanceAngle
+                        // region exists in straight path to ball - check if it is the ball as a region (see (2) below)
+                        isImpedingRegionDetected = true;
+                        break;
+                if !isImpedingRegionDetected (i.e. no region exists that is blocking the path straight to the ball)
+                    // Drive straight toward the ball (use angle of ball to simply turn right/left)
+                    return line representing the open area around the ball that we can fit through  //Make this better? Make this the open gap between actual regions where the ball is located? Make FindBestGap return a Coordinate? Look into
+                else
+                    See (2) below
+                
+
+                --------
+                // (2) If path straight to ball is not open, see if a region and ball are at the same location. If so, drive toward that region
+
+                // Try to find region that is the ball. If found, return it as best gap
+                Double angle = ball.Angle;
+                for each region in regions
+                    Line regionLineApproximation = line representing region - from start Coordinate to end Coordinate (i.e. new Line(region.StartCoordinate, region.EndCoordinate))
+                    Coordinate approxRegionMidpoint = midpoint of regionLineApproximation
+                    if angle is approximately equal to approxRegionMidpoint.Angle       // use function for testing this threshold
+                        if size is relatively accurate      // Maybe? This may be difficult as the base/holder of tennis ball is unknown to us (pvc pipe? Solid wooden base or something? etc)
+                            return line;
+
+                
+                --------
+                // (3) No region representing ball was found. Kick back to GPS
+
+                return null     // How to handle this? Look more into this
+
+            else
+                // (4) Turn camera mast
+
+                // TODO
+                    // Maybe have modes? 
+                    // Seek mode (don't see ball) vs. approach mode (see ball, navigate toward)? Since this will most likely be complex with a lot of logic, may make sense
+
+                
+                --------
+                // (5) Compare IMU/GPS
+                Get current GPS
+                Get goal GPS
+                Compute difference between the two
+                    Use this to find direction, heading (i.e. cardinal direction) we should be driving
+                Get heading we should be heading = calculate from above
+                Get heading we are facing from IMU
+                If different, turn toward heading we should be facing (zero-point turn - we want to go slow to increase time for GPS to be accurate to our location and if we're "close" to goal don't want to go fast)
+                If same heading (or once we have the same heading if using above turning method), slowly drive straight (hopefully we find ball)
+                (?) Repeat until we are within a small distance from goal (i.e. GPS is not accurate)?
+                    if not found when within some threshold of closeness for GPS, seek?
+                    if found, detect ball and automatically go to the "found ball" logic above 
+            */
 
             return null;
         }
