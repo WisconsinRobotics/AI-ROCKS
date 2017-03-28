@@ -13,17 +13,17 @@ namespace AI_ROCKS.Drive.DriveStates
     // CURRENTLY WORKING AS IF COMPASS RETURNS ASMUTH (COMPASS NOT UNIT CIRCLE)
     class GPSDriveState : IDriveState
     {
-        private const float DIRECTION_VATIANCE_NOISE = .1f; // gives threshold that "straight" is considered
+        private const float DIRECTION_VATIANCE_NOISE = 1f; // gives threshold that "straight" is considered
         private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
 
         private double idealDirection;
         GPS finalGPS = new GPS(-1, 59, 59, 0, 0, 1);
 
-        GPS currGPS;
-        short currCompass;
+        //GPS currGPS;
+        //short currCompass;
 
         DriveCommand command;
-
+        // TODO CONSTANTS FOR DRIVE COMMAND SPEED
         public GPSDriveState()
         {
         }
@@ -39,8 +39,13 @@ namespace AI_ROCKS.Drive.DriveStates
                 count++;
                 return DriveCommand.Straight(50);
             }
-            currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
-            currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
+            GPS currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
+            short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
+            
+            if (currCompass < 0)
+                currCompass = (short)(-1 * currCompass);
+            else
+                currCompass = (short)(360 - currCompass);
 
             // get data in good form 
             float finalLat, finalLong, currLat, currLong;
@@ -129,8 +134,8 @@ namespace AI_ROCKS.Drive.DriveStates
             double bestAngle = Double.MaxValue;
             double angle;
 
-            currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
-            currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
+            GPS currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
+            short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
 
             // get data in good form 
             float finalLat, finalLong, currLat, currLong;
