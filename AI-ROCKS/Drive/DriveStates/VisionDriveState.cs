@@ -6,6 +6,8 @@ using Emgu.CV.Structure;
 
 using AI_ROCKS.Drive.Models;
 using ObstacleLibrarySharp;
+using Emgu.CV.Util;
+using Emgu.CV.CvEnum;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
@@ -26,18 +28,22 @@ namespace AI_ROCKS.Drive.DriveStates
         // Limits of HSV masking
         Hsv lower = new Hsv(22, 120, 114);
         Hsv upper = new Hsv(37, 255, 255);
+        Hsv lowerTight = new Hsv(22, 120, 114);
+        Hsv upperTight = new Hsv(37, 255, 255);
+        Hsv lowerLoose = new Hsv(22, 52, 72);
+        Hsv upperLoose = new Hsv(32, 240, 254);
 
         const int leftThreshold = 200;
         const int rightThreshold = 300;
 
         // TODO put these somewhere else? A Vision handler or something?
-        public const int FOCAL_LENGTH = -1;        // TODO Placefiller - find actual value (from Amcrest or via calibration)
-        public const double KNOWN_WIDTH = 2.6;     // inches   //TODO validate
-        public const int PIXELS_WIDTH = 1920;
-        public const int PIXELS_HEIGHT = 1080;
+        public const Double FOCAL_LENGTH = -1;      // 3.6mm (6mm optional)     //TODO validate, convert into what we need (units)?
+        public const Double KNOWN_WIDTH = 2.6;      // inches                   //TODO validate
+        public const int PIXELS_WIDTH = 1920;       // May change, make dynamic?
+        public const int PIXELS_HEIGHT = 1080;      // May change, make dynamic?
 
         TennisBall ball;
-        DriveCommand command;
+
 
         public VisionDriveState()
         {                
@@ -67,6 +73,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             // Ball detected
             float ballX = ball.CenterPoint.X;
+
             if (ballX < leftThreshold) 
             {
                 // Ball is to the left of us
@@ -204,26 +211,54 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private void NetworkCamGrab(Object sender, NewFrameEventArgs eventArgs)
         {
-            Bitmap b = eventArgs.Frame;
-            Image<Bgr, byte> myImage = new Image<Bgr, byte>(b);
-            ProcessFrame(myImage);
+            Bitmap bitmap = eventArgs.Frame;
+            Image<Bgr, byte> frame = new Image<Bgr, byte>(bitmap);
+            ProcessFrame(frame);
         }
 
-        private void ProcessFrame(Image<Bgr, byte> m)
+        private void ProcessFrame(Image<Bgr, byte> frame)
         {
-            Image<Bgr, byte> blur = m.SmoothGaussian(15);
+            Image<Bgr, byte> blur = frame.SmoothGaussian(15);
             Image<Hsv, byte> hsv = blur.Convert<Hsv, byte>();
-            Image<Gray, byte> mask = hsv.InRange(lower, upper);
-            Image<Bgr, byte> coloredMask = mask.Convert<Bgr, byte>() & m;
+
+            // Masks
+            Image<Gray, byte> mask = hsv.InRange(lowerTight, upperTight).Erode(2).Dilate(2);
+            Image<Bgr, byte> coloredMask = mask.Convert<Bgr, byte>() &frame;
             Image<Gray, byte> grayMask = coloredMask.Convert<Gray, byte>();
 
-            CircleF[] c = grayMask.Convert<Gray, byte>().HoughCircles(new Gray(param1), new Gray(param2), dp, minDist, minRadius)[0];
-            if (c.Length > 0)
-            {
-                CircleF circle = c[0];
+            CircleF candidateBall = new CircleF();
+            bool isBallDetected = FindTennisBall(grayMask, ref candidateBall);
 
-                ball = new TennisBall(circle);
+            ball = isBallDetected ? new TennisBall(candidateBall) : null;
+        }
+
+        private bool FindTennisBall(Image<Gray, byte> mask, ref CircleF outCircle)
+        {
+            bool found = false;
+
+            VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
+            CvInvoke.FindContours(mask.Copy(), contours, null, RetrType.External, ChainApproxMethod.ChainApproxSimple);
+
+            if (contours.Size > 0)
+            {
+                VectorOfPoint max = contours[0];
+                
+                for (int i = 0; i < contours.Size; i++)
+                {
+                    VectorOfPoint contour = contours[i];
+                    if (CvInvoke.ContourArea(contour, false) > CvInvoke.ContourArea(max, false))
+                    {
+                        max = contour;
+                    }
+                }
+                if (CvInvoke.ContourArea(max, false) > 300)
+                {
+                    outCircle = CvInvoke.MinEnclosingCircle(max);
+                    found = true;
+                }
             }
+
+            return found;
         }
     }
 }

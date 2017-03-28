@@ -19,6 +19,8 @@ namespace AI_ROCKS.Drive.Models
         private Double angle;
 
 
+        // TODO have this?
+        /*
         public TennisBall(Coordinate centerPoint, Double radius, Double distanceToCenter)
         {
             this.centerPoint = centerPoint;
@@ -26,6 +28,7 @@ namespace AI_ROCKS.Drive.Models
             this.distanceToCenter = distanceToCenter;
             this.angle = centerPoint.Theta;
         }
+        */
 
         // TODO have this? Or have only CircleF constructor
         /*
@@ -72,13 +75,13 @@ namespace AI_ROCKS.Drive.Models
         }
 
         // perveivedWidth = pixels
-        private static Double FindDistanceToCenter(Double perceivedWidth)
+        private Double FindDistanceToCenter(Double perceivedWidth)
         {
             // TODO better usage of these consts (somewhere in some handler?)
             return (VisionDriveState.KNOWN_WIDTH * VisionDriveState.FOCAL_LENGTH) / perceivedWidth;
         }
 
-        private static Double FindAngle(CircleF circle, Double distanceToCenter)
+        private Double FindAngle(CircleF circle, Double distanceToCenter)
         {
             PointF center = circle.Center;
 
