@@ -30,6 +30,12 @@ namespace AI_ROCKS.Drive.DriveStates
         const int leftThreshold = 200;
         const int rightThreshold = 300;
 
+        // TODO put these somewhere else? A Vision handler or something?
+        public const int FOCAL_LENGTH = -1;        // TODO Placefiller - find actual value (from Amcrest or via calibration)
+        public const double KNOWN_WIDTH = 2.6;     // inches   //TODO validate
+        public const int PIXELS_WIDTH = 1920;
+        public const int PIXELS_HEIGHT = 1080;
+
         TennisBall ball;
         DriveCommand command;
 
@@ -214,8 +220,9 @@ namespace AI_ROCKS.Drive.DriveStates
             CircleF[] c = grayMask.Convert<Gray, byte>().HoughCircles(new Gray(param1), new Gray(param2), dp, minDist, minRadius)[0];
             if (c.Length > 0)
             {
-                //X = c[0].Center.X;
-                //TODO update ball accordingly here, rather than X
+                CircleF circle = c[0];
+
+                ball = new TennisBall(circle);
             }
         }
     }
