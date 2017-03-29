@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Drawing;
 using System.Collections.Generic;
-using AForge.Video;
+//using AForge.Video;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -15,10 +14,12 @@ namespace AI_ROCKS.Drive.DriveStates
 {
     class VisionDriveState : IDriveState
     {
-        MJPEGStream stream;
-        const string camera_url = "http://192.168.1.8/cgi-bin/mjpg/video.cgi";
-        const string camera_login = "admin";
-        const string camera_password = "i#3Er0b0";
+        //MJPEGStream stream;
+        //const string CAMERA_URL = "http://192.168.1.8/cgi-bin/mjpg/video.cgi";
+        const string CAMERA_USERNAME = "admin";
+        const string CAMERA_PASSWORD = "i#3Er0b0";
+        const string CAMERA_IP_MAST = "192.168.1.6";        // TODO not correct, update
+        const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
 
         // Constants for hough circles
         const int param1 = 12;
@@ -47,19 +48,26 @@ namespace AI_ROCKS.Drive.DriveStates
         private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
 
         TennisBall ball;
+        VideoCapture webcam;
 
 
         public VisionDriveState()
-        {                
-            stream = new MJPEGStream(camera_url);
-            stream.Login = camera_login;
-            stream.Password = camera_password;
+        {
+            this.webcam = new VideoCapture(CAMERA_URL);
+            this.webcam.ImageGrabbed += WebcamGrab;
+            this.webcam.Start();
+
+            /*
+            stream = new MJPEGStream(CAMERA_URL);
+            stream.Login = CAMERA_USERNAME;
+            stream.Password = CAMERA_PASSWORD;
             stream.ForceBasicAuthentication = true;
             stream.NewFrame += NetworkCamGrab;
             stream.Start();
-            
+            */
+
             // Ball not detected at start, so initialize to null
-            ball = null;
+            this.ball = null;
         }
 
         /// <summary>
@@ -69,14 +77,14 @@ namespace AI_ROCKS.Drive.DriveStates
         public DriveCommand FindNextDriveCommand()
         {
             // Ball not detected
-            if (ball == null)
+            if (this.ball == null)
             {
                 // Don't drive
                 return DriveCommand.Straight(DriveCommand.SPEED_HALT);
             }
 
             // Ball detected
-            float ballX = ball.CenterPoint.X;
+            float ballX = this.ball.CenterPoint.X;
 
             if (ballX < leftThreshold) 
             {
@@ -238,12 +246,21 @@ namespace AI_ROCKS.Drive.DriveStates
             return null;
         }
 
+        private void WebcamGrab(Object sender, EventArgs e)
+        {
+            Mat frame = new Mat();
+            webcam.Retrieve(frame);
+            ProcessFrame(frame.ToImage<Bgr, byte>());
+        }
+
+        /*
         private void NetworkCamGrab(Object sender, NewFrameEventArgs eventArgs)
         {
             Bitmap bitmap = eventArgs.Frame;
             Image<Bgr, byte> frame = new Image<Bgr, byte>(bitmap);
             ProcessFrame(frame);
         }
+        */
 
         private void ProcessFrame(Image<Bgr, byte> image)
         {
@@ -258,7 +275,7 @@ namespace AI_ROCKS.Drive.DriveStates
             CircleF candidateBall = new CircleF();
             bool isBallDetected = FindTennisBall(grayMask, ref candidateBall);
 
-            ball = isBallDetected ? new TennisBall(candidateBall) : null;
+            this.ball = isBallDetected ? new TennisBall(candidateBall) : null;
         }
 
         private bool FindTennisBall(Image<Gray, byte> mask, ref CircleF outCircle)
