@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Drawing;
+using System.Collections.Generic;
 using AForge.Video;
 using Emgu.CV;
+using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
+using Emgu.CV.Util;
 
 using AI_ROCKS.Drive.Models;
 using ObstacleLibrarySharp;
-using Emgu.CV.Util;
-using Emgu.CV.CvEnum;
+
 
 namespace AI_ROCKS.Drive.DriveStates
 {
@@ -41,6 +43,8 @@ namespace AI_ROCKS.Drive.DriveStates
         public const Double KNOWN_WIDTH = 2.6;      // inches                   //TODO validate
         public const int PIXELS_WIDTH = 1920;       // May change, make dynamic?
         public const int PIXELS_HEIGHT = 1080;      // May change, make dynamic?
+
+        private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
 
         TennisBall ball;
 
@@ -206,6 +210,31 @@ namespace AI_ROCKS.Drive.DriveStates
                     if found, detect ball and automatically go to the "found ball" logic above 
             */
 
+
+            List<ObstacleLibrarySharp.Region> regions = obstacles.Regions;
+            
+            double bestGapDistance = 0;
+            Line bestGap = null;
+
+            // Sanity check - if zero Regions exist, return Line representing gap straight in front of Ascent
+            if (regions.Count == 0)
+            {
+                // Make Line that is twice the width of Ascent and 1/2 the maximum distance away to signify 
+                // the best gap is straight ahead of us
+                Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+                Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+
+                bestGap = new Line(leftCoord, rightCoord);
+                return bestGap;
+            }
+
+            // If open path to ball exists, drive toward it
+            if (IsOpenPathToBall())
+            {
+
+            }
+
+
             return null;
         }
 
@@ -216,14 +245,14 @@ namespace AI_ROCKS.Drive.DriveStates
             ProcessFrame(frame);
         }
 
-        private void ProcessFrame(Image<Bgr, byte> frame)
+        private void ProcessFrame(Image<Bgr, byte> image)
         {
-            Image<Bgr, byte> blur = frame.SmoothGaussian(15);
+            Image<Bgr, byte> blur = image.SmoothGaussian(15);
             Image<Hsv, byte> hsv = blur.Convert<Hsv, byte>();
 
             // Masks
             Image<Gray, byte> mask = hsv.InRange(lowerTight, upperTight).Erode(2).Dilate(2);
-            Image<Bgr, byte> coloredMask = mask.Convert<Bgr, byte>() &frame;
+            Image<Bgr, byte> coloredMask = mask.Convert<Bgr, byte>() &image;
             Image<Gray, byte> grayMask = coloredMask.Convert<Gray, byte>();
 
             CircleF candidateBall = new CircleF();
@@ -259,6 +288,11 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
             return found;
+        }
+
+        private bool IsOpenPathToBall()
+        {
+            return false;
         }
     }
 }
