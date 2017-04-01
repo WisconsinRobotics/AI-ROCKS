@@ -4,7 +4,6 @@ using System.Threading;
 using AI_ROCKS.Drive.DriveStates;
 using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
-using AI_ROCKS.Services;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive
@@ -12,7 +11,17 @@ namespace AI_ROCKS.Drive
     class DriveContext
     {
         public const float ASCENT_WIDTH = 1168.4f;
-        public const float LRF_FOV = 90.0f;          // TODO Rough number - good enough for testing but get this more mathematically/for certain 
+
+        // LRF
+        public const long LRF_MAX_RELIABLE_DISTANCE = 6000;             // TODO get from LRFLibrary
+        public const float LRF_MIN_ANGLE = (float)Math.PI / 4;          // 45 degrees right edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
+        public const float LRF_MAX_ANGLE = 3 * (float)Math.PI / 4;      // 135 degrees left edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
+
+        // LRF field of view (FOV) edges
+        public static readonly Line LRF_RIGHT_FOV_EDGE =
+            new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MIN_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
+        public static readonly Line LRF_LEFT_FOV_EDGE =
+            new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MAX_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
 
         private IDriveState driveState;
         private StateType stateType;

@@ -91,8 +91,7 @@ namespace AI_ROCKS.Services
             lrf.RefreshData();
             
             // Only get Coordinates within the LRF FOV to avoid detecting wheels as an obstacle
-            float halfLrfFov = DriveContext.LRF_FOV / 2;
-            List<Coordinate> coordinates = lrf.GetCoordinates((float)(Math.PI/2 - halfLrfFov), (float)(Math.PI/2 + halfLrfFov));
+            List<Coordinate> coordinates = lrf.GetCoordinates(DriveContext.LRF_MIN_ANGLE, DriveContext.LRF_MAX_ANGLE);
 
             List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, REGION_SEPARATION_DISTANCE, RDP_THRESHOLD); //DriveContext.ASCENT_WIDTH, RDP_THRESHOLD);
             Plot plot = new Plot(regions);

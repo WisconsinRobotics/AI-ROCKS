@@ -8,20 +8,8 @@ namespace AI_ROCKS.Drive.DriveStates
 {
     class ObstacleAvoidanceDriveState : IDriveState
     {
-        // TODO move all of these to a more appropriate place
-        private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
-        private Line lrfLeftFOV;                                // TODO put this somewhere else
-        private Line lrfRightFOV;                               // TODO put this somewhere else
-
-
         public ObstacleAvoidanceDriveState()
         {
-            // TODO make this accessible from all DriveStates - here just for testing (aka un-hack-ify)
-            // Make Lines to represent the edges of the field of view (FOV)
-            lrfLeftFOV = 
-                new Line(new Coordinate(0, 0, CoordSystem.Cartesian), new Coordinate(-1 * LRF_MAX_RELIABLE_DISTANCE, 0, CoordSystem.Cartesian));
-            lrfRightFOV = 
-                new Line(new Coordinate(0, 0, CoordSystem.Cartesian), new Coordinate(LRF_MAX_RELIABLE_DISTANCE, 0, CoordSystem.Cartesian));
         }
 
 
@@ -39,9 +27,6 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             List<Region> regions = obstacles.Regions;
 
-            //regions.RemoveAt(regions.Count - 1);
-            //regions.RemoveAt(0);
-            
             double bestGapDistance = 0;
             Line bestGap = null;
 
@@ -50,8 +35,8 @@ namespace AI_ROCKS.Drive.DriveStates
             {
                 // Make Line that is twice the width of Ascent and 1/2 the maximum distance away to signify 
                 // the best gap is straight ahead of us
-                Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
-                Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+                Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+                Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
 
                 bestGap = new Line(leftCoord, rightCoord);
                 return bestGap;
@@ -63,7 +48,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             // Check if leftmost Coordinate in the leftmost Region is on the right half of the entire FOV. If it is, make leftEdgeCoordinate where the 
             // max -acceptable-range meets the left FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
-            Coordinate leftEdgeCoordinate = Line.FindClosestPointOnLine(lrfLeftFOV, firstRegion.StartCoordinate);
+            Coordinate leftEdgeCoordinate = Line.FindClosestPointOnLine(DriveContext.LRF_LEFT_FOV_EDGE, firstRegion.StartCoordinate);
             if (firstRegion.StartCoordinate.X > 0)
             {
                 leftEdgeCoordinate = new Coordinate(-AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
@@ -72,7 +57,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             // Check if rightmost Coordinate in the rightmost Region is on the left half of the entire FOV. If it is, make rightEdgeCoordinate where the
             // max -acceptable-range meets the right FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
-            Coordinate rightEdgeCoordinate = Line.FindClosestPointOnLine(lrfRightFOV, lastRegion.EndCoordinate);
+            Coordinate rightEdgeCoordinate = Line.FindClosestPointOnLine(DriveContext.LRF_RIGHT_FOV_EDGE, lastRegion.EndCoordinate);
             if (lastRegion.EndCoordinate.X < 0)
             {
                 rightEdgeCoordinate = new Coordinate(AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
