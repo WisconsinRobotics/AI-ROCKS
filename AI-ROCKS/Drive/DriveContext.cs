@@ -23,6 +23,7 @@ namespace AI_ROCKS.Drive
         public static readonly Line LRF_LEFT_FOV_EDGE =
             new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MAX_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
 
+
         private IDriveState driveState;
         private StateType stateType;
 
@@ -164,6 +165,20 @@ namespace AI_ROCKS.Drive
         {
             get { return this.lastObstacleDetected; }
             set { this.lastObstacleDetected = value; }
+        }
+
+        /// <summary>
+        /// Return a Line representing a gap straight in front of Ascent. This gap is a Line twice the width 
+        /// of Ascent and half the maximum distance.
+        /// </summary>
+        /// <returns> Line - Line representing an open gap straight in front of Ascent.</returns>
+        public static Line GapStraightInFront()
+        {
+            // Return Line representing gap straight in front of Ascent
+            Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+            Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+
+            return new Line(leftCoord, rightCoord);
         }
     }
 }

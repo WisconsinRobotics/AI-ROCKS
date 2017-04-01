@@ -30,16 +30,11 @@ namespace AI_ROCKS.Drive.DriveStates
             double bestGapDistance = 0;
             Line bestGap = null;
 
-            // Sanity check - if zero Regions exist, return Line representing gap straight in front of Ascent
+            // Sanity check
             if (regions.Count == 0)
             {
-                // Make Line that is twice the width of Ascent and 1/2 the maximum distance away to signify 
-                // the best gap is straight ahead of us
-                Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
-                Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
-
-                bestGap = new Line(leftCoord, rightCoord);
-                return bestGap;
+                // Return Line representing gap straight in front of Ascent
+                return DriveContext.GapStraightInFront();
             }
 
             // Check first and last Region gaps (may be same Region if only one Region)
@@ -47,7 +42,7 @@ namespace AI_ROCKS.Drive.DriveStates
             Region lastRegion = regions.ElementAt(regions.Count - 1);
 
             // Check if leftmost Coordinate in the leftmost Region is on the right half of the entire FOV. If it is, make leftEdgeCoordinate where the 
-            // max -acceptable-range meets the left FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
+            // max-acceptable-range meets the left FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
             Coordinate leftEdgeCoordinate = Line.FindClosestPointOnLine(DriveContext.LRF_LEFT_FOV_EDGE, firstRegion.StartCoordinate);
             if (firstRegion.StartCoordinate.X > 0)
             {
@@ -56,7 +51,7 @@ namespace AI_ROCKS.Drive.DriveStates
             Line leftEdgeGap = new Line(leftEdgeCoordinate, firstRegion.StartCoordinate);
 
             // Check if rightmost Coordinate in the rightmost Region is on the left half of the entire FOV. If it is, make rightEdgeCoordinate where the
-            // max -acceptable-range meets the right FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
+            // max-acceptable-range meets the right FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
             Coordinate rightEdgeCoordinate = Line.FindClosestPointOnLine(DriveContext.LRF_RIGHT_FOV_EDGE, lastRegion.EndCoordinate);
             if (lastRegion.EndCoordinate.X < 0)
             {
