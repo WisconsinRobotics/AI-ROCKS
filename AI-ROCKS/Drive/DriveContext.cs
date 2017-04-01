@@ -12,21 +12,21 @@ namespace AI_ROCKS.Drive
     class DriveContext
     {
         public const float ASCENT_WIDTH = 1168.4f;
+        public const float LRF_FOV = 90.0f;          // TODO Rough number - good enough for testing but get this more mathematically/for certain 
 
         private IDriveState driveState;
         private StateType stateType;
-        private AutonomousService autonomousService;    //TODO pass this? Shouldn't a service not be accessible to it's members? -> pass things I need to constructor rather than whole service?
 
-        public DriveContext(AutonomousService autonomousService, StateType initialStateType)
+        private readonly Object sendDriveCommandLock;
+        private long lastObstacleDetected;
+
+        public DriveContext(StateType initialStateType)
         {
             // GPSDriveState is default unless specified
             this.driveState = StateTypeHelper.ToDriveState(initialStateType);
             this.stateType = initialStateType;
             
-            this.autonomousService = autonomousService;
-            
-            // Subscribe to ObstacleEvent
-            autonomousService.ObstacleEvent += HandleObstacleEvent;
+            this.sendDriveCommandLock = new Object();
         }
 
 
@@ -49,7 +49,7 @@ namespace AI_ROCKS.Drive
         {
             // Obtain lock
             bool isLocked = false;
-            Monitor.TryEnter(autonomousService.SendDriveCommandLock, ref isLocked);
+            Monitor.TryEnter(this.sendDriveCommandLock, ref isLocked);
 
             if (isLocked)
             {
@@ -57,7 +57,7 @@ namespace AI_ROCKS.Drive
                 DriveHandler.SendDriveCommand(driveCommand);
 
                 // Release lock
-                Monitor.Exit(autonomousService.SendDriveCommandLock);
+                Monitor.Exit(this.sendDriveCommandLock);
             }
         }
 
@@ -123,10 +123,10 @@ namespace AI_ROCKS.Drive
             }
 
             // Send driveCommand
-            lock (autonomousService.SendDriveCommandLock)
+            lock (this.sendDriveCommandLock)
             {
                 DriveHandler.SendDriveCommand(driveCommand);
-                autonomousService.LastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                this.lastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
         }
 
@@ -146,6 +146,15 @@ namespace AI_ROCKS.Drive
         {
             get { return stateType; }
             set { stateType = value; }
+        }
+
+        /// <summary>
+        /// Property representing when the last obstacle was detected (unix time in milliseconds).
+        /// </summary>
+        public long LastObstacleDetected
+        {
+            get { return this.lastObstacleDetected; }
+            set { this.lastObstacleDetected = value; }
         }
     }
 }
