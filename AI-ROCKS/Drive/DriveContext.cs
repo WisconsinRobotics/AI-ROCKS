@@ -4,7 +4,6 @@ using System.Threading;
 using AI_ROCKS.Drive.DriveStates;
 using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
-using AI_ROCKS.Services;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive
@@ -13,20 +12,31 @@ namespace AI_ROCKS.Drive
     {
         public const float ASCENT_WIDTH = 1168.4f;
 
+        // LRF
+        public const long LRF_MAX_RELIABLE_DISTANCE = 6000;             // TODO get from LRFLibrary
+        public const float LRF_MIN_ANGLE = (float)Math.PI / 4;          // 45 degrees right edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
+        public const float LRF_MAX_ANGLE = 3 * (float)Math.PI / 4;      // 135 degrees left edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
+
+        // LRF field of view (FOV) edges
+        public static readonly Line LRF_RIGHT_FOV_EDGE =
+            new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MIN_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
+        public static readonly Line LRF_LEFT_FOV_EDGE =
+            new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MAX_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
+
+
         private IDriveState driveState;
         private StateType stateType;
-        private AutonomousService autonomousService;    //TODO pass this? Shouldn't a service not be accessible to it's members? -> pass things I need to constructor rather than whole service?
 
-        public DriveContext(AutonomousService autonomousService, StateType initialStateType)
+        private readonly Object sendDriveCommandLock;
+        private long lastObstacleDetected;
+
+        public DriveContext(StateType initialStateType)
         {
             // GPSDriveState is default unless specified
             this.driveState = StateTypeHelper.ToDriveState(initialStateType);
             this.stateType = initialStateType;
             
-            this.autonomousService = autonomousService;
-            
-            // Subscribe to ObstacleEvent
-            autonomousService.ObstacleEvent += HandleObstacleEvent;
+            this.sendDriveCommandLock = new Object();
         }
 
 
@@ -49,7 +59,7 @@ namespace AI_ROCKS.Drive
         {
             // Obtain lock
             bool isLocked = false;
-            Monitor.TryEnter(autonomousService.SendDriveCommandLock, ref isLocked);
+            Monitor.TryEnter(this.sendDriveCommandLock, ref isLocked);
 
             if (isLocked)
             {
@@ -57,7 +67,7 @@ namespace AI_ROCKS.Drive
                 DriveHandler.SendDriveCommand(driveCommand);
 
                 // Release lock
-                Monitor.Exit(autonomousService.SendDriveCommandLock);
+                Monitor.Exit(this.sendDriveCommandLock);
             }
         }
 
@@ -123,10 +133,10 @@ namespace AI_ROCKS.Drive
             }
 
             // Send driveCommand
-            lock (autonomousService.SendDriveCommandLock)
+            lock (this.sendDriveCommandLock)
             {
                 DriveHandler.SendDriveCommand(driveCommand);
-                autonomousService.LastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                this.lastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
         }
 
@@ -146,6 +156,29 @@ namespace AI_ROCKS.Drive
         {
             get { return stateType; }
             set { stateType = value; }
+        }
+
+        /// <summary>
+        /// Property representing when the last obstacle was detected (unix time in milliseconds).
+        /// </summary>
+        public long LastObstacleDetected
+        {
+            get { return this.lastObstacleDetected; }
+            set { this.lastObstacleDetected = value; }
+        }
+
+        /// <summary>
+        /// Return a Line representing a gap straight in front of Ascent. This gap is a Line twice the width 
+        /// of Ascent and half the maximum distance.
+        /// </summary>
+        /// <returns> Line - Line representing an open gap straight in front of Ascent.</returns>
+        public static Line GapStraightInFront()
+        {
+            // Return Line representing gap straight in front of Ascent
+            Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+            Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+
+            return new Line(leftCoord, rightCoord);
         }
     }
 }

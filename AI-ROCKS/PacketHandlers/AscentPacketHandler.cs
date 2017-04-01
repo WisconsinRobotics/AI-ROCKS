@@ -206,7 +206,7 @@ namespace AI_ROCKS.PacketHandlers
             int payloadSize = data[7];
             int payloadIndex = 9;
 
-            if (data[payloadIndex + payloadSize + 1] != 0xFE)
+            if (data[payloadIndex + payloadSize] != 0xFE)
             {
                 return;
             }

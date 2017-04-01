@@ -43,7 +43,7 @@ namespace AI_ROCKS.Drive
                 this.right = (sbyte)-speed;
 
             }
-            else if (angle.CompareTo(Math.PI / 2) > 0 && angle.CompareTo(Math.PI) < 0)
+            else if (angle.CompareTo(Math.PI / 2) > 0 && angle.CompareTo(Math.PI) <= 0)
             {
                 // Turn left
                 this.left = (sbyte)-speed;
