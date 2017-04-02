@@ -5,6 +5,7 @@ using AI_ROCKS.Drive.DriveStates;
 using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
 using ObstacleLibrarySharp;
+using AI_ROCKS.Drive.Models;
 
 namespace AI_ROCKS.Drive
 {
@@ -23,12 +24,14 @@ namespace AI_ROCKS.Drive
         public static readonly Line LRF_LEFT_FOV_EDGE =
             new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MAX_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
 
-
         private IDriveState driveState;
         private StateType stateType;
 
         private readonly Object sendDriveCommandLock;
         private long lastObstacleDetected;
+
+        private GPS gate;   //TODO take in from command line
+
 
         public DriveContext(StateType initialStateType)
         {
@@ -37,6 +40,8 @@ namespace AI_ROCKS.Drive
             this.stateType = initialStateType;
             
             this.sendDriveCommandLock = new Object();
+
+            this.gate = new GPS(0, 0, 0, 0, 0, 0);  // TODO
         }
 
 
@@ -165,6 +170,14 @@ namespace AI_ROCKS.Drive
         {
             get { return this.lastObstacleDetected; }
             set { this.lastObstacleDetected = value; }
+        }
+
+        /// <summary>
+        /// Property for the GPS coordinates of the gate.
+        /// </summary>
+        public GPS Gate
+        {
+            get { return this.gate; }
         }
 
         /// <summary>

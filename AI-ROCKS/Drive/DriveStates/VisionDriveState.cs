@@ -8,7 +8,8 @@ using Emgu.CV.Util;
 
 using AI_ROCKS.Drive.Models;
 using ObstacleLibrarySharp;
-
+using AI_ROCKS.PacketHandlers;
+using System.Device.Location;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
@@ -18,7 +19,7 @@ namespace AI_ROCKS.Drive.DriveStates
         //const string CAMERA_URL = "http://192.168.1.8/cgi-bin/mjpg/video.cgi";
         const string CAMERA_USERNAME = "admin";
         const string CAMERA_PASSWORD = "i#3Er0b0";
-        const string CAMERA_IP_MAST = "192.168.1.6";        // TODO not correct, update
+        const string CAMERA_IP_MAST = "192.168.1.8";
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
 
         // Constants for hough circles
@@ -45,13 +46,13 @@ namespace AI_ROCKS.Drive.DriveStates
         public const int PIXELS_WIDTH = 1920;       // May change, make dynamic?
         public const int PIXELS_HEIGHT = 1080;      // May change, make dynamic?
 
-        private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
+        private bool switchToGPS = false;
 
-        TennisBall ball;
-        VideoCapture webcam;
+        private TennisBall ball;
+        private VideoCapture webcam;
+        private GPS gate;
 
-
-        public VisionDriveState()
+        public VisionDriveState()//GPS gate)    // TODO get from DriveContext upon instantiation
         {
             this.webcam = new VideoCapture(CAMERA_URL);
             this.webcam.ImageGrabbed += WebcamGrab;
@@ -68,6 +69,9 @@ namespace AI_ROCKS.Drive.DriveStates
 
             // Ball not detected at start, so initialize to null
             this.ball = null;
+
+            // TODO how to access gate
+            this.gate = null; // gate;
         }
 
         /// <summary>
@@ -76,31 +80,65 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>DriveCommand - the next drive command for ROCKS to execute.</returns>
         public DriveCommand FindNextDriveCommand()
         {
-            // Ball not detected
-            if (this.ball == null)
+            // Ball detected
+            if (ball != null)
             {
-                // Don't drive
+                // Within required distance
+                if (IsWithinRequiredDistance(ball))
+                {
+                    // TODO handle sending success - need ACK too? Look into
+                    return DriveCommand.Straight(DriveCommand.SPEED_HALT);
+                }
+
+                // Not within required distance
+                float ballX = this.ball.CenterPoint.X;
+                if (ballX < leftThreshold)
+                {
+                    // Ball is to the left
+                    return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION);
+                }
+                else if (ballX > rightThreshold)
+                {
+                    // Ball is to the right
+                    return DriveCommand.RightTurn(DriveCommand.SPEED_VISION);
+                }
+                else
+                {
+                    // Ball is straight ahead
+                    return DriveCommand.Straight(DriveCommand.SPEED_VISION);
+                }
+            }
+
+            // Ball not detected
+            GPS ascent = AscentPacketHandler.GPSData;
+            double distanceToGate = ascent.GetDistanceTo(this.gate);
+
+            if (distanceToGate > 4.0)
+            {
+                // Kick back to GPS
+                switchToGPS = true;     // TODO incorporate this
                 return DriveCommand.Straight(DriveCommand.SPEED_HALT);
             }
 
-            // Ball detected
-            float ballX = this.ball.CenterPoint.X;
-
-            if (ballX < leftThreshold) 
+            // TODO return azimuth-based angle. Is this good or return something else? -> Depends on how our IMU compass data works
+            double headingAngle = ascent.GetHeadingTo(this.gate);
+            if (distanceToGate > 3.0)
             {
-                // Ball is to the left of us
-                return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION);
+                // Turn and face heading
+                // Drive straight toward heading
             }
-            else if (ballX > rightThreshold)
+            else if (distanceToGate > 2.0)
             {
-                // Ball is to the right of us
-                return DriveCommand.RightTurn(DriveCommand.SPEED_VISION);
+                // Turn toward heading
+                // Scan, use heading as reference
             }
-            else 
+            else
             {
-                // Ball is straight ahead
-                return DriveCommand.Straight(DriveCommand.SPEED_VISION);
+                // Scan
+                // ... more to do for this case
             }
+            
+            return null;    //TODO
         }
 
         /// <summary>
@@ -219,7 +257,7 @@ namespace AI_ROCKS.Drive.DriveStates
             */
 
 
-            List<ObstacleLibrarySharp.Region> regions = obstacles.Regions;
+            List<Region> regions = obstacles.Regions;
             
             double bestGapDistance = 0;
             Line bestGap = null;
@@ -229,8 +267,8 @@ namespace AI_ROCKS.Drive.DriveStates
             {
                 // Make Line that is twice the width of Ascent and 1/2 the maximum distance away to signify 
                 // the best gap is straight ahead of us
-                Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
-                Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+                Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+                Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
 
                 bestGap = new Line(leftCoord, rightCoord);
                 return bestGap;
@@ -239,7 +277,7 @@ namespace AI_ROCKS.Drive.DriveStates
             // If open path to ball exists, drive toward it
             if (IsOpenPathToBall())
             {
-
+                // Drive toward it
             }
 
 
@@ -309,6 +347,13 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private bool IsOpenPathToBall()
         {
+            // TODO
+            return false;
+        }
+
+        private bool IsWithinRequiredDistance(TennisBall ball)
+        {
+            // TODO
             return false;
         }
     }
