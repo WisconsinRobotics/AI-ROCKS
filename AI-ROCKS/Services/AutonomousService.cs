@@ -17,8 +17,8 @@ namespace AI_ROCKS.Services
         public const long OBSTACLE_DETECTION_DISTANCE = 2000;       // 2 meters         // TODO verify and update
 
         // RDP
-        private const double REGION_SEPARATION_DISTANCE = 60.0;     // TODO verify, move somewhere?
-        private const double RDP_THRESHOLD = 5.0;
+        private const double REGION_SEPARATION_DISTANCE = 300.0;
+        private const double RDP_THRESHOLD = 50.0;
 
         public event EventHandler<ObstacleEventArgs> ObstacleEvent;
 
@@ -46,6 +46,9 @@ namespace AI_ROCKS.Services
             if (!lrfInit)
             {
                 // TODO Fail - send error code to ROCKS
+
+                // For now, throw exception (so you don't spend an hour debugging to end up figuring out you specified the port wrong..#triggered)
+                throw new ArgumentException("Invalid port for LRF - must be integer (UDP) or COM port (serial)");
             }
         }
 
