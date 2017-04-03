@@ -10,9 +10,9 @@ namespace AI_ROCKS.Drive
         public const byte SPEED_VISION = 30;
         public const byte SPEED_HALT = 0;
 
-        private const double STRAIGHT = Math.PI / 2;
-        private const double RIGHT = 0;
-        private const double LEFT = Math.PI;
+        private const double ANGLE_STRAIGHT = Math.PI / 2;
+        private const double ANGLE_RIGHT = 0;
+        private const double ANGLE_LEFT = Math.PI;
 
         private sbyte left;
         private sbyte right;
@@ -59,21 +59,21 @@ namespace AI_ROCKS.Drive
         public static DriveCommand Straight(byte speed)
         {
             // Create DriveCommand that represents a Straight command of specified speed
-            DriveCommand straight = new DriveCommand(STRAIGHT, speed);
+            DriveCommand straight = new DriveCommand(ANGLE_STRAIGHT, speed);
             return straight;
         }
 
         public static DriveCommand RightTurn(byte speed)
         {
             // Create DriveCommand that represents a Right command of specified speed
-            DriveCommand right = new DriveCommand(RIGHT, speed);
+            DriveCommand right = new DriveCommand(ANGLE_RIGHT, speed);
             return right;
         }
 
         public static DriveCommand LeftTurn(byte speed)
         {
             // Create DriveCommand that represents a Left command of specified speed
-            DriveCommand left = new DriveCommand(LEFT, speed);
+            DriveCommand left = new DriveCommand(ANGLE_LEFT, speed);
             return left;
         }
 

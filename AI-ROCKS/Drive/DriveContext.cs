@@ -23,7 +23,6 @@ namespace AI_ROCKS.Drive
         public static readonly Line LRF_LEFT_FOV_EDGE =
             new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MAX_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
 
-
         private IDriveState driveState;
         private StateType stateType;
 

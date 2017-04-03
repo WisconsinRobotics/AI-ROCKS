@@ -17,8 +17,8 @@ namespace AI_ROCKS.Services
         public const long OBSTACLE_DETECTION_DISTANCE = 2000;       // 2 meters         // TODO verify and update
 
         // RDP
-        private const double REGION_SEPARATION_DISTANCE = 300.0;
-        private const double RDP_THRESHOLD = 50.0;
+        private const double REGION_SEPARATION_DISTANCE = 300.0;    // Distance between regions - helps reduce noise
+        private const double RDP_THRESHOLD = 50.0;                  // How much the LRF data is reduced
 
         public event EventHandler<ObstacleEventArgs> ObstacleEvent;
 
@@ -36,11 +36,13 @@ namespace AI_ROCKS.Services
             this.lrf = new LRF();
             if (Int32.TryParse(lrfPort, out lrfUDPPort))
             {
-                //lrfInit = lrf.Initialize(lrfUDPPort);   // For getting LRF data over UDP
+                // For getting LRF data over UDP
+                //lrfInit = lrf.Initialize(lrfUDPPort);
             }
             else
             {
-                lrfInit = lrf.Initialize(lrfPort);      // For getting LRF data over serial
+                // For getting LRF data over serial
+                lrfInit = lrf.Initialize(lrfPort);
             }
 
             if (!lrfInit)
@@ -96,7 +98,7 @@ namespace AI_ROCKS.Services
             // Only get Coordinates within the LRF FOV to avoid detecting wheels as an obstacle
             List<Coordinate> coordinates = lrf.GetCoordinates(DriveContext.LRF_MIN_ANGLE, DriveContext.LRF_MAX_ANGLE);
 
-            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, REGION_SEPARATION_DISTANCE, RDP_THRESHOLD); //DriveContext.ASCENT_WIDTH, RDP_THRESHOLD);
+            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, REGION_SEPARATION_DISTANCE, RDP_THRESHOLD);
             Plot plot = new Plot(regions);
 
             // See if any obstacle within maximum allowed distance
