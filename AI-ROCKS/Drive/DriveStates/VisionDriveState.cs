@@ -9,7 +9,6 @@ using Emgu.CV.Util;
 using AI_ROCKS.Drive.Models;
 using ObstacleLibrarySharp;
 using AI_ROCKS.PacketHandlers;
-using System.Device.Location;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
@@ -46,9 +45,14 @@ namespace AI_ROCKS.Drive.DriveStates
         public const int PIXELS_WIDTH = 1920;       // May change, make dynamic?
         public const int PIXELS_HEIGHT = 1080;      // May change, make dynamic?
 
+        private const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
+
         private bool switchToGPS = false;
 
         private TennisBall ball;
+        private long ballTimestamp;
+        private readonly Object ballLock;
+
         private VideoCapture webcam;
         private GPS gate;
 
@@ -67,8 +71,8 @@ namespace AI_ROCKS.Drive.DriveStates
             stream.Start();
             */
 
-            // Ball not detected at start, so initialize to null
             this.ball = null;
+            this.ballLock = new Object();
 
             // TODO how to access gate
             this.gate = null; // gate;
@@ -80,6 +84,12 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>DriveCommand - the next drive command for ROCKS to execute.</returns>
         public DriveCommand FindNextDriveCommand()
         {
+            // Recently detected ball but now don't now. Stop driving to redetect since we may have dropped it due to bouncing.
+            if (ball == null && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < ballTimestamp + DROP_BALL_DELAY)
+            {
+                return DriveCommand.Straight(DriveCommand.SPEED_HALT);
+            }
+
             // Ball detected
             if (ball != null)
             {
@@ -116,7 +126,7 @@ namespace AI_ROCKS.Drive.DriveStates
             if (distanceToGate > 4.0)
             {
                 // Kick back to GPS
-                switchToGPS = true;     // TODO incorporate this
+                switchToGPS = true;
                 return DriveCommand.Straight(DriveCommand.SPEED_HALT);
             }
 
@@ -147,8 +157,7 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>StateType - the next StateType</returns>
         public StateType GetNextStateType()
         {
-            // Logic for finding when state needs to be switched from VisionDriveState to GPSDriveState
-            return 0;
+            return switchToGPS ? StateType.GPSState : StateType.VisionState;
         }
 
         public Line FindBestGap(Plot obstacles)
@@ -313,7 +322,14 @@ namespace AI_ROCKS.Drive.DriveStates
             CircleF candidateBall = new CircleF();
             bool isBallDetected = FindTennisBall(grayMask, ref candidateBall);
 
-            this.ball = isBallDetected ? new TennisBall(candidateBall) : null;
+            lock (ballLock)
+            {
+                this.ball = isBallDetected ? new TennisBall(candidateBall) : null;
+            }
+            if (isBallDetected)
+            {
+                ballTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            }
         }
 
         private bool FindTennisBall(Image<Gray, byte> mask, ref CircleF outCircle)
@@ -353,8 +369,12 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private bool IsWithinRequiredDistance(TennisBall ball)
         {
-            // TODO
-            return false;
+            if (ball == null)
+            {
+                return false;
+            }
+
+            return ball.DistanceToCenter < DriveContext.REQUIRED_DISTANCE_FROM_BALL;
         }
     }
 }

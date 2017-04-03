@@ -24,6 +24,9 @@ namespace AI_ROCKS.Drive
         public static readonly Line LRF_LEFT_FOV_EDGE =
             new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MAX_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
 
+        // Vision
+        public const double REQUIRED_DISTANCE_FROM_BALL = 2.0;    // Meters
+
         private IDriveState driveState;
         private StateType stateType;
 
@@ -82,7 +85,7 @@ namespace AI_ROCKS.Drive
         /// <returns>bool - If state change is required.</returns>
         public bool IsStateChangeRequired()
         {
-            return driveState.GetNextStateType() != stateType;
+            return driveState.GetNextStateType() != this.stateType;
         }
 
         //TODO look at this function

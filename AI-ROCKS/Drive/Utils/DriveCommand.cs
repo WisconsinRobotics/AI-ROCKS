@@ -8,6 +8,7 @@ namespace AI_ROCKS.Drive
         public const byte SPEED_CLEAR_OBSTACLE = 40;
         public const byte SPEED_AVOID_OBSTACLE = 30;
         public const byte SPEED_VISION = 30;
+        public const byte SPEED_VISION_REDETECT_BALL = 20;
         public const byte SPEED_HALT = 0;
 
         private const double STRAIGHT = Math.PI / 2;
