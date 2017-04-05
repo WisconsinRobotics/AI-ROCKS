@@ -13,11 +13,11 @@ namespace AI_ROCKS.Drive.DriveStates
     // CURRENTLY WORKING AS IF COMPASS RETURNS ASMUTH (COMPASS NOT UNIT CIRCLE)
     class GPSDriveState : IDriveState
     {
-        private const float DIRECTION_VATIANCE_NOISE = 1f; // gives threshold that "straight" is considered
+        private const float DIRECTION_VATIANCE_NOISE = 2f; // gives threshold that "straight" is considered
         private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
 
         private double idealDirection;
-        GPS finalGPS = new GPS(-1, 59, 59, 0, 0, 1);
+        GPS finalGPS = new GPS(0, 1, 32, 0, 3, 45);
 
         //GPS currGPS;
         //short currCompass;
@@ -42,10 +42,11 @@ namespace AI_ROCKS.Drive.DriveStates
             GPS currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
             short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
             
-            if (currCompass < 0)
+            // might need to be changed
+ /*           if (currCompass < 0)
                 currCompass = (short)(-1 * currCompass);
             else
-                currCompass = (short)(360 - currCompass);
+                currCompass = (short)(360 - currCompass);*/
 
             // get data in good form 
             float finalLat, finalLong, currLat, currLong;
@@ -56,13 +57,19 @@ namespace AI_ROCKS.Drive.DriveStates
             
             // calculate ideal direction
             idealDirection = Math.Atan2((finalLat - currLat), (finalLong - currLong));
+           /* if (idealDirection < 0)
+            {
+                idealDirection += (float)(2 * Math.PI);
+            }*/
             idealDirection = idealDirection * (180 / Math.PI);
-            idealDirection = -idealDirection;
-            idealDirection = idealDirection + 90;
-            if (idealDirection < 0)
-                idealDirection = idealDirection + 360;
-
-            // if lined up within numeric precision, drive straight
+            idealDirection = 90 - idealDirection;
+            if ((finalLong - currLong) < 0)
+            {
+                idealDirection = idealDirection + 180;
+            }
+            //Flipping direction to match the opposite navigation system as in gazebo
+            idealDirection = (idealDirection + 180) % 360;
+             // if lined up within numeric precision, drive straight
             if (Math.Abs(idealDirection - currCompass) < DIRECTION_VATIANCE_NOISE
                 || Math.Abs(idealDirection - currCompass) > (360 - DIRECTION_VATIANCE_NOISE))
             {
@@ -76,24 +83,24 @@ namespace AI_ROCKS.Drive.DriveStates
             double opposite = (idealDirection + 180) % 360;
             if (idealDirection < opposite) // this means that modulo was not necessary ie ideal direction < 180
             {
-                if (currCompass > idealDirection && currCompass < opposite) // turn left
-                {
-                    return command = DriveCommand.LeftTurn(50);
-                }
-                else // turn right
+                if (currCompass > idealDirection && currCompass < opposite) // turn right
                 {
                     return command = DriveCommand.RightTurn(50);
+                }
+                else // turn left
+                {
+                    return command = DriveCommand.LeftTurn(50);
                 }
             }
             else // modulo necessary
             {
-                if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite)) // turn left
-                {
-                    return command = DriveCommand.LeftTurn(50);
-                }
-                else // turn right
+                if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite)) // turn right
                 {
                     return command = DriveCommand.RightTurn(50);
+                }
+                else // turn left
+                {
+                    return command = DriveCommand.LeftTurn(50);
                 }
             }
         }
