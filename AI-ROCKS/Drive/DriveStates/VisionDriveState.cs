@@ -7,8 +7,8 @@ using Emgu.CV.Structure;
 using Emgu.CV.Util;
 
 using AI_ROCKS.Drive.Models;
-using ObstacleLibrarySharp;
 using AI_ROCKS.PacketHandlers;
+using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
@@ -55,6 +55,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private VideoCapture webcam;
         private GPS gate;
+        private Scan scan;
 
         public VisionDriveState()//GPS gate)    // TODO get from DriveContext upon instantiation
         {
@@ -76,6 +77,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             // TODO how to access gate
             this.gate = null; // gate;
+            this.scan = null;
         }
 
         /// <summary>
@@ -93,6 +95,9 @@ namespace AI_ROCKS.Drive.DriveStates
             // Ball detected
             if (ball != null)
             {
+                // Detected ball so no longer scan
+                this.scan = null;
+                
                 // Within required distance
                 if (IsWithinRequiredDistance(ball))
                 {
@@ -102,19 +107,19 @@ namespace AI_ROCKS.Drive.DriveStates
 
                 // Not within required distance
                 float ballX = this.ball.CenterPoint.X;
-                if (ballX < leftThreshold)
+                if (ballX < leftThreshold)  // TODO look into this for dynamic video sizes. ie. be able to account for 1080, 720, etc.
                 {
-                    // Ball is to the left
+                    // Ball to left
                     return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION);
                 }
                 else if (ballX > rightThreshold)
                 {
-                    // Ball is to the right
+                    // Ball to right
                     return DriveCommand.RightTurn(DriveCommand.SPEED_VISION);
                 }
                 else
                 {
-                    // Ball is straight ahead
+                    // Ball straight ahead
                     return DriveCommand.Straight(DriveCommand.SPEED_VISION);
                 }
             }
@@ -123,32 +128,94 @@ namespace AI_ROCKS.Drive.DriveStates
             GPS ascent = AscentPacketHandler.GPSData;
             double distanceToGate = ascent.GetDistanceTo(this.gate);
 
-            if (distanceToGate > 4.0)
+            // Kick back to GPS
+            if (distanceToGate > 5.0)
             {
-                // Kick back to GPS
                 switchToGPS = true;
                 return DriveCommand.Straight(DriveCommand.SPEED_HALT);
             }
 
-            // TODO return azimuth-based angle. Is this good or return something else? -> Depends on how our IMU compass data works
-            double headingAngle = ascent.GetHeadingTo(this.gate);
+            // Turn to face heading, drive toward it
             if (distanceToGate > 3.0)
             {
-                // Turn and face heading
-                // Drive straight toward heading
+                short ascentHeading = AscentPacketHandler.Compass;
+                double headingToGate = ascent.GetHeadingTo(this.gate);
+
+                // Aligned with heading. Start going straight
+                if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, Scan.HEADING_THRESHOLD))
+                {
+                    return DriveCommand.Straight(DriveCommand.SPEED_VISION);
+                }
+
+                // Turn toward gate heading angle
+                if (IMU.IsHeadingWithinThreshold(ascentHeading, (headingToGate + 90) % 360, 90))
+                {
+                    return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
+                }
+                else
+                {
+                    return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                }
+
+                // Probably would work, kept as reference
+                /*
+                double lowBound = headingToGate;
+                double highBound = (headingToGate + 180) % 360;
+
+                if (lowBound < highBound)
+                {
+                    if (lowBound < ascentHeading && ascentHeading < highBound)
+                    {
+                        return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
+                    }
+                    else
+                    {
+                        return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                    }
+                }
+                else
+                {
+                    if (!(highBound < ascentHeading && ascentHeading < lowBound))
+                    {
+                        return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
+                    }
+                    else
+                    {
+                        return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                    }
+                }
+                */
             }
-            else if (distanceToGate > 2.0)
+
+            // If scanning, complete scan
+            if (this.scan != null)
+            {
+                if (!this.scan.IsComplete())
+                {
+                    return scan.FindNextDriveCommand();
+                }
+                else
+                {
+                    // Clear scan, will rescan below
+                    this.scan = null;
+                }
+            }
+
+            if (distanceToGate > 2.0)
             {
                 // Turn toward heading
                 // Scan, use heading as reference
+                this.scan = new Scan(this.gate, true);
             }
             else
             {
                 // Scan
                 // ... more to do for this case
+
+                this.scan = new Scan(this.gate, false);
             }
-            
-            return null;    //TODO
+
+            return scan.FindNextDriveCommand();
         }
 
         /// <summary>

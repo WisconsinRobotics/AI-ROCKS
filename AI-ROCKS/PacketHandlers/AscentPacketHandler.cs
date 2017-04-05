@@ -254,7 +254,15 @@ namespace AI_ROCKS.PacketHandlers
         /// </summary>
         public static short Compass
         {
-            get { return GetInstance().imuHandler.Compass; }
+            get
+            {
+                short ascentHeading = GetInstance().imuHandler.Compass;
+                if (ascentHeading < 0)
+                {
+                    ascentHeading += 180;
+                }
+                return ascentHeading;
+            }
         }
     }
 }
