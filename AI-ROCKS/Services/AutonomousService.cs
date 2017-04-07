@@ -14,15 +14,14 @@ namespace AI_ROCKS.Services
         // Obstacle avoidance
         private const long OBSTACLE_WATCHDOG_MILLIS = 1000;         // 5 second delay   // TODO verify and update
         private const long CLEAR_OBSTACLE_DELAY_MILLIS = 1000;      // 1 second delay   // TODO verify and update
+
         public const long OBSTACLE_DETECTION_DISTANCE = 2000;       // 2 meters         // TODO verify and update
 
-        public event EventHandler<ObstacleEventArgs> ObstacleEvent;
-        private readonly object sendDriveCommandLock;
-        private long lastObstacleDetected;
-
         // RDP
-        private const double REGION_SEPARATION_DISTANCE = 60.0;                         // TODO verify, move somewhere?
-        private const double RDP_THRESHOLD = 5.0;
+        private const double REGION_SEPARATION_DISTANCE = 300.0;    // Distance between regions - helps reduce noise
+        private const double RDP_THRESHOLD = 50.0;                  // How much the LRF data is reduced
+
+        public event EventHandler<ObstacleEventArgs> ObstacleEvent;
 
         private DriveContext driveContext;
         private LRF lrf;
@@ -30,14 +29,31 @@ namespace AI_ROCKS.Services
 
         public AutonomousService(String lrfPort, StateType initialStateType)
         {
-            this.driveContext = new DriveContext(this, initialStateType);
-            this.sendDriveCommandLock = new Object();
 
-            this.lrf = new LRF();
-            //lrf.Initialize(lrfPort);    // For getting LRF data over serial
+            this.driveContext = new DriveContext(initialStateType);
+            this.ObstacleEvent += driveContext.HandleObstacleEvent;
+
             int lrfUDPPort = 0;
-            Int32.TryParse(lrfPort, out lrfUDPPort);
-            lrf.Initialize(lrfUDPPort);         // For getting LRF data over UDP
+            bool lrfInit = false;
+            this.lrf = new LRF();
+            if (Int32.TryParse(lrfPort, out lrfUDPPort))
+            {
+                // For getting LRF data over UDP
+                lrfInit = lrf.Initialize(lrfUDPPort);
+            }
+            else
+            {
+                // For getting LRF data over serial
+                //lrfInit = lrf.Initialize(lrfPort);
+            }
+
+            if (!lrfInit)
+            {
+                // TODO Fail - send error code to ROCKS
+
+                // For now, throw exception (so you don't spend an hour debugging to end up figuring out you specified the port wrong..#triggered)
+                throw new ArgumentException("Invalid port for LRF - must be integer (UDP) or COM port (serial)");
+            }
         }
 
 
@@ -80,12 +96,14 @@ namespace AI_ROCKS.Services
         {
             // Get LRF data
             lrf.RefreshData();
-            List<Coordinate> coordinates = lrf.GetCoordinates(CoordinateFilter.Front);
-            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, REGION_SEPARATION_DISTANCE, RDP_THRESHOLD); //DriveContext.ASCENT_WIDTH, RDP_THRESHOLD);
+            
+            // Only get Coordinates within the LRF FOV to avoid detecting wheels as an obstacle
+            List<Coordinate> coordinates = lrf.GetCoordinates(DriveContext.LRF_MIN_ANGLE, DriveContext.LRF_MAX_ANGLE);
+
+            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, REGION_SEPARATION_DISTANCE, RDP_THRESHOLD);
             Plot plot = new Plot(regions);
 
-            // See if any event within maximum allowed distance
-            // Probably add this as a function in ObstacleLibrary:
+            // See if any obstacle within maximum allowed distance
             bool obstacleDetected = false;
             foreach (Region region in plot.Regions)
             {
@@ -93,14 +111,11 @@ namespace AI_ROCKS.Services
                 {
                     if (coordinate.R < OBSTACLE_DETECTION_DISTANCE)
                     {
-                        //if (coordinate.Theta > 1.0472 && coordinate.Theta < 2.0944)
-                        //{
-                            if (Math.Abs(coordinate.X) < DriveContext.ASCENT_WIDTH/2)
-                            {
-                                obstacleDetected = true;
-                                break;
-                            }
-                        //}
+                        if (Math.Abs(coordinate.X) < DriveContext.ASCENT_WIDTH/2)
+                        {
+                            obstacleDetected = true;
+                            break;
+                        }
                     }
                 }
 
@@ -140,23 +155,7 @@ namespace AI_ROCKS.Services
         /// <returns>bool - true if the last obstacle was detected within threshold time, false otherwise</returns>
         private bool IsLastObstacleWithinInterval(long milliseconds)
         {
-            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < lastObstacleDetected + milliseconds;
-        }
-
-        /// <summary>
-        /// Property representing when the last obstacle was detected (unix time in milliseconds).
-        /// </summary>
-        public long LastObstacleDetected
-        {
-            set { this.lastObstacleDetected = value; }
-        }
-
-        /// <summary>
-        /// Property to get the sendDriveCommandLock.
-        /// </summary>
-        public Object SendDriveCommandLock
-        {
-            get { return this.sendDriveCommandLock; }
+            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < this.driveContext.LastObstacleDetected + milliseconds;
         }
     }
 }

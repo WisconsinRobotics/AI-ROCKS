@@ -13,11 +13,11 @@ namespace AI_ROCKS.Drive.DriveStates
     // CURRENTLY WORKING AS IF COMPASS RETURNS ASMUTH (COMPASS NOT UNIT CIRCLE)
     class GPSDriveState : IDriveState
     {
-        private const float DIRECTION_VATIANCE_NOISE = 2f; // gives threshold that "straight" is considered
+        private const float DIRECTION_VATIANCE_NOISE = 5f; // gives threshold that "straight" is considered
         private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
 
         private double idealDirection;
-        GPS finalGPS = new GPS(0, 1, 32, 0, 3, 45);
+        GPS finalGPS = new GPS(0, 0, 58, 0, 3, 7);
 
         //GPS currGPS;
         //short currCompass;
@@ -40,7 +40,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 return DriveCommand.Straight(50);
             }
             GPS currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
-            short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
+            short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass; // currCompass needs to be received as a compass from gazebo
             
             // might need to be changed
  /*           if (currCompass < 0)
@@ -68,7 +68,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 idealDirection = idealDirection + 180;
             }
             //Flipping direction to match the opposite navigation system as in gazebo
-            idealDirection = (idealDirection + 180) % 360;
+            //idealDirection = (idealDirection + 180) % 360;
              // if lined up within numeric precision, drive straight
             if (Math.Abs(idealDirection - currCompass) < DIRECTION_VATIANCE_NOISE
                 || Math.Abs(idealDirection - currCompass) > (360 - DIRECTION_VATIANCE_NOISE))
