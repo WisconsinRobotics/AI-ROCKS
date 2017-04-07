@@ -75,8 +75,8 @@ namespace AI_ROCKS.Drive.Models
         }
 
         /// <summary>
-        /// Find heading/bearing toward another GPS points. Refer here for more info:
-        /// http://www.movable-type.co.uk/scripts/latlong.html
+        /// Find heading/bearing toward another GPS points. This uses Rhumb bearing calculations.
+        /// Refer here for more info: http://www.movable-type.co.uk/scripts/latlong.html
         /// </summary>
         /// <param name="other">GPS to measure heading to.</param>
         /// <returns>double - the heading toward `other`, in degrees using Azimuth angle (i.e. compass angles).</returns>
@@ -106,6 +106,21 @@ namespace AI_ROCKS.Drive.Models
                     Math.Sin(radians.Item1) * Math.Cos(otherRadians.Item1) * Math.Cos(otherRadians.Item2 - radians.Item2);
             var bearing = Math.Atan2(y, x); //radians
             */
+        }
+
+        public static double ConvertAzimuthToUnitCircle(double azimuthAngle)
+        {
+            // Convert from Azimuth system that compasses use (0 = N, 90 = E, 180 = S, 270 = W - clockwise)
+            // to unit circle that ObstacleLibrary uses (0 = E, 90 = N, 180 = W, 270 = S - counterclockwise).
+            // Do through equation: h = 450 - a. If h > 360, h = h - 360.  
+            double unitCircleDeg = 450 - azimuthAngle;
+            if (unitCircleDeg >= 360)
+            {
+                unitCircleDeg -= 360;
+            }
+
+            double unitCircleRad = unitCircleDeg * Math.PI / 180.0;
+            return unitCircleRad;
         }
 
         public short LatDegrees

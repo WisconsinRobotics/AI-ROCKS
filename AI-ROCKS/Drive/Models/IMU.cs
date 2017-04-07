@@ -21,7 +21,30 @@ namespace AI_ROCKS.Drive.Models
             this.yOrient = yOrient;
             this.zOrient = zOrient;
         }
-        
+
+
+        public static bool IsHeadingWithinThreshold(double heading, double targetHeading, double threshold)
+        {
+            double lowBound = targetHeading - threshold;
+            double highBound = targetHeading + threshold;
+            if (lowBound < 0)
+            {
+                lowBound += 360;
+            }
+            if (highBound >= 360)
+            {
+                highBound %= 360;
+            }
+
+            if (lowBound < highBound)
+            {
+                return lowBound < heading && heading < highBound;
+            }
+            else
+            {
+                return !(highBound < heading && heading < lowBound);
+            }
+        }
 
         public short XAccel
         {
