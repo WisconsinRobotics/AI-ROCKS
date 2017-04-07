@@ -23,7 +23,7 @@ namespace AI_ROCKS.PacketHandlers
     {
         // BCL opcodes
         const byte OPCODE_REPORT_GPS = 0x51;
-        const byte OPCODE_REPORT_IMU = 0x55;
+        const byte OPCODE_REPORT_IMU = 0x56;
 
         // Constants for communicating with ROCKS
         const int AI_ROCKS_PORT = 15000;
