@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-//using AForge.Video;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -14,8 +13,6 @@ namespace AI_ROCKS.Drive.DriveStates
 {
     class VisionDriveState : IDriveState
     {
-        //MJPEGStream stream;
-        //const string CAMERA_URL = "http://192.168.1.8/cgi-bin/mjpg/video.cgi";
         const string CAMERA_USERNAME = "admin";
         const string CAMERA_PASSWORD = "i#3Er0b0";
         const string CAMERA_IP_MAST = "192.168.1.8";
@@ -62,15 +59,6 @@ namespace AI_ROCKS.Drive.DriveStates
             this.webcam = new VideoCapture(CAMERA_URL);
             this.webcam.ImageGrabbed += WebcamGrab;
             this.webcam.Start();
-
-            /*
-            stream = new MJPEGStream(CAMERA_URL);
-            stream.Login = CAMERA_USERNAME;
-            stream.Password = CAMERA_PASSWORD;
-            stream.ForceBasicAuthentication = true;
-            stream.NewFrame += NetworkCamGrab;
-            stream.Start();
-            */
 
             this.ball = null;
             this.ballLock = new Object();
@@ -366,15 +354,6 @@ namespace AI_ROCKS.Drive.DriveStates
             webcam.Retrieve(frame);
             ProcessFrame(frame.ToImage<Bgr, byte>());
         }
-
-        /*
-        private void NetworkCamGrab(Object sender, NewFrameEventArgs eventArgs)
-        {
-            Bitmap bitmap = eventArgs.Frame;
-            Image<Bgr, byte> frame = new Image<Bgr, byte>(bitmap);
-            ProcessFrame(frame);
-        }
-        */
 
         private void ProcessFrame(Image<Bgr, byte> image)
         {
