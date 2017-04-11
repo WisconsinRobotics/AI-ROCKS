@@ -53,15 +53,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AForge">
-      <HintPath>..\AForge.dll</HintPath>
-    </Reference>
-    <Reference Include="AForge.Video">
-      <HintPath>..\AForge.Video.dll</HintPath>
-    </Reference>
-    <Reference Include="AForge.Vision">
-      <HintPath>..\AForge.Vision.dll</HintPath>
-    </Reference>
     <Reference Include="Emgu.CV.World">
       <HintPath>..\Emgu.CV.World.dll</HintPath>
     </Reference>
