@@ -4,7 +4,6 @@ using System.Threading;
 using AI_ROCKS.Drive.DriveStates;
 using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
-using AI_ROCKS.Services;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive
@@ -13,20 +12,30 @@ namespace AI_ROCKS.Drive
     {
         public const float ASCENT_WIDTH = 1168.4f;
 
+        // LRF
+        public const long LRF_MAX_RELIABLE_DISTANCE = 6000;             // TODO get from LRFLibrary
+        public const float LRF_MIN_ANGLE = (float)Math.PI / 4;          // 45 degrees right edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
+        public const float LRF_MAX_ANGLE = 3 * (float)Math.PI / 4;      // 135 degrees left edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
+
+        // LRF field of view (FOV) edges
+        public static readonly Line LRF_RIGHT_FOV_EDGE =
+            new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MIN_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
+        public static readonly Line LRF_LEFT_FOV_EDGE =
+            new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MAX_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
+
         private IDriveState driveState;
         private StateType stateType;
-        private AutonomousService autonomousService;
 
-        public DriveContext(AutonomousService autonomousService, StateType initialStateType)
+        private readonly Object sendDriveCommandLock;
+        private long lastObstacleDetected;
+
+        public DriveContext(StateType initialStateType)
         {
             // GPSDriveState is default unless specified
             this.driveState = StateTypeHelper.ToDriveState(initialStateType);
             this.stateType = initialStateType;
             
-            this.autonomousService = autonomousService;
-            
-            // Subscribe to ObstacleEvent
-            autonomousService.ObstacleEvent += HandleObstacleEvent;
+            this.sendDriveCommandLock = new Object();
         }
 
 
@@ -41,13 +50,15 @@ namespace AI_ROCKS.Drive
 
         /// <summary>
         /// Issue the specified DriveCommand to ROCKS through AscentPacketHandler.
+        /// 
+        /// If the SendDriveCommandLock cannot be obtained, do not send the DriveCommand. TODO why? Shore this up
         /// </summary>
         /// <param name="driveCommand">The DriveCommand to be executed.</param>
         public void Drive(DriveCommand driveCommand)
         {
             // Obtain lock
             bool isLocked = false;
-            Monitor.TryEnter(autonomousService.SendDriveCommandLock, ref isLocked);
+            Monitor.TryEnter(this.sendDriveCommandLock, ref isLocked);
 
             if (isLocked)
             {
@@ -55,10 +66,8 @@ namespace AI_ROCKS.Drive
                 DriveHandler.SendDriveCommand(driveCommand);
 
                 // Release lock
-                Monitor.Exit(autonomousService.SendDriveCommandLock);
+                Monitor.Exit(this.sendDriveCommandLock);
             }
-            
-            // Return value?
         }
 
         /// <summary>
@@ -93,6 +102,14 @@ namespace AI_ROCKS.Drive
             return nextStateType;
         }
 
+        /// <summary>
+        /// Function subscribed to AutonomousService's ObstacleEvent to handle an ObstacleEvent when it's triggered.
+        /// 
+        /// This function gets the Plot representing the detected obstacles and uses the current DriveState's 
+        /// FindBestGap() to determine the best gap to drive toward. It then issues the corresponding DriveCommand.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e">ObstacleEventArgs that contains the Plot representing the detected obstacles.</param>
         public void HandleObstacleEvent(Object sender, ObstacleEventArgs e)
         {
             DriveCommand driveCommand;
@@ -101,40 +118,66 @@ namespace AI_ROCKS.Drive
             // Find the best gap
             Line bestGap = this.driveState.FindBestGap(obstacles);
 
+            // If bestGap exists, drive toward it's midpoint. Otherwise, turn right
             if (bestGap != null)
             {
-                // Drive toward bestGap's midpoint
                 Coordinate midpoint = bestGap.FindMidpoint();
+                double angle = midpoint.Theta;
 
-                // Straight ahead is 0 - calculate angle accordingly
-                double angle = midpoint.Theta;   // TODO Determine this - how to scale it for our angle representation
-                driveCommand = new DriveCommand(angle, DriveCommand.CLEAR_OBSTACLE_SPEED);
+                driveCommand = new DriveCommand(angle, DriveCommand.SPEED_CLEAR_OBSTACLE);
             }
             else
             {
-                // Turn right
-                driveCommand = DriveCommand.RightTurn(DriveCommand.CLEAR_OBSTACLE_SPEED);      // TODO find appropriate value here - want to be slower?
+                driveCommand = DriveCommand.RightTurn(DriveCommand.SPEED_CLEAR_OBSTACLE);
             }
 
-            lock (autonomousService.SendDriveCommandLock)
+            // Send driveCommand
+            lock (this.sendDriveCommandLock)
             {
                 DriveHandler.SendDriveCommand(driveCommand);
-                autonomousService.LastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                this.lastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
-            
-            // Return value?
         }
 
+        /// <summary>
+        /// Property for the current DriveState.
+        /// </summary>
         public IDriveState DriveState
         {
             get { return this.driveState; }
             set { this.driveState = value; }
         }
 
+        /// <summary>
+        /// Property for the current StateType.
+        /// </summary>
         public StateType StateType
         {
             get { return stateType; }
             set { stateType = value; }
+        }
+
+        /// <summary>
+        /// Property representing when the last obstacle was detected (unix time in milliseconds).
+        /// </summary>
+        public long LastObstacleDetected
+        {
+            get { return this.lastObstacleDetected; }
+            set { this.lastObstacleDetected = value; }
+        }
+
+        /// <summary>
+        /// Return a Line representing a gap straight in front of Ascent. This gap is a Line twice the width 
+        /// of Ascent and half the maximum distance.
+        /// </summary>
+        /// <returns> Line - Line representing an open gap straight in front of Ascent.</returns>
+        public static Line GapStraightInFront()
+        {
+            // Return Line representing gap straight in front of Ascent
+            Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+            Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
+
+            return new Line(leftCoord, rightCoord);
         }
     }
 }

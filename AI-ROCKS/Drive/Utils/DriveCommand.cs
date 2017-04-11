@@ -4,11 +4,15 @@ namespace AI_ROCKS.Drive
 {
     class DriveCommand
     {
-        public const byte CLEAR_OBSTACLE_SPEED = 30;            //TODO verify
-        public const byte OBSTACLE_DRIVE_STATE_SPEED = 50;      // TODO put this somewhere else - Make it work for multiple states too
+        public const byte SPEED_NORMAL_OPERATION = 50;
+        public const byte SPEED_CLEAR_OBSTACLE = 40;
+        public const byte SPEED_AVOID_OBSTACLE = 30;
+        public const byte SPEED_VISION = 30;
+        public const byte SPEED_HALT = 0;
 
-        private const double STRAIGHT = Math.PI / 2;              //TODO look at depending on what we do for angles (i.e. where is 0)
-        private const double RIGHT = 0;       //TODO look at depending on what we do for angles (i.e. where is 0)
+        private const double ANGLE_STRAIGHT = Math.PI / 2;
+        private const double ANGLE_RIGHT = 0;
+        private const double ANGLE_LEFT = Math.PI;
 
         private sbyte left;
         private sbyte right;
@@ -39,7 +43,7 @@ namespace AI_ROCKS.Drive
                 this.right = (sbyte)-speed;
 
             }
-            else if (angle.CompareTo(Math.PI / 2) > 0 && angle.CompareTo(Math.PI) < 0)
+            else if (angle.CompareTo(Math.PI / 2) > 0 && angle.CompareTo(Math.PI) <= 0)
             {
                 // Turn left
                 this.left = (sbyte)-speed;
@@ -55,15 +59,22 @@ namespace AI_ROCKS.Drive
         public static DriveCommand Straight(byte speed)
         {
             // Create DriveCommand that represents a Straight command of specified speed
-            DriveCommand straight = new DriveCommand(STRAIGHT, speed);
+            DriveCommand straight = new DriveCommand(ANGLE_STRAIGHT, speed);
             return straight;
         }
 
         public static DriveCommand RightTurn(byte speed)
         {
             // Create DriveCommand that represents a Right command of specified speed
-            DriveCommand right = new DriveCommand(RIGHT, speed);
+            DriveCommand right = new DriveCommand(ANGLE_RIGHT, speed);
             return right;
+        }
+
+        public static DriveCommand LeftTurn(byte speed)
+        {
+            // Create DriveCommand that represents a Left command of specified speed
+            DriveCommand left = new DriveCommand(ANGLE_LEFT, speed);
+            return left;
         }
 
         public sbyte Left
