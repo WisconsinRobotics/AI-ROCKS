@@ -15,7 +15,7 @@ namespace AI_ROCKS.Services
         private const long OBSTACLE_WATCHDOG_MILLIS = 1000;         // 5 second delay   // TODO verify and update
         private const long CLEAR_OBSTACLE_DELAY_MILLIS = 1000;      // 1 second delay   // TODO verify and update
 
-        public const long OBSTACLE_DETECTION_DISTANCE = 2000;       // 2 meters         // TODO verify and update
+        public const long OBSTACLE_DETECTION_DISTANCE = 2000; //4 for testing with gazebo      // 2 meters         // TODO verify and update
 
         // RDP
         private const double REGION_SEPARATION_DISTANCE = 300.0;    // Distance between regions - helps reduce noise
@@ -142,7 +142,7 @@ namespace AI_ROCKS.Services
 
             if (handler != null)
             {
-                // BeginInvoke here? use same thread or spawn new thread?
+                // BeginInvoke here? use same thread or spawn new thread?b
                 handler(this, e);
             }
         }

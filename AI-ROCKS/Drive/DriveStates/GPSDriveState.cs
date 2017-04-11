@@ -41,15 +41,16 @@ namespace AI_ROCKS.Drive.DriveStates
             }
             GPS currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
             short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass; // currCompass needs to be received as a compass from gazebo
-            
+            idealDirection = currGPS.GetHeadingTo(finalGPS);
             // might need to be changed
- /*           if (currCompass < 0)
-                currCompass = (short)(-1 * currCompass);
-            else
-                currCompass = (short)(360 - currCompass);*/
+            /*           if (currCompass < 0)
+                           currCompass = (short)(-1 * currCompass);
+                       else
+                           currCompass = (short)(360 - currCompass);*/
 
             // get data in good form 
-            float finalLat, finalLong, currLat, currLong;
+
+            /*float finalLat, finalLong, currLat, currLong;
             finalLat = finalGPS.LatDegrees + (finalGPS.LatMinutes / 60f) + (finalGPS.LatSeconds / 60f / 60f);
             finalLong = finalGPS.LongDegrees+ (finalGPS.LongMinutes / 60f) + (finalGPS.LongSeconds / 60f / 60f);
             currLat = currGPS.LatDegrees + (currGPS.LatMinutes / 60f) + (currGPS.LatSeconds / 60f / 60f);
@@ -57,10 +58,10 @@ namespace AI_ROCKS.Drive.DriveStates
             
             // calculate ideal direction
             idealDirection = Math.Atan2((finalLat - currLat), (finalLong - currLong));
-           /* if (idealDirection < 0)
+            if (idealDirection < 0)
             {
                 idealDirection += (float)(2 * Math.PI);
-            }*/
+            }
             idealDirection = idealDirection * (180 / Math.PI);
             idealDirection = 90 - idealDirection;
             if ((finalLong - currLong) < 0)
@@ -68,7 +69,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 idealDirection = idealDirection + 180;
             }
             //Flipping direction to match the opposite navigation system as in gazebo
-            //idealDirection = (idealDirection + 180) % 360;
+            //idealDirection = (idealDirection + 180) % 360; */
              // if lined up within numeric precision, drive straight
             if (Math.Abs(idealDirection - currCompass) < DIRECTION_VATIANCE_NOISE
                 || Math.Abs(idealDirection - currCompass) > (360 - DIRECTION_VATIANCE_NOISE))
@@ -83,24 +84,24 @@ namespace AI_ROCKS.Drive.DriveStates
             double opposite = (idealDirection + 180) % 360;
             if (idealDirection < opposite) // this means that modulo was not necessary ie ideal direction < 180
             {
-                if (currCompass > idealDirection && currCompass < opposite) // turn right
-                {
-                    return command = DriveCommand.RightTurn(50);
-                }
-                else // turn left
+                if (currCompass > idealDirection && currCompass < opposite) // turn left
                 {
                     return command = DriveCommand.LeftTurn(50);
+                }
+                else // turn right
+                {
+                    return command = DriveCommand.RightTurn(50);
                 }
             }
             else // modulo necessary
             {
-                if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite)) // turn right
-                {
-                    return command = DriveCommand.RightTurn(50);
-                }
-                else // turn left
+                if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite)) // turn left
                 {
                     return command = DriveCommand.LeftTurn(50);
+                }
+                else // turn right
+                {
+                    return command = DriveCommand.RightTurn(50);
                 }
             }
         }
@@ -144,20 +145,7 @@ namespace AI_ROCKS.Drive.DriveStates
             GPS currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
             short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
 
-            // get data in good form 
-            float finalLat, finalLong, currLat, currLong;
-            finalLat = finalGPS.LatDegrees + (finalGPS.LatMinutes / 60f) + (finalGPS.LatSeconds / 60f / 60f);
-            finalLong = finalGPS.LongDegrees + (finalGPS.LongMinutes / 60f) + (finalGPS.LongSeconds / 60f / 60f);
-            currLat = currGPS.LatDegrees + (currGPS.LatMinutes / 60f) + (currGPS.LatSeconds / 60f / 60f);
-            currLong = currGPS.LongDegrees + (currGPS.LongMinutes / 60f) + (currGPS.LongSeconds / 60f / 60f);
-
-            // calculate ideal direction
-            idealDirection = Math.Atan2((finalLat - currLat), (finalLong - currLong));
-            idealDirection = idealDirection * (180 / Math.PI);
-            idealDirection = -idealDirection;
-            idealDirection = idealDirection + 90;
-            if (idealDirection < 0)
-                idealDirection = idealDirection + 360;
+            idealDirection = currGPS.GetHeadingTo(finalGPS);
 
             // Check first and last Region gaps (may be same Region if only one Region)
             Region firstRegion = regions.ElementAt(0);
