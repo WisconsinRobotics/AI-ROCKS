@@ -13,52 +13,51 @@ namespace AI_ROCKS.Drive.DriveStates
 {
     class VisionDriveState : IDriveState
     {
+        // Camera initialization
         const string CAMERA_USERNAME = "admin";
         const string CAMERA_PASSWORD = "i#3Er0b0";
         const string CAMERA_IP_MAST = "192.168.1.8";
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
 
-        // Constants for hough circles
-        const int param1 = 12;
-        const int param2 = 24;
-        const double dp = 1.5;
-        const double minDist = 100;
-        const int minRadius = 1;
-
-        // Limits of HSV masking
-        Hsv lower = new Hsv(22, 120, 114);
-        Hsv upper = new Hsv(37, 255, 255);
-        Hsv lowerTight = new Hsv(22, 120, 114);
-        Hsv upperTight = new Hsv(37, 255, 255);
-        Hsv lowerLoose = new Hsv(22, 52, 72);
-        Hsv upperLoose = new Hsv(32, 240, 254);
-
-        const int leftThreshold = 200;
-        const int rightThreshold = 300;
-
         // TODO put these somewhere else? A Vision handler or something?
+        // Camera constants
         public const Double FOCAL_LENGTH = -1;      // 3.6mm (6mm optional)     //TODO validate, convert into what we need (units)?
         public const Double KNOWN_WIDTH = 2.6;      // inches                   //TODO validate
         public const int PIXELS_WIDTH = 1920;       // May change, make dynamic?
         public const int PIXELS_HEIGHT = 1080;      // May change, make dynamic?
 
-        private const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
+        // Circle detection
+        const int MIN_RADIUS = 20;
 
+        // Gaussian blur
+        const int GAUSSIAN_KERNELSIZE = 15;
+
+        // Limits of HSV masking
+        Hsv minHSV = new Hsv(22, 74, 120);
+        Hsv maxHSV = new Hsv(152, 155, 230);
+
+        // Turning thresholds
+        const int leftThreshold = 200;
+        const int rightThreshold = 300;
+
+        // Navigation utils
+        private const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
         private bool switchToGPS = false;
 
+        // Detection objects
         private TennisBall ball;
         private long ballTimestamp;
         private readonly Object ballLock;
 
-        private VideoCapture webcam;
+        // Navigation objects
+        private VideoCapture camera;
         private GPS gate;
         private Scan scan;
 
+
         public VisionDriveState()//GPS gate)    // TODO get from DriveContext upon instantiation
         {
-            this.webcam = new VideoCapture(CAMERA_URL);
-            this.webcam.ImageGrabbed += WebcamGrab;
-            this.webcam.Start();
+            StartCamera();
 
             this.ball = null;
             this.ballLock = new Object();
@@ -348,23 +347,38 @@ namespace AI_ROCKS.Drive.DriveStates
             return null;
         }
 
-        private void WebcamGrab(Object sender, EventArgs e)
+        private void StartCamera()
         {
-            Mat frame = new Mat();
-            webcam.Retrieve(frame);
-            ProcessFrame(frame.ToImage<Bgr, byte>());
+            this.camera = new VideoCapture(CAMERA_URL);
+            this.camera.ImageGrabbed += FrameGrabbed;
+            this.camera.Start();
         }
 
-        private void ProcessFrame(Image<Bgr, byte> image)
+        private void FrameGrabbed(Object sender, EventArgs e)
         {
-            Image<Bgr, byte> blur = image.SmoothGaussian(15);
-            Image<Hsv, byte> hsv = blur.Convert<Hsv, byte>();
+            Mat frame = new Mat();
+            camera.Retrieve(frame);
+            ProcessFrame(frame);
+        }
 
-            // Masks
-            Image<Gray, byte> mask = hsv.InRange(lowerTight, upperTight).Erode(2).Dilate(2);
-            Image<Bgr, byte> coloredMask = mask.Convert<Bgr, byte>() &image;
-            Image<Gray, byte> grayMask = coloredMask.Convert<Gray, byte>();
+        private void ProcessFrame(Mat frame)
+        {
+            // Convert to Image type
+            Image<Bgr, byte> frameImage = frame.ToImage<Bgr, byte>();
 
+            // Apply Gaussian Blur and Perform HSV masking
+            Image<Bgr, byte> blur = frameImage.SmoothGaussian(GAUSSIAN_KERNELSIZE);
+            Image<Gray, byte> mask = blur.Convert<Hsv, byte>().InRange(minHSV, maxHSV);
+
+            // Erode and Dilate
+            mask = mask.Erode(2).Dilate(2);
+
+            // Produce a Colored mask and Grayscaled mask
+            Image<Bgr, byte> coloredMask = mask.Convert<Bgr, byte>() & frameImage;
+            Image<Gray, byte> grayMask = mask & frameImage.Convert<Gray, byte>();
+            //Image<Gray, byte> grayMask = coloredMask.Convert<Gray, byte>();
+
+            // Find the tennis ball
             CircleF candidateBall = new CircleF();
             bool isBallDetected = FindTennisBall(grayMask, ref candidateBall);
 
@@ -379,6 +393,11 @@ namespace AI_ROCKS.Drive.DriveStates
         }
 
         private bool FindTennisBall(Image<Gray, byte> mask, ref CircleF outCircle)
+        {
+            return FindEnclosingCircle(mask, ref outCircle);
+        }
+
+        private bool FindEnclosingCircle(Image<Gray, byte> mask, ref CircleF outCircle)
         {
             bool found = false;
 
@@ -399,8 +418,12 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
                 if (CvInvoke.ContourArea(max, false) > 300)
                 {
-                    outCircle = CvInvoke.MinEnclosingCircle(max);
-                    found = true;
+                    CircleF tempCircle = CvInvoke.MinEnclosingCircle(max);
+                    if (tempCircle.Radius > MIN_RADIUS)
+                    {
+                        found = true;
+                        outCircle = tempCircle;
+                    }
                 }
             }
 

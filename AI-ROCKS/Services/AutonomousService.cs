@@ -36,11 +36,11 @@ namespace AI_ROCKS.Services
             this.lrf = new LRF();
             if (Int32.TryParse(lrfPort, out lrfUDPPort))
             {
-                //lrfInit = lrf.Initialize(lrfUDPPort);   // For getting LRF data over UDP
+                lrfInit = lrf.Initialize(lrfUDPPort);   // For getting LRF data over UDP
             }
             else
             {
-                lrfInit = lrf.Initialize(lrfPort);      // For getting LRF data over serial
+                //lrfInit = lrf.Initialize(lrfPort);      // For getting LRF data over serial
             }
 
             if (!lrfInit)
