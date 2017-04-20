@@ -37,8 +37,8 @@ namespace AI_ROCKS.Drive.DriveStates
         Hsv maxHSV = new Hsv(152, 155, 230);
 
         // Turning thresholds
-        const int leftThreshold = 200;
-        const int rightThreshold = 300;
+        const int leftThreshold = 3 * PIXELS_WIDTH / 8;     // 3/8 from left
+        const int rightThreshold = 5 * PIXELS_WIDTH / 8;    // 5/8 from left
 
         // Navigation utils
         private const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
@@ -82,127 +82,12 @@ namespace AI_ROCKS.Drive.DriveStates
             // Ball detected
             if (ball != null)
             {
-                // Detected ball so no longer scan
-                this.scan = null;
-                
-                // Within required distance
-                if (IsWithinRequiredDistance(ball))
-                {
-                    // TODO handle sending success - need ACK too? Look into
-                    return DriveCommand.Straight(DriveCommand.SPEED_HALT);
-                }
-
-                // Not within required distance
-                float ballX = this.ball.CenterPoint.X;
-                if (ballX < leftThreshold)  // TODO look into this for dynamic video sizes. ie. be able to account for 1080, 720, etc.
-                {
-                    // Ball to left
-                    return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION);
-                }
-                else if (ballX > rightThreshold)
-                {
-                    // Ball to right
-                    return DriveCommand.RightTurn(DriveCommand.SPEED_VISION);
-                }
-                else
-                {
-                    // Ball straight ahead
-                    return DriveCommand.Straight(DriveCommand.SPEED_VISION);
-                }
+                return DriveBallDetected();
             }
 
-            // Ball not detected
-            GPS ascent = AscentPacketHandler.GPSData;
-            double distanceToGate = ascent.GetDistanceTo(this.gate);
+            // No ball detected
+            return DriveNoBallDetected();
 
-            // Kick back to GPS
-            if (distanceToGate > 5.0)
-            {
-                switchToGPS = true;
-                return DriveCommand.Straight(DriveCommand.SPEED_HALT);
-            }
-
-            // Turn to face heading, drive toward it
-            if (distanceToGate > 3.0)
-            {
-                short ascentHeading = AscentPacketHandler.Compass;
-                double headingToGate = ascent.GetHeadingTo(this.gate);
-
-                // Aligned with heading. Start going straight
-                if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, Scan.HEADING_THRESHOLD))
-                {
-                    return DriveCommand.Straight(DriveCommand.SPEED_VISION);
-                }
-
-                // Turn toward gate heading angle
-                if (IMU.IsHeadingWithinThreshold(ascentHeading, (headingToGate + 90) % 360, 90))
-                {
-                    return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
-                }
-                else
-                {
-                    return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
-                }
-
-                // Probably would work, kept as reference
-                /*
-                double lowBound = headingToGate;
-                double highBound = (headingToGate + 180) % 360;
-
-                if (lowBound < highBound)
-                {
-                    if (lowBound < ascentHeading && ascentHeading < highBound)
-                    {
-                        return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
-                    }
-                    else
-                    {
-                        return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
-                    }
-                }
-                else
-                {
-                    if (!(highBound < ascentHeading && ascentHeading < lowBound))
-                    {
-                        return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
-                    }
-                    else
-                    {
-                        return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
-                    }
-                }
-                */
-            }
-
-            // If scanning, complete scan
-            if (this.scan != null)
-            {
-                if (!this.scan.IsComplete())
-                {
-                    return scan.FindNextDriveCommand();
-                }
-                else
-                {
-                    // Clear scan, will rescan below
-                    this.scan = null;
-                }
-            }
-
-            if (distanceToGate > 2.0)
-            {
-                // Turn toward heading
-                // Scan, use heading as reference
-                this.scan = new Scan(this.gate, true);
-            }
-            else
-            {
-                // Scan
-                // ... more to do for this case
-
-                this.scan = new Scan(this.gate, false);
-            }
-
-            return scan.FindNextDriveCommand();
         }
 
         /// <summary>
@@ -428,6 +313,141 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
             return found;
+        }
+
+        private DriveCommand DriveBallDetected()
+        {
+            if (ball == null)
+            {
+                // Shouldn't be called if ball not detected
+                // TODO could this be a race condition? Pass copy of ball as param?
+                return null;
+            }
+
+
+            // Detected ball so no longer scan
+            this.scan = null;
+
+            // Within required distance
+            if (IsWithinRequiredDistance(ball))
+            {
+                // TODO handle sending success - need ACK too? Look into
+                return DriveCommand.Straight(DriveCommand.SPEED_HALT);
+            }
+
+            // Not within required distance
+            float ballX = this.ball.CenterPoint.X;
+            if (ballX < leftThreshold)  // TODO look into this for dynamic video sizes. ie. be able to account for 1080, 720, etc.
+            {
+                // Ball to left
+                return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION);
+            }
+            else if (ballX > rightThreshold)
+            {
+                // Ball to right
+                return DriveCommand.RightTurn(DriveCommand.SPEED_VISION);
+            }
+            else
+            {
+                // Ball straight ahead
+                return DriveCommand.Straight(DriveCommand.SPEED_VISION);
+            }
+        }
+
+        private DriveCommand DriveNoBallDetected()
+        {
+            // Ball not detected
+            GPS ascent = AscentPacketHandler.GPSData;
+            double distanceToGate = ascent.GetDistanceTo(this.gate);
+
+            // Kick back to GPS
+            if (distanceToGate > 5.0)
+            {
+                switchToGPS = true;
+                return DriveCommand.Straight(DriveCommand.SPEED_HALT);
+            }
+
+            // Turn to face heading, drive toward it
+            if (distanceToGate > 3.0)
+            {
+                short ascentHeading = AscentPacketHandler.Compass;
+                double headingToGate = ascent.GetHeadingTo(this.gate);
+
+                // Aligned with heading. Start going straight
+                if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, Scan.HEADING_THRESHOLD))
+                {
+                    return DriveCommand.Straight(DriveCommand.SPEED_VISION);
+                }
+
+                // Turn toward gate heading angle
+                if (IMU.IsHeadingWithinThreshold(ascentHeading, (headingToGate + 90) % 360, 90))
+                {
+                    return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
+                }
+                else
+                {
+                    return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                }
+
+                // Probably would work, kept as reference
+                /*
+                double lowBound = headingToGate;
+                double highBound = (headingToGate + 180) % 360;
+
+                if (lowBound < highBound)
+                {
+                    if (lowBound < ascentHeading && ascentHeading < highBound)
+                    {
+                        return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
+                    }
+                    else
+                    {
+                        return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                    }
+                }
+                else
+                {
+                    if (!(highBound < ascentHeading && ascentHeading < lowBound))
+                    {
+                        return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
+                    }
+                    else
+                    {
+                        return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                    }
+                }
+                */
+            }
+
+            // If scanning, complete scan
+            if (this.scan != null)
+            {
+                if (!this.scan.IsComplete())
+                {
+                    return scan.FindNextDriveCommand();
+                }
+                else
+                {
+                    // Clear scan, will rescan below
+                    this.scan = null;
+                }
+            }
+
+            if (distanceToGate > 2.0)
+            {
+                // Turn toward heading
+                // Scan, use heading as reference
+                this.scan = new Scan(this.gate, true);
+            }
+            else
+            {
+                // Scan
+                // ... more to do for this case
+
+                this.scan = new Scan(this.gate, false);
+            }
+
+            return scan.FindNextDriveCommand();
         }
 
         private bool IsOpenPathToBall()
