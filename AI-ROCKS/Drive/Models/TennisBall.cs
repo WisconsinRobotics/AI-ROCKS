@@ -13,7 +13,7 @@ namespace AI_ROCKS.Drive.Models
 {
     class TennisBall
     {
-        private Coordinate centerPoint;
+        private Coordinate centerPoint;     // With respect to image frame, not distance in space (like an obstacle)
         private Double radius;
         private Double distanceToCenter;
         private Double angle;
@@ -87,7 +87,7 @@ namespace AI_ROCKS.Drive.Models
 
             // Create "top-down" view of ball with respect to x and y
             float x = center.X - VisionDriveState.PIXELS_WIDTH / 2;
-            float y = (float)Math.Sqrt(Math.Pow(x, 2) + Math.Pow(distanceToCenter, 2));
+            float y = (float)Math.Sqrt(Math.Pow(distanceToCenter, 2) - Math.Pow(x, 2));
 
             Coordinate topDown = new Coordinate(x, y, CoordSystem.Cartesian);
 

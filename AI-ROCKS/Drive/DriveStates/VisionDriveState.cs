@@ -39,6 +39,8 @@ namespace AI_ROCKS.Drive.DriveStates
         // Turning thresholds
         const int leftThreshold = 3 * PIXELS_WIDTH / 8;     // 3/8 from left
         const int rightThreshold = 5 * PIXELS_WIDTH / 8;    // 5/8 from left
+        const double TURN_THRESHOLD_ANGLE_LEFT = 2 * Math.PI / 3;
+        const double TURN_THRESHOLD_ANGLE_RIGHT = Math.PI / 3;
 
         // Navigation utils
         private const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
@@ -207,7 +209,6 @@ namespace AI_ROCKS.Drive.DriveStates
 
             List<Region> regions = obstacles.Regions;
             
-            double bestGapDistance = 0;
             Line bestGap = null;
 
             // Sanity check - if zero Regions exist, return Line representing gap straight in front of Ascent
@@ -223,11 +224,18 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
             // If open path to ball exists, drive toward it
-            if (IsOpenPathToBall())
+            if (IsOpenPathToBall(obstacles))
             {
-                // Drive toward it
-            }
+                Coordinate ballCoord = new Coordinate((float)ball.Angle, (float)ball.DistanceToCenter, CoordSystem.Polar);
 
+                // Hack - make Line parallel to x-axis rather than perpendicular to Line to ball, but it works
+                Coordinate leftGapCoord = new Coordinate(ballCoord.X - DriveContext.ASCENT_WIDTH / 2, ballCoord.Y, CoordSystem.Cartesian);
+                Coordinate rightGapCoord = new Coordinate(ballCoord.X + DriveContext.ASCENT_WIDTH / 2, ballCoord.Y, CoordSystem.Cartesian);
+
+                bestGap = new Line(leftGapCoord, rightGapCoord);
+
+                return bestGap;               
+            }
 
             return null;
         }
@@ -335,23 +343,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 return DriveCommand.Straight(DriveCommand.SPEED_HALT);
             }
 
-            // Not within required distance
-            float ballX = this.ball.CenterPoint.X;
-            if (ballX < leftThreshold)  // TODO look into this for dynamic video sizes. ie. be able to account for 1080, 720, etc.
-            {
-                // Ball to left
-                return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION);
-            }
-            else if (ballX > rightThreshold)
-            {
-                // Ball to right
-                return DriveCommand.RightTurn(DriveCommand.SPEED_VISION);
-            }
-            else
-            {
-                // Ball straight ahead
-                return DriveCommand.Straight(DriveCommand.SPEED_VISION);
-            }
+            return TurnTowardBall();
         }
 
         private DriveCommand DriveNoBallDetected()
@@ -450,10 +442,52 @@ namespace AI_ROCKS.Drive.DriveStates
             return scan.FindNextDriveCommand();
         }
 
-        private bool IsOpenPathToBall()
+        private bool IsOpenPathToBall(Plot obstacles)
         {
-            // TODO
-            return false;
+            if (ball == null | obstacles == null)
+            {
+                return false;
+            }
+
+            Coordinate ballCoord = new Coordinate((float)ball.Angle, (float)ball.DistanceToCenter, CoordSystem.Polar);
+            Line lineToBall = new Line(new Coordinate(0, 0, CoordSystem.Cartesian), ballCoord);
+            
+            foreach (Region region in obstacles.Regions)
+            {
+                foreach (Coordinate coord in region.ReducedCoordinates)
+                {
+                    // TODO Don't check depth now on account of it possibly being inaccurate. If it's reliable, add depth check here
+
+                    if (Line.DistanceFromLine(lineToBall, coord) <= DriveContext.ASCENT_WIDTH / 2)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        // Could go off angle, but left as X coordinate for now
+        private DriveCommand TurnTowardBall()
+        {
+            // Not within required distance
+            float ballX = this.ball.CenterPoint.X;
+            if (ballX < leftThreshold)  // TODO look into this for dynamic video sizes. ie. be able to account for 1080, 720, etc.
+            {
+                // Ball to left
+                return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION);
+            }
+            else if (ballX > rightThreshold)
+            {
+                // Ball to right
+                return DriveCommand.RightTurn(DriveCommand.SPEED_VISION);
+            }
+            else
+            {
+                // Ball straight ahead
+                return DriveCommand.Straight(DriveCommand.SPEED_VISION);
+            }
         }
 
         private bool IsWithinRequiredDistance(TennisBall ball)
