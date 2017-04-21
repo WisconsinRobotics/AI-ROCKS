@@ -152,10 +152,8 @@ namespace AI_ROCKS.Drive.DriveStates
             Region lastRegion = regions.ElementAt(regions.Count - 1);
 
             // left and right fields of view (FOV)
-            Line lrfLeftFOV =
-                new Line(new Coordinate(0, 0, CoordSystem.Cartesian), new Coordinate(-1 * LRF_MAX_RELIABLE_DISTANCE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Cartesian));
-            Line lrfRightFOV =
-                new Line(new Coordinate(0, 0, CoordSystem.Cartesian), new Coordinate(LRF_MAX_RELIABLE_DISTANCE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Cartesian));
+            Line lrfLeftFOV = DriveContext.LRF_LEFT_FOV_EDGE;
+            Line lrfRightFOV = DriveContext.LRF_RIGHT_FOV_EDGE;
 
             // Check if leftmost Coordinate in the leftmost Region is on the right half of the entire FOV. If it is, make leftEdgeCoordinate where the 
             // max -acceptable-range meets the left FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
@@ -185,7 +183,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
                 if (Math.Abs(idealDirection - angle) < bestAngle)
                 {
-                    bestAngle = angle;
+                    bestAngle = idealDirection - angle;
                     bestGap = leftEdgeGap;
                 }
             }
