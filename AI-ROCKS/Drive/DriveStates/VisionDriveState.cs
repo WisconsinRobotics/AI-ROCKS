@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -44,6 +45,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         // Navigation utils
         private const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
+        private const double BALL_REGION_THRESHOLD = 0.0872665;     // 5 degrees in radians
         private bool switchToGPS = false;
 
         // Detection objects
@@ -101,14 +103,9 @@ namespace AI_ROCKS.Drive.DriveStates
             return switchToGPS ? StateType.GPSState : StateType.VisionState;
         }
 
+        // Given a Plot representing the obstacles, find Line representing the best gap.
         public Line FindBestGap(Plot obstacles)
         {
-            // Given a Plot representing the obstacles, find Line representing the best gap.
-
-            // Refer to GPSDriveState's psuedo code. Do we want to account for detecting the gate as a Region 
-            // and actually heading toward it, rather than avoiding it?
-
-            // TODO Vision group's algorithm here
             /*
             Overview:
             
@@ -120,93 +117,10 @@ namespace AI_ROCKS.Drive.DriveStates
             Don't see ball:
                 4) Turn camera mast - drive accordingly
                 5) Compare IMU/GPS - orient accordingly and drive straight
-
-            ------
-            Psuedocode:
-            // NOTE: (1) and (2) above can be combined. This psuedocode gives them separate for simplicity's sake but for efficiency they should most likely be combined
-
-            TennisBall ball = get current tennis ball (from class variable, VisionHelper, etc)
-            List<Region> regions = obstacles.Regions;
             
-            if (regions.Count == 0)
-                // Drive straight
-                Return line representing gap straight in front of us (refer to ObstacleAvoidanceDriveState)
-
-            // Ball is detected
-            if (ball != null)
-
-                // (1) If path straight to ball is open, drive toward it
-
-                // Get angles corresponding to Coordiante at minimum "left" and "right" clearance on sides of tennis ball (i.e. ASCENT_WIDTH / 2 on either side, perpendicular to the path we'd take - easiest shown in diagram)
-                // Can probably use function for checking, or at least consolidate this with the below for loop to be more optimal
-                
-                leftClearanceAngle = get left clearance angle
-                rightClearanceAngle = get right clearance angle
-                bool isImpedingRegionDetected = false;      // Probably name better but you get the point
-                for each region in regions
-                    regionStartAngle = region.StartCoordinate.Angle     // left-most point - be careful with less than/greater than comparision since we use unit circle which increases right to left
-                    regionEndAngle = region.EndCoordinate.Angle
-                    if regionStartAngle is within leftClearanceAngle and rightClearanceAngle
-                        // region exists in straight path to ball - check if it is the ball as a region (see (2) below)
-                        isImpedingRegionDetected = true;
-                        break;
-                    if regionEndAngle is within leftClearanceAngle and rightClearanceAngle
-                        // region exists in straight path to ball - check if it is the ball as a region (see (2) below)
-                        isImpedingRegionDetected = true;
-                        break;
-                    if regionStartAngle > leftClearanceAngle and regionEndAngle < rightClearanceAngle
-                        // region exists in straight path to ball - check if it is the ball as a region (see (2) below)
-                        isImpedingRegionDetected = true;
-                        break;
-                if !isImpedingRegionDetected (i.e. no region exists that is blocking the path straight to the ball)
-                    // Drive straight toward the ball (use angle of ball to simply turn right/left)
-                    return line representing the open area around the ball that we can fit through  //Make this better? Make this the open gap between actual regions where the ball is located? Make FindBestGap return a Coordinate? Look into
-                else
-                    See (2) below
-                
-
-                --------
-                // (2) If path straight to ball is not open, see if a region and ball are at the same location. If so, drive toward that region
-
-                // Try to find region that is the ball. If found, return it as best gap
-                Double angle = ball.Angle;
-                for each region in regions
-                    Line regionLineApproximation = line representing region - from start Coordinate to end Coordinate (i.e. new Line(region.StartCoordinate, region.EndCoordinate))
-                    Coordinate approxRegionMidpoint = midpoint of regionLineApproximation
-                    if angle is approximately equal to approxRegionMidpoint.Angle       // use function for testing this threshold
-                        if size is relatively accurate      // Maybe? This may be difficult as the base/holder of tennis ball is unknown to us (pvc pipe? Solid wooden base or something? etc)
-                            return line;
-
-                
-                --------
-                // (3) No region representing ball was found. Kick back to GPS
-
-                return null     // How to handle this? Look more into this
-
-            else
-                // (4) Turn camera mast
-
-                // TODO
-                    // Maybe have modes? 
-                    // Seek mode (don't see ball) vs. approach mode (see ball, navigate toward)? Since this will most likely be complex with a lot of logic, may make sense
-
-                
-                --------
-                // (5) Compare IMU/GPS
-                Get current GPS
-                Get goal GPS
-                Compute difference between the two
-                    Use this to find direction, heading (i.e. cardinal direction) we should be driving
-                Get heading we should be heading = calculate from above
-                Get heading we are facing from IMU
-                If different, turn toward heading we should be facing (zero-point turn - we want to go slow to increase time for GPS to be accurate to our location and if we're "close" to goal don't want to go fast)
-                If same heading (or once we have the same heading if using above turning method), slowly drive straight (hopefully we find ball)
-                (?) Repeat until we are within a small distance from goal (i.e. GPS is not accurate)?
-                    if not found when within some threshold of closeness for GPS, seek?
-                    if found, detect ball and automatically go to the "found ball" logic above 
-            */
-
-
+             // Note: removed psuedocode corresponding to this logic - refer to previous commits to get it back
+             */
+            
             List<Region> regions = obstacles.Regions;
             
             Line bestGap = null;
@@ -214,8 +128,7 @@ namespace AI_ROCKS.Drive.DriveStates
             // Sanity check - if zero Regions exist, return Line representing gap straight in front of Ascent
             if (regions.Count == 0)
             {
-                // Make Line that is twice the width of Ascent and 1/2 the maximum distance away to signify 
-                // the best gap is straight ahead of us
+                // Make Line that is twice the width of Ascent and 1/2 the maximum distance away to signify the best gap is straight ahead of us
                 Coordinate leftCoord = new Coordinate(-DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
                 Coordinate rightCoord = new Coordinate(DriveContext.ASCENT_WIDTH, DriveContext.LRF_MAX_RELIABLE_DISTANCE / 2, CoordSystem.Cartesian);
 
@@ -224,7 +137,7 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
             // If open path to ball exists, drive toward it
-            if (IsOpenPathToBall(obstacles))
+            if (IsOpenPathToBall(obstacles) || IsBallDetectedRegionAndOpenPath(obstacles))
             {
                 Coordinate ballCoord = new Coordinate((float)ball.Angle, (float)ball.DistanceToCenter, CoordSystem.Polar);
 
@@ -237,7 +150,11 @@ namespace AI_ROCKS.Drive.DriveStates
                 return bestGap;               
             }
 
+            // No ball/path to ball is found - kick back to GPS
+            switchToGPS = true;
             return null;
+
+            // TODO this logic! This will certainly not suffice in competition
         }
 
         private void StartCamera()
@@ -444,6 +361,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private bool IsOpenPathToBall(Plot obstacles)
         {
+            // TODO what if we dropped the ball for one frame - check timing threshold
             if (ball == null | obstacles == null)
             {
                 return false;
@@ -466,6 +384,45 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
             return true;
+        }
+
+        // TODO horrible function name but whatever (for now)
+        private bool IsBallDetectedRegionAndOpenPath(Plot obstacles)
+        {
+            // TODO what if we dropped the ball for one frame - check timing threshold
+            if (ball == null)
+            {
+                return false;
+            }
+
+            bool ballIsRegion = false;
+            int ballRegionIndex = 0;
+
+            // Is a Region entirely within the start/end threshold (5 degrees)
+            for (int i = 0; i < obstacles.Regions.Count; i++)
+            {
+                Region region = obstacles.Regions.ElementAt(i);
+
+                Coordinate start = region.StartCoordinate;
+                Coordinate end = region.EndCoordinate;
+
+                if ((start.Theta <= ball.Angle + BALL_REGION_THRESHOLD && start.Theta >= ball.Angle - BALL_REGION_THRESHOLD)
+                        && (end.Theta <= ball.Angle + BALL_REGION_THRESHOLD && end.Theta >= ball.Angle - BALL_REGION_THRESHOLD))
+                {
+                    ballIsRegion = true;
+                    ballRegionIndex = i;
+                    break;
+                }
+            }
+
+            // If the ball is a Region, remove the Region representing the ball and return if there is an open path to it
+            if (ballIsRegion)
+            {
+                obstacles.Regions.RemoveAt(ballRegionIndex);
+                return IsOpenPathToBall(obstacles);
+            }
+
+            return false;
         }
 
         // Could go off angle, but left as X coordinate for now
