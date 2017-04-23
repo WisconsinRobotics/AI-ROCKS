@@ -1,12 +1,11 @@
 ﻿using System;
 
 using ObstacleLibrarySharp;
-using LRFLibrarySharp;
 using System.Collections.Generic;
 using System.Linq;
 
-using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.Drive.Models;
+using AI_ROCKS.PacketHandlers;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
@@ -17,7 +16,7 @@ namespace AI_ROCKS.Drive.DriveStates
         private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
 
         private double idealDirection;
-        GPS finalGPS = new GPS(0, 0, 58, 0, 3, 7);
+        GPS finalGPS = new GPS(43, 4, 19.5f, -89, 24, 42.4f); // new GPS(0, 0, 58, 0, 3, 7);
 
         //GPS currGPS;
         //short currCompass;
@@ -39,9 +38,13 @@ namespace AI_ROCKS.Drive.DriveStates
                 count++;
                 return DriveCommand.Straight(50);
             }
-            GPS currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
-            short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass; // currCompass needs to be received as a compass from gazebo
+
+            GPS currGPS = AscentPacketHandler.GPSData;
+            short currCompass = AscentPacketHandler.Compass; // currCompass needs to be received as a compass from gazebo
             idealDirection = currGPS.GetHeadingTo(finalGPS);
+
+            Console.Write("currCompass: " + currCompass + " | idealDirection: " + idealDirection + " | ");
+
             // might need to be changed
             /*           if (currCompass < 0)
                            currCompass = (short)(-1 * currCompass);
@@ -70,9 +73,18 @@ namespace AI_ROCKS.Drive.DriveStates
             }
             //Flipping direction to match the opposite navigation system as in gazebo
             //idealDirection = (idealDirection + 180) % 360; */
-             // if lined up within numeric precision, drive straight
+            // if lined up within numeric precision, drive straight
+            
+            // What used to exist - Matt changed on 4/23 to use already existing function below
+            /*
             if (Math.Abs(idealDirection - currCompass) < DIRECTION_VATIANCE_NOISE
                 || Math.Abs(idealDirection - currCompass) > (360 - DIRECTION_VATIANCE_NOISE))
+            {
+                return command = DriveCommand.Straight(50);
+            }
+            */
+
+            if (IMU.IsHeadingWithinThreshold(currCompass, idealDirection, DIRECTION_VATIANCE_NOISE))
             {
                 return command = DriveCommand.Straight(50);
             }
@@ -113,6 +125,11 @@ namespace AI_ROCKS.Drive.DriveStates
         public StateType GetNextStateType()
         {
             // Logic for finding when state needs to be switched from GPSDriveState to VisionDriveState
+
+            if (AscentPacketHandler.GPSData.GetDistanceTo(finalGPS) < 5)
+            {
+                Console.WriteLine("WITHIN 5 METERS");
+            }
             return 0;
         }
 
