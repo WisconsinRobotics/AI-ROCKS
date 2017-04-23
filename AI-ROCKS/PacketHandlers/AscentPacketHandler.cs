@@ -4,8 +4,10 @@ using System.IO.Ports;
 using System.Linq;
 using System.Net.Sockets;
 using System.Net;
+using Timer = System.Timers.Timer;
 
 using AI_ROCKS.Drive.Models;
+using System.Timers;
 
 namespace AI_ROCKS.PacketHandlers
 {
@@ -21,9 +23,14 @@ namespace AI_ROCKS.PacketHandlers
 
     class AscentPacketHandler
     {
+        // Query interval for GPS, IMU sensors
+        private const long QUERY_SENSOR_INTERVAL_MILLIS = 100;
+
         // BCL opcodes
+        const byte OPCODE_QUERY_GPS = 0x50;
         const byte OPCODE_REPORT_GPS = 0x51;
-        const byte OPCODE_REPORT_IMU = 0x55;
+        const byte OPCODE_QUERY_IMU = 0x55;
+        const byte OPCODE_REPORT_IMU = 0x56;
 
         // Constants for communicating with ROCKS
         const int AI_ROCKS_PORT = 15000;
@@ -103,6 +110,12 @@ namespace AI_ROCKS.PacketHandlers
 
             // Initialize async receive
             ai_rocksSocket.BeginReceive(HandleSocketReceive, null);
+
+            // Query GPS, IMU data every 100ms
+            Timer queryTimer = new Timer(QUERY_SENSOR_INTERVAL_MILLIS);
+            queryTimer.AutoReset = true;
+            queryTimer.Elapsed += this.SendQueries;
+            queryTimer.Enabled = true;
         }
 
         /// <summary>
@@ -176,6 +189,82 @@ namespace AI_ROCKS.PacketHandlers
             GetInstance().ai_rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ascentControlsIPEndpoint);
         }
         
+        // Hack function used for testing - make this better
+        private void SendQueries(Object source, ElapsedEventArgs e)
+        {
+            // TODO These function calls don't work due to robot/service IDs, figure out why
+            //byte[] data = { };
+            // Query GPS and IMU
+            //AscentPacketHandler.SendPayloadToROCKS(0x50, data);
+            //AscentPacketHandler.SendPayloadToROCKS(0x55, data);
+
+            byte[] opcodes = { OPCODE_QUERY_GPS, OPCODE_QUERY_IMU };
+            byte[] data = { };
+
+            // BCL packet to be formed and sent
+            foreach (byte opcode in opcodes)
+            {
+                List<byte> bclPacket = new List<byte>();
+
+                // Header
+                bclPacket.Add(0xBA);
+                bclPacket.Add(0xAD);
+
+                // Opcode - all wheel speed
+                bclPacket.Add(opcode);
+
+                // Source addr - robot ID and service ID
+                bclPacket.Add(0x01);
+                bclPacket.Add(0x01);
+
+                // Dest addr - robot ID and service ID
+                bclPacket.Add(0x0F);
+                bclPacket.Add(0xFF);
+
+                // Payload size and payload
+                bclPacket.Add((byte)data.Length);
+
+                // CRC
+                int crc = 0;
+                for (int i = 0; i < data.Length; i++)
+                {
+                    // Set up the dividend
+                    crc ^= data[i];
+
+                    for (int j = 0; j < 8; j++)
+                    {
+                        // Does the divisor go into the dividend?
+                        if ((crc & 0x80) > 1)
+                        {
+                            // Dividend -= divisor
+                            crc = (crc << 1) ^ 0x07;
+                        }
+                        else
+                        {
+                            // Move to the next bit
+                            crc <<= 1;
+                        }
+                    }
+                }
+                bclPacket.Add((byte)crc);
+
+                // Add data[] to payload
+                foreach (byte b in data)
+                {
+                    bclPacket.Add(b);
+                }
+
+                // End
+                bclPacket.Add(0xFE);
+
+                // Send over Serial on the COM port of the launchpad
+                //GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count);
+
+                // Send to Gazebo or ROCKS
+                GetInstance().ai_rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ascentControlsIPEndpoint);
+            }
+        }
+
         /// <summary>
         /// Async receive function for ROCKS communication. This receives all data being sent from 
         /// ROCKS and updates the appropriate PacketHandler with the received data.

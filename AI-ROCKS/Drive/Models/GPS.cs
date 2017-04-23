@@ -4,15 +4,15 @@ namespace AI_ROCKS.Drive.Models
 {
     class GPS
     {
-        private short latDegrees;
-        private short latMinutes;
-        private short latSeconds;
-        private short longDegrees;
-        private short longMinutes;
-        private short longSeconds;
+        private float latDegrees;
+        private float latMinutes;
+        private float latSeconds;
+        private float longDegrees;
+        private float longMinutes;
+        private float longSeconds;
 
 
-        public GPS(short latDegrees, short latMinutes, short latSeconds, short longDegrees, short longMinutes, short longSeconds)
+        public GPS(float latDegrees, float latMinutes, float latSeconds, float longDegrees, float longMinutes, float longSeconds)
         {
             this.latDegrees = latDegrees;
             this.latMinutes = latMinutes;
@@ -123,32 +123,32 @@ namespace AI_ROCKS.Drive.Models
             return unitCircleRad;
         }
 
-        public short LatDegrees
+        public float LatDegrees
         {
             get { return this.latDegrees; }
         }
 
-        public short LatMinutes
+        public float LatMinutes
         {
             get { return this.latMinutes; }
         }
 
-        public short LatSeconds
+        public float LatSeconds
         {
             get { return this.latSeconds; }
         }
 
-        public short LongDegrees
+        public float LongDegrees
         {
             get { return this.longDegrees; }
         }
 
-        public short LongMinutes
+        public float LongMinutes
         {
             get { return this.longMinutes; }
         }
 
-        public short LongSeconds
+        public float LongSeconds
         {
             get { return this.longSeconds; }
         }
