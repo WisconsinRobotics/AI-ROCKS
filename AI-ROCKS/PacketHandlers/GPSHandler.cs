@@ -45,12 +45,15 @@ namespace AI_ROCKS.PacketHandlers
             //TODO validity checking
             
             // BCL packet -> GPS object
-            short latDegrees = (short)((payload[0] << 8) | (payload[1]));
-            short latMinutes = (short)((payload[2] << 8) | (payload[3]));
-            short latSeconds = (short)((payload[4] << 8) | (payload[5]));
-            short longDegrees = (short)((payload[6] << 8) | (payload[7]));
-            short longMinutes = (short)((payload[8] << 8) | (payload[9]));
-            short longSeconds = (short)((payload[10] << 8) | (payload[11]));
+            float latDegrees = (payload[0] << 8) | (payload[1]);
+            float latMinutes = (payload[2] << 8) | (payload[3]);
+            float latSeconds = (payload[4] << 8) | (payload[5]);       // Divide by 10 since it's sent as fixed-point
+            latSeconds = latSeconds / 10;
+            float longDegrees = (payload[6] << 8) | (payload[7]);      // Always negative where we operate so it's sent as positive - we make it negative here
+            longDegrees = -1 * longDegrees;
+            float longMinutes = (payload[8] << 8) | (payload[9]);
+            float longSeconds = (payload[10] << 8) | (payload[11]);    // Divide by 10 since it's sent as fixed-point
+            longSeconds = longSeconds / 10;
 
             GPS parsedGPS = new GPS(latDegrees, latMinutes, latSeconds, longDegrees, longMinutes, longSeconds);
             return parsedGPS;
