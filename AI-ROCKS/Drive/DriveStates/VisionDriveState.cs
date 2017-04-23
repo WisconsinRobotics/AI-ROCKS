@@ -17,7 +17,7 @@ namespace AI_ROCKS.Drive.DriveStates
         // Camera initialization
         const string CAMERA_USERNAME = "admin";
         const string CAMERA_PASSWORD = "i#3Er0b0";
-        const string CAMERA_IP_MAST = "192.168.1.8";
+        const string CAMERA_IP_MAST = "192.168.1.6";    // TODO should be .8 but for now it's not
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
 
         // TODO put these somewhere else? A Vision handler or something?
@@ -34,8 +34,8 @@ namespace AI_ROCKS.Drive.DriveStates
         const int GAUSSIAN_KERNELSIZE = 15;
 
         // Limits of HSV masking
-        Hsv minHSV = new Hsv(22, 74, 120);
-        Hsv maxHSV = new Hsv(152, 155, 230);
+        Hsv minHSV = new Hsv(30, 30, 110);
+        Hsv maxHSV = new Hsv(50, 170, 255);
 
         // Turning thresholds
         const int leftThreshold = 3 * PIXELS_WIDTH / 8;     // 3/8 from left
@@ -67,7 +67,7 @@ namespace AI_ROCKS.Drive.DriveStates
             this.ballLock = new Object();
 
             // TODO how to access gate
-            this.gate = null; // gate;
+            this.gate = new GPS(0, 0, 0, 0, 0, 0); // gate;
             this.scan = null;
         }
 
@@ -80,6 +80,7 @@ namespace AI_ROCKS.Drive.DriveStates
             // Recently detected ball but now don't now. Stop driving to redetect since we may have dropped it due to bouncing.
             if (ball == null && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < ballTimestamp + DROP_BALL_DELAY)
             {
+                Console.WriteLine("Dropped ball - halting ");
                 return DriveCommand.Straight(DriveCommand.SPEED_HALT);
             }
 
@@ -242,12 +243,15 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private DriveCommand DriveBallDetected()
         {
+            // Sanity check
             if (ball == null)
             {
-                // Shouldn't be called if ball not detected
                 // TODO could this be a race condition? Pass copy of ball as param?
                 return null;
             }
+
+
+            Console.Write("Ball detected ");
 
 
             // Detected ball so no longer scan
@@ -265,6 +269,17 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private DriveCommand DriveNoBallDetected()
         {
+            // Sanity check
+            if (ball != null)
+            {
+                // TODO could this be a race condition? Pass copy of ball as param?
+                return null;
+            }
+
+
+            Console.Write("Ball not detected ");
+
+
             // Ball not detected
             GPS ascent = AscentPacketHandler.GPSData;
             double distanceToGate = ascent.GetDistanceTo(this.gate);
