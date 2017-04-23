@@ -78,7 +78,8 @@ namespace AI_ROCKS.Drive.Models
         private Double FindDistanceToCenter(Double perceivedWidth)
         {
             // TODO better usage of these consts (somewhere in some handler?)
-            return (VisionDriveState.KNOWN_WIDTH * VisionDriveState.FOCAL_LENGTH) / perceivedWidth;
+            Double distanceFt = (VisionDriveState.KNOWN_WIDTH * VisionDriveState.FOCAL_LENGTH) / perceivedWidth;
+            return distanceFt / 3.28084;
         }
 
         private Double FindAngle(CircleF circle, Double distanceToCenter)

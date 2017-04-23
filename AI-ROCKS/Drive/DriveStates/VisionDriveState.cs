@@ -22,13 +22,13 @@ namespace AI_ROCKS.Drive.DriveStates
 
         // TODO put these somewhere else? A Vision handler or something?
         // Camera constants
-        public const Double FOCAL_LENGTH = -1;      // 3.6mm (6mm optional)     //TODO validate, convert into what we need (units)?
+        public const Double FOCAL_LENGTH = 100.0;   // 3.6mm (6mm optional)     //TODO validate, convert into what we need (units)?
         public const Double KNOWN_WIDTH = 2.6;      // inches                   //TODO validate
         public const int PIXELS_WIDTH = 1920;       // May change, make dynamic?
         public const int PIXELS_HEIGHT = 1080;      // May change, make dynamic?
 
         // Circle detection
-        const int MIN_RADIUS = 20;
+        const int MIN_RADIUS = 10;
 
         // Gaussian blur
         const int GAUSSIAN_KERNELSIZE = 15;
@@ -260,6 +260,8 @@ namespace AI_ROCKS.Drive.DriveStates
             // Within required distance
             if (IsWithinRequiredDistance(ball))
             {
+                Console.Write("WITHIN REQUIRED DISTANCE | ");
+
                 // TODO handle sending success - need ACK too? Look into
                 return DriveCommand.Straight(DriveCommand.SPEED_HALT);
             }
