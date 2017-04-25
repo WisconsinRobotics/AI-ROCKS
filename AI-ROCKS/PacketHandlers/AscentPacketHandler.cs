@@ -23,25 +23,27 @@ namespace AI_ROCKS.PacketHandlers
 
     class AscentPacketHandler
     {
-        // Query interval for GPS, IMU sensors
-        private const long QUERY_SENSOR_INTERVAL_MILLIS = 100;
-
         // BCL opcodes
         const byte OPCODE_QUERY_GPS = 0x50;
         const byte OPCODE_REPORT_GPS = 0x51;
         const byte OPCODE_QUERY_IMU = 0x55;
         const byte OPCODE_REPORT_IMU = 0x56;
 
+        // BCL constants
+        public const int ROCKS_ROBOT_ID = 15;
+        public const int ROCKS_AI_SERVICE_ID = 3;
+        public const int ROCKS_SENSOR_SERVICE_ID = 4;
+        public const int AI_ROCKS_ROBOT_ID = 16;
+        public const int AI_ROCKS_AI_SERVICE_ID = 0;
+
+        // Query interval for GPS, IMU sensors
+        private const long QUERY_SENSOR_INTERVAL_MILLIS = 100;
+        static readonly byte[] QUERY_OPCODES = { OPCODE_QUERY_GPS, OPCODE_QUERY_IMU };      // Query GPS and IMU
+
         // Constants for communicating with ROCKS
         const int AI_ROCKS_PORT = 15000;
         const int ROCKS_PORT = 10000;
         const string LAUNCHPAD_COM_PORT = "COM4";       //TODO make from param? Update after knowing COM port if nothing else
-
-        // BCL constants
-        const int ROCKS_ROBOT_ID = 15;
-        const int ROCKS_AI_SERVICE_ID = 3;
-        const int AI_ROCKS_ROBOT_ID = 16;
-        const int AI_ROCKS_AI_SERVICE_ID = 0;
 
         private static IPEndPoint ascentControlsIPEndpoint;
         private UdpClient ai_rocksSocket;
@@ -114,7 +116,7 @@ namespace AI_ROCKS.PacketHandlers
             // Query GPS, IMU data every 100ms
             Timer queryTimer = new Timer(QUERY_SENSOR_INTERVAL_MILLIS);
             queryTimer.AutoReset = true;
-            queryTimer.Elapsed += this.SendQueries;
+            queryTimer.Elapsed += this.SendQueryPackets;
             queryTimer.Enabled = true;
         }
 
@@ -124,7 +126,8 @@ namespace AI_ROCKS.PacketHandlers
         /// </summary>
         /// <param name="opcode">BCL opcode for the data and BCL packet to send to ROCKS.</param>
         /// <param name="data">Data, or payload, of the BCL packet being sent to ROCKS.</param>
-        public static void SendPayloadToROCKS(byte opcode, byte[] data)
+        /// <param name="destServiceID">BCL destination dervice ID for the BCL packet sent to ROCKS.</param>
+        public static void SendPayloadToROCKS(byte opcode, byte[] data, byte destServiceID)
         {
             // header = [header] [opcode] [source robot ID = 16] [source service ID = 0] [dest robot ID = 15] [dest service ID = 3] [payload size] [checksum] [payload] [footer]
 
@@ -144,7 +147,7 @@ namespace AI_ROCKS.PacketHandlers
 
             // Dest addr - robot ID and service ID
             bclPacket.Add(ROCKS_ROBOT_ID);
-            bclPacket.Add(ROCKS_AI_SERVICE_ID);
+            bclPacket.Add(destServiceID);
 
             // Payload size and payload
             bclPacket.Add((byte)data.Length);
@@ -189,18 +192,18 @@ namespace AI_ROCKS.PacketHandlers
             GetInstance().ai_rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ascentControlsIPEndpoint);
         }
         
-        // Hack function used for testing - make this better
-        private void SendQueries(Object source, ElapsedEventArgs e)
+        private void SendQueryPackets(Object source, ElapsedEventArgs e)
         {
-            // TODO These function calls don't work due to robot/service IDs, figure out why
-            //byte[] data = { };
             // Query GPS and IMU
-            //AscentPacketHandler.SendPayloadToROCKS(0x50, data);
-            //AscentPacketHandler.SendPayloadToROCKS(0x55, data);
-
-            byte[] opcodes = { OPCODE_QUERY_GPS, OPCODE_QUERY_IMU };
             byte[] data = { };
 
+            foreach (byte opcode in QUERY_OPCODES)
+            {
+                SendPayloadToROCKS(opcode, data, ROCKS_SENSOR_SERVICE_ID);
+            }
+
+            // Above is untested so this is kept for reference
+            /*
             // BCL packet to be formed and sent
             foreach (byte opcode in opcodes)
             {
@@ -263,6 +266,7 @@ namespace AI_ROCKS.PacketHandlers
                 // Send to Gazebo or ROCKS
                 GetInstance().ai_rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ascentControlsIPEndpoint);
             }
+            */
         }
 
         /// <summary>
