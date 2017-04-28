@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Timers;
 
+using System.Net;
+using System.Net.Sockets;
+
 using AI_ROCKS.Drive;
 using AI_ROCKS.Drive.Utils;
-using LRFLibrarySharp;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Services
@@ -23,37 +25,80 @@ namespace AI_ROCKS.Services
         public event EventHandler<ObstacleEventArgs> ObstacleEvent;
 
         private DriveContext driveContext;
-        private LRF lrf;
+        //private LRF lrf;
+        
+        private Plot plot;
+
+        private UdpClient rocks_lrf_socket;
+        private const int PORT = 11000;
+        private bool handshake = false;
 
 
-        public AutonomousService(String lrfPort, StateType initialStateType)
+        public AutonomousService(StateType initialStateType, bool isLRF = true)
         {
             this.driveContext = new DriveContext(initialStateType);
             this.ObstacleEvent += driveContext.HandleObstacleEvent;
 
-            int lrfUDPPort = 0;
-            bool lrfInit = false;
-            this.lrf = new LRF();
-            if (Int32.TryParse(lrfPort, out lrfUDPPort))
+            if(isLRF)
             {
-                // For getting LRF data over UDP
-                //lrfInit = lrf.Initialize(lrfUDPPort);
+                rocks_lrf_socket = new UdpClient(PORT);
+
+                // Initialize async receive
+                rocks_lrf_socket.BeginReceive(HandleSocketReceive, null);
             }
             else
             {
-                // For getting LRF data over serial
-                lrfInit = lrf.Initialize(lrfPort);
-            }
-
-            if (!lrfInit)
-            {
-                // TODO Fail - send error code to ROCKS
-
-                // For now, throw exception (so you don't spend an hour debugging to end up figuring out you specified the port wrong..#triggered)
-                throw new ArgumentException("Invalid port for LRF - must be integer (UDP) or COM port (serial)");
+                plot = new Plot();
             }
         }
 
+        void HandleSocketReceive(IAsyncResult result)
+        {
+            IPEndPoint recvAddr = new IPEndPoint(IPAddress.Loopback, 0);
+            byte[] data = rocks_lrf_socket.EndReceive(result, ref recvAddr);
+
+            rocks_lrf_socket.BeginReceive(HandleSocketReceive, null);
+
+            List<byte> list = new List<byte>();
+
+            for (int i = 0; i < data.Length; i++)
+                list.Add(data[i]);
+
+            if(!handshake)
+            {
+                if(list.Count == 4)
+                {
+                    if(list[0] == 0xDE && list[1] == 0xAD && list[2] == 0xBE && list[3] == 0xEF)
+                    {
+                        IPEndPoint sendAddr = new IPEndPoint(IPAddress.Loopback, 10000);
+
+                        byte[] lrf_min_angle = BitConverter.GetBytes(DriveContext.LRF_MIN_ANGLE);
+                        byte[] lrf_max_angle = BitConverter.GetBytes(DriveContext.LRF_MAX_ANGLE);
+                        byte[] region_separation_distance = BitConverter.GetBytes(REGION_SEPARATION_DISTANCE);
+                        byte[] rdp_threshold = BitConverter.GetBytes(RDP_THRESHOLD);
+                        
+                        List<byte> buffer = new List<byte>();
+                        buffer.Add(0xDE);
+                        buffer.Add(0xAD);
+
+                        buffer.AddRange(lrf_min_angle);
+                        buffer.AddRange(lrf_max_angle);
+                        buffer.AddRange(region_separation_distance);
+                        buffer.AddRange(rdp_threshold);
+
+                        buffer.Add(0xBE);
+                        buffer.Add(0xEF);
+
+                        rocks_lrf_socket.Send(buffer.ToArray(), buffer.Count, sendAddr);
+
+                        handshake = true;
+                    }
+                }
+                return;
+            }
+
+            plot = Plot.Deserialize(list);
+        }
 
         /// <summary>
         /// Main execution function for AutonomousService.
@@ -92,14 +137,8 @@ namespace AI_ROCKS.Services
         /// </summary>
         public void DetectObstacleEvent(Object source, ElapsedEventArgs e)
         {
-            // Get LRF data
-            lrf.RefreshData();
-            
-            // Only get Coordinates within the LRF FOV to avoid detecting wheels as an obstacle
-            List<Coordinate> coordinates = lrf.GetCoordinates(DriveContext.LRF_MIN_ANGLE, DriveContext.LRF_MAX_ANGLE);
-
-            List<Region> regions = Region.GetRegionsFromCoordinateList(coordinates, REGION_SEPARATION_DISTANCE, RDP_THRESHOLD);
-            Plot plot = new Plot(regions);
+            if (plot == null)
+                return;
 
             // See if any obstacle within maximum allowed distance
             bool obstacleDetected = false;

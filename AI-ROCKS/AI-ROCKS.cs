@@ -18,6 +18,7 @@ namespace AI_ROCKS
             String lrfPort = String.Empty;
             StateType initialStateType = StateType.GPSState;
             IPAddress destinationIP = IPAddress.Loopback;
+            bool isLRF = true;
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -69,6 +70,11 @@ namespace AI_ROCKS
                         
                         break;
                     }
+                    case "-t":
+                    {
+                        isLRF = false;
+                        break;
+                    }
                     default:
                     {
                         // Invalid command line argument
@@ -78,16 +84,16 @@ namespace AI_ROCKS
                 }
             }
 
-            if (lrfPort.Equals(String.Empty))
-            {
-                ExitFromInvalidArgrument("Command line argument for LRF port is required!");
-            }
+            //if (lrfPort.Equals(String.Empty))
+            //{
+            //    ExitFromInvalidArgrument("Command line argument for LRF port is required!");
+            //}
 
             // Initialize AscentPacketHandler
             AscentPacketHandler.Initialize(destinationIP);
 
             // Create AutonomousService
-            AutonomousService autonomousService = new AutonomousService(lrfPort, initialStateType);
+            AutonomousService autonomousService = new AutonomousService(initialStateType, isLRF);
 
             // Set up connection with ROCKS (Service Master?, etc)
             // TODO
