@@ -72,6 +72,7 @@ namespace AI_ROCKS
                     }
                     case "-t":
                     {
+                        // Test mode
                         isLRF = false;
                         break;
                     }
@@ -84,10 +85,10 @@ namespace AI_ROCKS
                 }
             }
 
-            //if (lrfPort.Equals(String.Empty))
-            //{
-            //    ExitFromInvalidArgrument("Command line argument for LRF port is required!");
-            //}
+            if (isLRF && lrfPort.Equals(String.Empty))
+            {
+                ExitFromInvalidArgrument("Command line argument for LRF port is required!");
+            }
 
             // Initialize AscentPacketHandler
             AscentPacketHandler.Initialize(destinationIP);

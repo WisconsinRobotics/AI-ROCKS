@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Timers;
-
 using System.Net;
 using System.Net.Sockets;
+using System.Timers;
 
 using AI_ROCKS.Drive;
 using AI_ROCKS.Drive.Utils;
@@ -22,13 +21,11 @@ namespace AI_ROCKS.Services
         private const double REGION_SEPARATION_DISTANCE = 300.0;    // Distance between regions - helps reduce noise
         private const double RDP_THRESHOLD = 50.0;                  // How much the LRF data is reduced
 
-        public event EventHandler<ObstacleEventArgs> ObstacleEvent;
-
         private DriveContext driveContext;
-        //private LRF lrf;
-        
         private Plot plot;
 
+        // Obstacle detection
+        public event EventHandler<ObstacleEventArgs> ObstacleEvent;
         private UdpClient rocks_lrf_socket;
         private const int PORT = 11000;
         private bool handshake = false;
@@ -39,16 +36,16 @@ namespace AI_ROCKS.Services
             this.driveContext = new DriveContext(initialStateType);
             this.ObstacleEvent += driveContext.HandleObstacleEvent;
 
-            if(isLRF)
+            if (isLRF)
             {
-                rocks_lrf_socket = new UdpClient(PORT);
+                this.rocks_lrf_socket = new UdpClient(PORT);
 
                 // Initialize async receive
-                rocks_lrf_socket.BeginReceive(HandleSocketReceive, null);
+                this.rocks_lrf_socket.BeginReceive(HandleSocketReceive, null);
             }
             else
             {
-                plot = new Plot();
+                this.plot = new Plot();
             }
         }
 
@@ -57,18 +54,20 @@ namespace AI_ROCKS.Services
             IPEndPoint recvAddr = new IPEndPoint(IPAddress.Loopback, 0);
             byte[] data = rocks_lrf_socket.EndReceive(result, ref recvAddr);
 
-            rocks_lrf_socket.BeginReceive(HandleSocketReceive, null);
+            this.rocks_lrf_socket.BeginReceive(HandleSocketReceive, null);
 
             List<byte> list = new List<byte>();
 
             for (int i = 0; i < data.Length; i++)
-                list.Add(data[i]);
-
-            if(!handshake)
             {
-                if(list.Count == 4)
+                list.Add(data[i]);
+            }
+
+            if (!this.handshake)
+            {
+                if (list.Count == 4)
                 {
-                    if(list[0] == 0xDE && list[1] == 0xAD && list[2] == 0xBE && list[3] == 0xEF)
+                    if (list[0] == 0xDE && list[1] == 0xAD && list[2] == 0xBE && list[3] == 0xEF)
                     {
                         IPEndPoint sendAddr = new IPEndPoint(IPAddress.Loopback, 10000);
 
@@ -89,7 +88,7 @@ namespace AI_ROCKS.Services
                         buffer.Add(0xBE);
                         buffer.Add(0xEF);
 
-                        rocks_lrf_socket.Send(buffer.ToArray(), buffer.Count, sendAddr);
+                        this.rocks_lrf_socket.Send(buffer.ToArray(), buffer.Count, sendAddr);
 
                         handshake = true;
                     }
@@ -97,7 +96,7 @@ namespace AI_ROCKS.Services
                 return;
             }
 
-            plot = Plot.Deserialize(list);
+            this.plot = Plot.Deserialize(list);
         }
 
         /// <summary>
@@ -137,12 +136,15 @@ namespace AI_ROCKS.Services
         /// </summary>
         public void DetectObstacleEvent(Object source, ElapsedEventArgs e)
         {
-            if (plot == null)
+            // Sanity check
+            if (this.plot == null)
+            {
                 return;
+            }
 
             // See if any obstacle within maximum allowed distance
             bool obstacleDetected = false;
-            foreach (Region region in plot.Regions)
+            foreach (Region region in this.plot.Regions)
             {
                 foreach (Coordinate coordinate in region.ReducedCoordinates)
                 {
@@ -165,7 +167,7 @@ namespace AI_ROCKS.Services
             // If obstacle detected, trigger event
             if (obstacleDetected)
             {
-                OnObstacleEvent(new ObstacleEventArgs(plot));
+                OnObstacleEvent(new ObstacleEventArgs(this.plot));
             }
         }
 

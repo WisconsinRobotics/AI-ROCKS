@@ -152,5 +152,17 @@ namespace AI_ROCKS.Drive.Models
         {
             get { return this.longSeconds; }
         }
+
+        public override String ToString()
+        {
+            String stringy = "latDeg: " + this.latDegrees
+                + " latMin: " + this.latMinutes
+                + " latSec: " + this.latSeconds
+                + " longDeg: " + this.longDegrees
+                + " longMin: " + this.longMinutes
+                + " longSec: " + this.longSeconds;
+
+            return stringy;
+        }
     }
 }

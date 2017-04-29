@@ -13,9 +13,9 @@ namespace AI_ROCKS.Drive
         public const float ASCENT_WIDTH = 1168.4f;
 
         // LRF
-        public const long LRF_MAX_RELIABLE_DISTANCE = 6000;             // TODO get from LRFLibrary
-        public const float LRF_MIN_ANGLE = (float)Math.PI / 4;          // 45 degrees right edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
-        public const float LRF_MAX_ANGLE = 3 * (float)Math.PI / 4;      // 135 degrees left edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
+        public const long LRF_MAX_RELIABLE_DISTANCE = 6000;
+        public const float LRF_MIN_ANGLE = (float)Math.PI / 4;          // 45 degrees right edge
+        public const float LRF_MAX_ANGLE = 3 * (float)Math.PI / 4;      // 135 degrees left edge
 
         // LRF field of view (FOV) edges
         public static readonly Line LRF_RIGHT_FOV_EDGE =
