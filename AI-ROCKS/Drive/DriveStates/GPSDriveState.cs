@@ -14,7 +14,7 @@ namespace AI_ROCKS.Drive.DriveStates
     {
         private const float DIRECTION_VATIANCE_NOISE = 5f; // gives threshold that "straight" is considered
         private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
-
+        private double PROXIMITY = -1; //Just for gazebo since map's scaling is weird 
         private double idealDirection;
         GPS finalGPS = new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);  //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
 
@@ -121,9 +121,9 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             // Logic for finding when state needs to be switched from GPSDriveState to VisionDriveState
 
-            if (AscentPacketHandler.GPSData.GetDistanceTo(finalGPS) == -1)
+            if (AscentPacketHandler.GPSData.GetDistanceTo(finalGPS) == PROXIMITY)
             {
-                Console.WriteLine("WITHIN 0.000000000000000000000000001 METERS");
+                Console.WriteLine("CLOSEBY");
                 return StateType.VisionState;
             }
 
@@ -142,7 +142,6 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             
             List<Region> regions = obstacles.Regions;
-            double threshold = DriveContext.ASCENT_WIDTH; //in mm 
             Line bestGap = null;
             double gap;
             Line gapLine;
@@ -173,7 +172,7 @@ namespace AI_ROCKS.Drive.DriveStates
             }
             Line leftEdgeGap = new Line(leftEdgeCoordinate, firstRegion.StartCoordinate);
             // Checking the left edge gap 
-            if (leftEdgeGap.Length >= threshold)
+            if (leftEdgeGap.Length >= DriveContext.ASCENT_WIDTH)
             {
                 Coordinate leftMidPoint = leftEdgeGap.FindMidpoint();
                 if (leftMidPoint.X > 0)
@@ -206,7 +205,7 @@ namespace AI_ROCKS.Drive.DriveStates
             }
             Line rightEdgeGap = new Line(rightEdgeCoordinate, lastRegion.EndCoordinate);
             //Checking the right edge gap
-            if (rightEdgeGap.Length >= threshold)
+            if (rightEdgeGap.Length >= DriveContext.ASCENT_WIDTH)
             {
                 Coordinate rightMidPoint = rightEdgeGap.FindMidpoint();
                 if (rightMidPoint.X > 0)
@@ -239,7 +238,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 // gap is distance, just needs to be big enough, maybe 1.5 times width of robot (Currently the width of the robot)
                 // I have a qualm with get gap distance, raw distance is returned, no projection is done
                 gap = Plot.GapDistanceBetweenRegions(leftRegion, rightRegion); // this returns true gap distance, not horizontal distance
-                if (gap >= threshold)
+                if (gap >= DriveContext.ASCENT_WIDTH)
                 {
                     gapLine = new Line(new Coordinate(leftRegion.EndCoordinate.X, leftRegion.EndCoordinate.Y, CoordSystem.Cartesian),
                                        new Coordinate(rightRegion.StartCoordinate.X, rightRegion.StartCoordinate.Y, CoordSystem.Cartesian));
