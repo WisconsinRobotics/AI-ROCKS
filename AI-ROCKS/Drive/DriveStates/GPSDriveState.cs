@@ -16,7 +16,7 @@ namespace AI_ROCKS.Drive.DriveStates
         private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
 
         private double idealDirection;
-        GPS finalGPS = new GPS(43, 4, 19.5f, -89, 24, 42.4f); // new GPS(0, 0, 58, 0, 3, 7);
+        GPS finalGPS = new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);  //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
 
         //GPS currGPS;
         //short currCompass;
@@ -42,15 +42,10 @@ namespace AI_ROCKS.Drive.DriveStates
             GPS currGPS = AscentPacketHandler.GPSData;
             short currCompass = AscentPacketHandler.Compass; // currCompass needs to be received as a compass from gazebo
             idealDirection = currGPS.GetHeadingTo(finalGPS);
+            double distance = AscentPacketHandler.GPSData.GetDistanceTo(finalGPS);
 
-            Console.Write("currCompass: " + currCompass + " | idealDirection: " + idealDirection + " | ");
-
-            // might need to be changed
-            /*           if (currCompass < 0)
-                           currCompass = (short)(-1 * currCompass);
-                       else
-                           currCompass = (short)(360 - currCompass);*/
-
+            Console.Write("currCompass: " + currCompass + " | idealDirection: " + idealDirection + " | "
+                                                        + " | distance: " + distance + " | ");
             // get data in good form 
 
             /*float finalLat, finalLong, currLat, currLong;
@@ -126,32 +121,28 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             // Logic for finding when state needs to be switched from GPSDriveState to VisionDriveState
 
-            if (AscentPacketHandler.GPSData.GetDistanceTo(finalGPS) < 5)
+            if (AscentPacketHandler.GPSData.GetDistanceTo(finalGPS) == -1)
             {
-                Console.WriteLine("WITHIN 5 METERS");
+                Console.WriteLine("WITHIN 0.000000000000000000000000001 METERS");
+                return StateType.VisionState;
             }
-            return 0;
+
+            return StateType.GPSState;
         }
 
-        // Given a Plot representing the obstacles, find Line representing the best gap.
-
-        // Do GPS driving according to our rendition of the "Follow the Gap" algorithm:
-        // Reference here: https://pdfs.semanticscholar.org/c432/3017af7bce46fc7574ada008b8af1011e614.pdf
-        //
-        // This algorithm avoids obstacles by finding the gap between them. It has a threshold gap (i.e. robot width),
-        // and if the measured gap is greater than the threshold gap, the robot follows the calculated gap angle. 
-        // In our case, the best gap will also be the one with the smallest displacement from the goal (the gate).
-
-        // 1) Get LRF, GPS data 
-        // 2) Calculate valid (large enough) gaps as Line objects, store in a list
-        // 3) Find which gap is "best" (gap center angle has smallest deviation from straight line to goal)
-        // 4) Find heading angle (actual angle to more according to combination of gap center and goal angles)
-        // 5) Make DriveCommand for this angle and speed, return it
-        //TODO event typing into some new ObstacleAvoidanceDriveState that triggers when the robot needs to avoid an obstacle
+        /// <summary>
+        /// Given a Plot representing the obstacles, find the Line representing the best gap.
+        /// Do GPS driving according to our rendition of the "Follow the Gap" algorithm:
+        /// Reference here: https://pdfs.semanticscholar.org/c432/3017af7bce46fc7574ada008b8af1011e614.pdf
+        /// This algorithm avoids obstacles by finding the gap between them. It has a threshold gap (i.e. robot width),
+        /// and if the measured gap is greater than the threshold gap, the robot follows the calculated gap angle. 
+        /// In our case, the best gap will also be the one with the smallest displacement from the goal (the gate).
+        /// </summary>
         public Line FindBestGap(Plot obstacles)
         {
+            
             List<Region> regions = obstacles.Regions;
-            double threshold = DriveContext.ASCENT_WIDTH / 10; //in mm 
+            double threshold = DriveContext.ASCENT_WIDTH; //in mm 
             Line bestGap = null;
             double gap;
             Line gapLine;
@@ -159,6 +150,7 @@ namespace AI_ROCKS.Drive.DriveStates
             double bestAngle = Double.MaxValue;
             double angle;
 
+            //Get LRF, GPS data 
             GPS currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
             short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
 
@@ -180,7 +172,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 leftEdgeCoordinate = new Coordinate(-AI_ROCKS.Services.AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
             }
             Line leftEdgeGap = new Line(leftEdgeCoordinate, firstRegion.StartCoordinate);
-            // give leftEdgeGap the old checkerooski!
+            // Checking the left edge gap 
             if (leftEdgeGap.Length >= threshold)
             {
                 Coordinate leftMidPoint = leftEdgeGap.FindMidpoint();
@@ -196,7 +188,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
                 else // midpoint.X is 0
                 {
-                    angle = currCompass; // so elegant :)
+                    angle = currCompass; 
                 }
                 if (Math.Abs(idealDirection - angle) < bestAngle)
                 {
@@ -213,7 +205,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 rightEdgeCoordinate = new Coordinate(AI_ROCKS.Services.AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
             }
             Line rightEdgeGap = new Line(rightEdgeCoordinate, lastRegion.EndCoordinate);
-            // give rightEdgeGap the old checkerooski!
+            //Checking the right edge gap
             if (rightEdgeGap.Length >= threshold)
             {
                 Coordinate rightMidPoint = rightEdgeGap.FindMidpoint();
@@ -229,7 +221,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
                 else // midpoint.X is 0
                 {
-                    angle = currCompass; // so elegant :)
+                    angle = currCompass; 
                 }
                 if (Math.Abs(idealDirection - angle) < bestAngle)
                 {
@@ -237,15 +229,14 @@ namespace AI_ROCKS.Drive.DriveStates
                     bestGap = rightEdgeGap;
                 }
             }
-            
-            //start to iterate through the list to find the bestGap
+
+            //start to iterate through the rest of the gaps to find the bestGap by calculating valid (large enough) gaps as Line objects
             for (int i = 0; i < regions.Count - 2; i++) // don't iterate through entire list, will result in index out of bounds error on rightRegion assignment
             {
                 Region leftRegion = regions[i];
                 Region rightRegion = regions[i + 1];
                 
-                // gap is distance, just needs to be big enough, maybe 1.5 times width of robot
-                // also doesn't get gap distance for between first or last with the ends
+                // gap is distance, just needs to be big enough, maybe 1.5 times width of robot (Currently the width of the robot)
                 // I have a qualm with get gap distance, raw distance is returned, no projection is done
                 gap = Plot.GapDistanceBetweenRegions(leftRegion, rightRegion); // this returns true gap distance, not horizontal distance
                 if (gap >= threshold)
@@ -272,8 +263,9 @@ namespace AI_ROCKS.Drive.DriveStates
                         }
                         else // midpoint.X is 0
                         {
-                            angle = currCompass; // so elegant :)
+                            angle = currCompass; 
                         }
+                        //checks if the gap found gets us closer to our destination 
                         if (Math.Abs(idealDirection - angle) < bestAngle)
                         {
                             bestAngle = angle;
@@ -283,7 +275,6 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
             }
             return bestGap;
-            // may need to add code in taking into account slope! 
         }
         
     }

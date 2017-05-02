@@ -96,6 +96,11 @@ namespace AI_ROCKS.Drive.Models
             var bearing = Math.Atan2(Δlon, Δψ);
             var bearingDeg = bearing * 180 / Math.PI;
 
+            while(bearingDeg < 0)
+            {
+                bearingDeg += 360;
+            }
+
             return bearingDeg;
 
 
