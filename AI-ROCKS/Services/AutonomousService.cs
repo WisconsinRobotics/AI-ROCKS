@@ -124,9 +124,10 @@ namespace AI_ROCKS.Services
             this.driveContext.Drive(driveCommand);
 
             // If state change is required, change state
-            if (this.driveContext.IsStateChangeRequired())
+            StateType nextState = this.driveContext.GetNextStateType();
+            if (this.driveContext.IsStateChangeRequired(nextState))
             {
-                this.driveContext.ChangeState();
+                this.driveContext.ChangeState(nextState);
             }
         }
 
