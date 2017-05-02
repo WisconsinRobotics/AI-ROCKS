@@ -76,7 +76,7 @@ namespace AI_ROCKS.Drive
         /// <returns>bool - If state change is required.</returns>
         public bool IsStateChangeRequired()
         {
-            return driveState.GetNextStateType() != stateType;
+            return driveState.GetNextStateType() != this.stateType;
         }
 
         //TODO look at this function

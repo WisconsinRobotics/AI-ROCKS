@@ -37,13 +37,13 @@ namespace AI_ROCKS.PacketHandlers
         public const int AI_ROCKS_AI_SERVICE_ID = 0;
 
         // Query interval for GPS, IMU sensors
-        private const long QUERY_SENSOR_INTERVAL_MILLIS = 100;
+        private const long QUERY_SENSOR_INTERVAL_MILLIS = 500;
         static readonly byte[] QUERY_OPCODES = { OPCODE_QUERY_GPS, OPCODE_QUERY_IMU };      // Query GPS and IMU
 
         // Constants for communicating with ROCKS
         const int AI_ROCKS_PORT = 15000;
         const int ROCKS_PORT = 10000;
-        const string LAUNCHPAD_COM_PORT = "COM4";       //TODO make from param? Update after knowing COM port if nothing else
+        const string LAUNCHPAD_COM_PORT = "COM4";       //TODO remove
 
         private static IPEndPoint ascentControlsIPEndpoint;
         private UdpClient ai_rocksSocket;
@@ -129,7 +129,7 @@ namespace AI_ROCKS.PacketHandlers
         /// <param name="destServiceID">BCL destination dervice ID for the BCL packet sent to ROCKS.</param>
         public static void SendPayloadToROCKS(byte opcode, byte[] data, byte destServiceID)
         {
-            // header = [header] [opcode] [source robot ID = 16] [source service ID = 0] [dest robot ID = 15] [dest service ID = 3] [payload size] [checksum] [payload] [footer]
+            // packet = [header] [opcode] [source robot ID = 16] [source service ID = 0] [dest robot ID = 15] [dest service ID] [payload size] [checksum] [payload] [footer]
 
             // BCL packet to be formed and sent
             List<byte> bclPacket = new List<byte>();
@@ -201,72 +201,6 @@ namespace AI_ROCKS.PacketHandlers
             {
                 SendPayloadToROCKS(opcode, data, ROCKS_SENSOR_SERVICE_ID);
             }
-
-            // Above is untested so this is kept for reference
-            /*
-            // BCL packet to be formed and sent
-            foreach (byte opcode in opcodes)
-            {
-                List<byte> bclPacket = new List<byte>();
-
-                // Header
-                bclPacket.Add(0xBA);
-                bclPacket.Add(0xAD);
-
-                // Opcode - all wheel speed
-                bclPacket.Add(opcode);
-
-                // Source addr - robot ID and service ID
-                bclPacket.Add(0x01);
-                bclPacket.Add(0x01);
-
-                // Dest addr - robot ID and service ID
-                bclPacket.Add(0x0F);
-                bclPacket.Add(0xFF);
-
-                // Payload size and payload
-                bclPacket.Add((byte)data.Length);
-
-                // CRC
-                int crc = 0;
-                for (int i = 0; i < data.Length; i++)
-                {
-                    // Set up the dividend
-                    crc ^= data[i];
-
-                    for (int j = 0; j < 8; j++)
-                    {
-                        // Does the divisor go into the dividend?
-                        if ((crc & 0x80) > 1)
-                        {
-                            // Dividend -= divisor
-                            crc = (crc << 1) ^ 0x07;
-                        }
-                        else
-                        {
-                            // Move to the next bit
-                            crc <<= 1;
-                        }
-                    }
-                }
-                bclPacket.Add((byte)crc);
-
-                // Add data[] to payload
-                foreach (byte b in data)
-                {
-                    bclPacket.Add(b);
-                }
-
-                // End
-                bclPacket.Add(0xFE);
-
-                // Send over Serial on the COM port of the launchpad
-                //GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count);
-
-                // Send to Gazebo or ROCKS
-                GetInstance().ai_rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ascentControlsIPEndpoint);
-            }
-            */
         }
 
         /// <summary>
@@ -281,11 +215,10 @@ namespace AI_ROCKS.PacketHandlers
 
             ai_rocksSocket.BeginReceive(HandleSocketReceive, null);
 
-            // (optional) check recv_addr against ASCENT_CONTROLS_IP_ENDPOINT
-            // verify header, ignore crc as over loopback
-            // parse opcode
-            // ignore crc
-            // route payload to appropriate handler based on parsed opcode
+            if (!ascentControlsIPEndpoint.Address.Equals(recvAddr))
+            {
+                return;
+            }
 
             // Check header bytes
             if (data[0] != 0xBA || data[1] != 0xAD)
