@@ -96,7 +96,7 @@ namespace AI_ROCKS.Drive.Models
             var bearing = Math.Atan2(Δlon, Δψ);
             var bearingDeg = bearing * 180 / Math.PI;
 
-            while(bearingDeg < 0)
+            while (bearingDeg < 0)
             {
                 bearingDeg += 360;
             }
@@ -156,6 +156,18 @@ namespace AI_ROCKS.Drive.Models
         public float LongSeconds
         {
             get { return this.longSeconds; }
+        }
+
+        public override String ToString()
+        {
+            String stringy = "latDeg: " + this.latDegrees
+                + " latMin: " + this.latMinutes
+                + " latSec: " + this.latSeconds
+                + " longDeg: " + this.longDegrees
+                + " longMin: " + this.longMinutes
+                + " longSec: " + this.longSeconds;
+
+            return stringy;
         }
     }
 }
