@@ -7,6 +7,7 @@ namespace AI_ROCKS.Drive
         public const byte SPEED_NORMAL_OPERATION = 50;
         public const byte SPEED_CLEAR_OBSTACLE = 40;
         public const byte SPEED_AVOID_OBSTACLE = 30;
+        public const byte SPEED_SLOW_TURN = 50;
         public const byte SPEED_VISION = 30;
         public const byte SPEED_HALT = 0;
 

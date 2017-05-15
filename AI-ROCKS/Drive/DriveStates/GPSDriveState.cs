@@ -44,8 +44,7 @@ namespace AI_ROCKS.Drive.DriveStates
             idealDirection = currGPS.GetHeadingTo(finalGPS);
             double distance = AscentPacketHandler.GPSData.GetDistanceTo(finalGPS);
 
-            Console.Write("currCompass: " + currCompass + " | idealDirection: " + idealDirection + " | "
-                                                        + " | distance: " + distance + " | ");
+            Console.Write("currCompass: " + currCompass + " | headingToGoal: " + idealDirection + " | distance: " + distance + " | ");
             // get data in good form 
 
             /*float finalLat, finalLong, currLat, currLong;
@@ -93,22 +92,22 @@ namespace AI_ROCKS.Drive.DriveStates
             {
                 if (currCompass > idealDirection && currCompass < opposite) // turn left
                 {
-                    return command = DriveCommand.LeftTurn(50);
+                    return command = DriveCommand.LeftTurn(DriveCommand.SPEED_SLOW_TURN);
                 }
                 else // turn right
                 {
-                    return command = DriveCommand.RightTurn(50);
+                    return command = DriveCommand.RightTurn(DriveCommand.SPEED_SLOW_TURN);
                 }
             }
             else // modulo necessary
             {
                 if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite)) // turn left
                 {
-                    return command = DriveCommand.LeftTurn(50);
+                    return command = DriveCommand.LeftTurn(DriveCommand.SPEED_SLOW_TURN);
                 }
                 else // turn right
                 {
-                    return command = DriveCommand.RightTurn(50);
+                    return command = DriveCommand.RightTurn(DriveCommand.SPEED_SLOW_TURN);
                 }
             }
         }
