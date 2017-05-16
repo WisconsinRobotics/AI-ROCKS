@@ -1,12 +1,13 @@
 ﻿using System;
 
+using AI_ROCKS.Drive.Models;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
     class GPSDriveState : IDriveState
     {
-        public GPSDriveState()
+        public GPSDriveState(GPS gate)
         {
 
         }

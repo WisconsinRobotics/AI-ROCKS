@@ -1,12 +1,13 @@
 ﻿using System;
 
+using AI_ROCKS.Drive.Models;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
     class VisionDriveState : IDriveState
     {
-        public VisionDriveState()
+        public VisionDriveState(GPS gate)
         {    
         }
 
