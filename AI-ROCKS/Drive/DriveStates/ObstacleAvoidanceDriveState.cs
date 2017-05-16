@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using AI_ROCKS.Services;
+using AI_ROCKS.Drive.Utils;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
@@ -15,7 +17,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         public DriveCommand FindNextDriveCommand()
         {
-            return DriveCommand.Straight(DriveCommand.SPEED_NORMAL_OPERATION);
+            return DriveCommand.Straight(Speed.SPEED_NORMAL_OPERATION);
         }
 
         public StateType GetNextStateType()

@@ -129,11 +129,11 @@ namespace AI_ROCKS.Drive
                 Coordinate midpoint = bestGap.FindMidpoint();
                 double angle = midpoint.Theta;
 
-                driveCommand = new DriveCommand(angle, DriveCommand.SPEED_CLEAR_OBSTACLE);
+                driveCommand = new DriveCommand(angle, Speed.SPEED_CLEAR_OBSTACLE);
             }
             else
             {
-                driveCommand = DriveCommand.RightTurn(DriveCommand.SPEED_CLEAR_OBSTACLE);
+                driveCommand = DriveCommand.RightTurn(Speed.SPEED_CLEAR_OBSTACLE);
             }
 
             // Send driveCommand

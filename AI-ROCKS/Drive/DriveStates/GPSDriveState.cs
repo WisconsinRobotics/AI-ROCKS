@@ -1,11 +1,12 @@
 ﻿using System;
 
-using ObstacleLibrarySharp;
 using System.Collections.Generic;
 using System.Linq;
 
 using AI_ROCKS.Drive.Models;
 using AI_ROCKS.PacketHandlers;
+using AI_ROCKS.Drive.Utils;
+using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
@@ -16,7 +17,11 @@ namespace AI_ROCKS.Drive.DriveStates
         private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
         private double PROXIMITY = -1; //Just for gazebo since map's scaling is weird 
         private double idealDirection;
-        GPS finalGPS = new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);  //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
+        GPS finalGPS = new GPS(43, 4, 17.9f, -89, 24, 41.1f);
+        // right outside door   //new GPS(43, 4, 17.9f, -89, 24, 41.1f);
+        // stop sign:           //new GPS(43, 4, 19.5f, -89, 24, 40.8f); 
+        // end of grass:        //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
+        // gazebo:              //new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);
 
         //GPS currGPS;
         //short currCompass;
@@ -80,7 +85,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             if (IMU.IsHeadingWithinThreshold(currCompass, idealDirection, DIRECTION_VATIANCE_NOISE))
             {
-                return command = DriveCommand.Straight(50);
+                return command = DriveCommand.Straight(Speed.SPEED_SLOW_TURN);
             }
 
             // not aligned with endGPS point, need to turn
@@ -92,22 +97,22 @@ namespace AI_ROCKS.Drive.DriveStates
             {
                 if (currCompass > idealDirection && currCompass < opposite) // turn left
                 {
-                    return command = DriveCommand.LeftTurn(DriveCommand.SPEED_SLOW_TURN);
+                    return command = DriveCommand.LeftTurn(Speed.SPEED_SLOW_TURN);
                 }
                 else // turn right
                 {
-                    return command = DriveCommand.RightTurn(DriveCommand.SPEED_SLOW_TURN);
+                    return command = DriveCommand.RightTurn(Speed.SPEED_SLOW_TURN);
                 }
             }
             else // modulo necessary
             {
                 if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite)) // turn left
                 {
-                    return command = DriveCommand.LeftTurn(DriveCommand.SPEED_SLOW_TURN);
+                    return command = DriveCommand.LeftTurn(Speed.SPEED_SLOW_TURN);
                 }
                 else // turn right
                 {
-                    return command = DriveCommand.RightTurn(DriveCommand.SPEED_SLOW_TURN);
+                    return command = DriveCommand.RightTurn(Speed.SPEED_SLOW_TURN);
                 }
             }
         }

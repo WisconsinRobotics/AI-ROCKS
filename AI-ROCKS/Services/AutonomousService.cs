@@ -113,7 +113,7 @@ namespace AI_ROCKS.Services
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
                 {
-                    this.driveContext.Drive(DriveCommand.Straight(DriveCommand.SPEED_CLEAR_OBSTACLE));
+                    this.driveContext.Drive(DriveCommand.Straight(Speed.SPEED_CLEAR_OBSTACLE));
                 }
                 
                 return;
