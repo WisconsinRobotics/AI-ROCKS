@@ -85,7 +85,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             if (IMU.IsHeadingWithinThreshold(currCompass, idealDirection, DIRECTION_VATIANCE_NOISE))
             {
-                return command = DriveCommand.Straight(Speed.SPEED_SLOW_TURN);
+                return command = DriveCommand.Straight(Speed.SLOW_TURN);
             }
 
             // not aligned with endGPS point, need to turn
@@ -97,22 +97,22 @@ namespace AI_ROCKS.Drive.DriveStates
             {
                 if (currCompass > idealDirection && currCompass < opposite) // turn left
                 {
-                    return command = DriveCommand.LeftTurn(Speed.SPEED_SLOW_TURN);
+                    return command = DriveCommand.LeftTurn(Speed.SLOW_TURN);
                 }
                 else // turn right
                 {
-                    return command = DriveCommand.RightTurn(Speed.SPEED_SLOW_TURN);
+                    return command = DriveCommand.RightTurn(Speed.SLOW_TURN);
                 }
             }
             else // modulo necessary
             {
                 if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite)) // turn left
                 {
-                    return command = DriveCommand.LeftTurn(Speed.SPEED_SLOW_TURN);
+                    return command = DriveCommand.LeftTurn(Speed.SLOW_TURN);
                 }
                 else // turn right
                 {
-                    return command = DriveCommand.RightTurn(Speed.SPEED_SLOW_TURN);
+                    return command = DriveCommand.RightTurn(Speed.SLOW_TURN);
                 }
             }
         }

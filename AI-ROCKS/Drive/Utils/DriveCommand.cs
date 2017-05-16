@@ -51,21 +51,21 @@ namespace AI_ROCKS.Drive
         public static DriveCommand Straight(byte speed)
         {
             // Create DriveCommand that represents a Straight command of specified speed
-            DriveCommand straight = new DriveCommand(Angle.ANGLE_STRAIGHT, speed);
+            DriveCommand straight = new DriveCommand(Angle.STRAIGHT, speed);
             return straight;
         }
 
         public static DriveCommand RightTurn(byte speed)
         {
             // Create DriveCommand that represents a Right command of specified speed
-            DriveCommand right = new DriveCommand(Angle. ANGLE_RIGHT, speed);
+            DriveCommand right = new DriveCommand(Angle.RIGHT, speed);
             return right;
         }
 
         public static DriveCommand LeftTurn(byte speed)
         {
             // Create DriveCommand that represents a Left command of specified speed
-            DriveCommand left = new DriveCommand(Angle.ANGLE_LEFT, speed);
+            DriveCommand left = new DriveCommand(Angle.LEFT, speed);
             return left;
         }
 

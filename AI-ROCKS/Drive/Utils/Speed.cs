@@ -8,11 +8,11 @@ namespace AI_ROCKS.Drive.Utils
 {
     public static class Speed
     {
-        public const byte SPEED_NORMAL_OPERATION = 50;
-        public const byte SPEED_CLEAR_OBSTACLE = 40;
-        public const byte SPEED_AVOID_OBSTACLE = 30;
-        public const byte SPEED_SLOW_TURN = 25;
-        public const byte SPEED_VISION = 30;
-        public const byte SPEED_HALT = 0;
+        public const byte NORMAL_OPERATION = 50;
+        public const byte CLEAR_OBSTACLE = 40;
+        public const byte AVOID_OBSTACLE = 30;
+        public const byte SLOW_TURN = 25;
+        public const byte VISION = 30;
+        public const byte HALT = 0;
     }
 }

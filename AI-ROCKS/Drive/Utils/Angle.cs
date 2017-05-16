@@ -8,8 +8,8 @@ namespace AI_ROCKS.Drive.Utils
 {
     public static class Angle
     {
-        public const double ANGLE_STRAIGHT = Math.PI / 2;
-        public const double ANGLE_RIGHT = 0;
-        public const double ANGLE_LEFT = Math.PI;
+        public const double STRAIGHT = Math.PI / 2;
+        public const double RIGHT = 0;
+        public const double LEFT = Math.PI;
     }
 }
