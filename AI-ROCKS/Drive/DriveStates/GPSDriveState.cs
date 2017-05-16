@@ -11,14 +11,14 @@ namespace AI_ROCKS.Drive.DriveStates
 {
     class GPSDriveState : IDriveState
     {
-        private const float THRESHOLD_HEADING_ANGLE = 5f;       // Gives threshold that "straight" is considered on either side
+        private const float THRESHOLD_HEADING_ANGLE = 10f;       // Gives threshold that "straight" is considered on either side
         private double GATE_PROXIMITY = 3.0;                    // Distance from gate for when to switch to Vision
-        GPS finalGPS = new GPS(43, 4, 17.9f, -89, 24, 41.1f);
-            // Other test GPS values:
-            // right outside door   //new GPS(43, 4, 17.9f, -89, 24, 41.1f);
-            // stop sign:           //new GPS(43, 4, 19.5f, -89, 24, 40.8f); 
-            // end of grass:        //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
-            // gazebo:              //new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);
+        GPS finalGPS = new GPS(43, 4, 19.8f, -89, 24, 41.0f);
+        // Other test GPS values:
+        // right outside door   //new GPS(43, 4, 17.9f, -89, 24, 41.1f);
+        // middle by stop sign  //new GPS(43, 4, 19.8f, -89, 24, 41.0f);
+        // end of grass:        //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
+        // gazebo:              //new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);
 
         public GPSDriveState()
         {
@@ -64,7 +64,7 @@ namespace AI_ROCKS.Drive.DriveStates
             
             if (IMU.IsHeadingWithinThreshold(currCompass, idealDirection, THRESHOLD_HEADING_ANGLE))
             {
-                return DriveCommand.Straight(Speed.SLOW_TURN);
+                return DriveCommand.Straight(Speed.SLOW_OPERATION);
             }
 
             // not aligned with endGPS point, need to turn
