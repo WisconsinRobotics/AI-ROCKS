@@ -1,5 +1,4 @@
 ﻿using System;
-
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,48 +9,37 @@ using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
 {
-    // CURRENTLY WORKING AS IF COMPASS RETURNS ASMUTH (COMPASS NOT UNIT CIRCLE)
     class GPSDriveState : IDriveState
     {
-        private const float DIRECTION_VATIANCE_NOISE = 5f; // gives threshold that "straight" is considered
-        private const long LRF_MAX_RELIABLE_DISTANCE = 6000;    // TODO get from LRFLibrary
-        private double PROXIMITY = -1; //Just for gazebo since map's scaling is weird 
-        private double idealDirection;
+        private const float THRESHOLD_HEADING_ANGLE = 5f;       // Gives threshold that "straight" is considered on either side
+        private double GATE_PROXIMITY = 3.0;                    // Distance from gate for when to switch to Vision
         GPS finalGPS = new GPS(43, 4, 17.9f, -89, 24, 41.1f);
-        // right outside door   //new GPS(43, 4, 17.9f, -89, 24, 41.1f);
-        // stop sign:           //new GPS(43, 4, 19.5f, -89, 24, 40.8f); 
-        // end of grass:        //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
-        // gazebo:              //new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);
+            // Other test GPS values:
+            // right outside door   //new GPS(43, 4, 17.9f, -89, 24, 41.1f);
+            // stop sign:           //new GPS(43, 4, 19.5f, -89, 24, 40.8f); 
+            // end of grass:        //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
+            // gazebo:              //new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);
 
-        //GPS currGPS;
-        //short currCompass;
-
-        DriveCommand command;
-        // TODO CONSTANTS FOR DRIVE COMMAND SPEED
         public GPSDriveState()
         {
         }
-        static int count = 0;
+
+        
         /// <summary>
         /// Find the next DriveCommand to be issued to ROCKS.
         /// </summary>
         /// <returns>DriveCommand - the next drive command for ROCKS to execute.</returns>
         public DriveCommand FindNextDriveCommand()
         {
-            if (count == 0)
-            {
-                count++;
-                return DriveCommand.Straight(50);
-            }
-
             GPS currGPS = AscentPacketHandler.GPSData;
-            short currCompass = AscentPacketHandler.Compass; // currCompass needs to be received as a compass from gazebo
-            idealDirection = currGPS.GetHeadingTo(finalGPS);
+            short currCompass = AscentPacketHandler.Compass;
+            double idealDirection = currGPS.GetHeadingTo(finalGPS);
             double distance = AscentPacketHandler.GPSData.GetDistanceTo(finalGPS);
 
+            // Debugging - delete
             Console.Write("currCompass: " + currCompass + " | headingToGoal: " + idealDirection + " | distance: " + distance + " | ");
+            
             // get data in good form 
-
             /*float finalLat, finalLong, currLat, currLong;
             finalLat = finalGPS.LatDegrees + (finalGPS.LatMinutes / 60f) + (finalGPS.LatSeconds / 60f / 60f);
             finalLong = finalGPS.LongDegrees+ (finalGPS.LongMinutes / 60f) + (finalGPS.LongSeconds / 60f / 60f);
@@ -74,18 +62,9 @@ namespace AI_ROCKS.Drive.DriveStates
             //idealDirection = (idealDirection + 180) % 360; */
             // if lined up within numeric precision, drive straight
             
-            // What used to exist - Matt changed on 4/23 to use already existing function below
-            /*
-            if (Math.Abs(idealDirection - currCompass) < DIRECTION_VATIANCE_NOISE
-                || Math.Abs(idealDirection - currCompass) > (360 - DIRECTION_VATIANCE_NOISE))
+            if (IMU.IsHeadingWithinThreshold(currCompass, idealDirection, THRESHOLD_HEADING_ANGLE))
             {
-                return command = DriveCommand.Straight(50);
-            }
-            */
-
-            if (IMU.IsHeadingWithinThreshold(currCompass, idealDirection, DIRECTION_VATIANCE_NOISE))
-            {
-                return command = DriveCommand.Straight(Speed.SLOW_TURN);
+                return DriveCommand.Straight(Speed.SLOW_TURN);
             }
 
             // not aligned with endGPS point, need to turn
@@ -93,26 +72,33 @@ namespace AI_ROCKS.Drive.DriveStates
             // the first case takes care of all time when the ideal direction is in some way east of us,
             // and the second case takes care of all time when the ideal direction is in some way west of us
             double opposite = (idealDirection + 180) % 360;
-            if (idealDirection < opposite) // this means that modulo was not necessary ie ideal direction < 180
+
+            // This means that modulo was not necessary ie ideal direction < 180
+            if (idealDirection < opposite)
             {
-                if (currCompass > idealDirection && currCompass < opposite) // turn left
+                if (currCompass > idealDirection && currCompass < opposite)
                 {
-                    return command = DriveCommand.LeftTurn(Speed.SLOW_TURN);
+                    // Turn left
+                    return DriveCommand.LeftTurn(Speed.SLOW_TURN);
                 }
-                else // turn right
+                else
                 {
-                    return command = DriveCommand.RightTurn(Speed.SLOW_TURN);
+                    // Turn right
+                    return DriveCommand.RightTurn(Speed.SLOW_TURN);
                 }
             }
-            else // modulo necessary
+            else
             {
-                if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite)) // turn left
+                // Modulo necessary
+                if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite))
                 {
-                    return command = DriveCommand.LeftTurn(Speed.SLOW_TURN);
+                    // Turn left
+                    return DriveCommand.LeftTurn(Speed.SLOW_TURN);
                 }
-                else // turn right
+                else
                 {
-                    return command = DriveCommand.RightTurn(Speed.SLOW_TURN);
+                    // Turn right
+                    return DriveCommand.RightTurn(Speed.SLOW_TURN);
                 }
             }
         }
@@ -123,11 +109,11 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>StateType - the next StateType</returns>
         public StateType GetNextStateType()
         {
-            // Logic for finding when state needs to be switched from GPSDriveState to VisionDriveState
-
-            if (AscentPacketHandler.GPSData.GetDistanceTo(finalGPS) == PROXIMITY)
+            // When to be switch from GPSDriveState to VisionDriveState
+            if (AscentPacketHandler.GPSData.GetDistanceTo(finalGPS) <= GATE_PROXIMITY)
             {
-                Console.WriteLine("CLOSEBY");
+                // TODO send log back to base station
+                Console.WriteLine("WITHIN PROXIMITY");
                 return StateType.VisionState;
             }
 
@@ -144,20 +130,17 @@ namespace AI_ROCKS.Drive.DriveStates
         /// </summary>
         public Line FindBestGap(Plot obstacles)
         {
-            
             List<Region> regions = obstacles.Regions;
             Line bestGap = null;
-            double gap;
-            Line gapLine;
-            Coordinate midpoint;
             double bestAngle = Double.MaxValue;
             double angle;
 
-            //Get LRF, GPS data 
-            GPS currGPS = AI_ROCKS.PacketHandlers.AscentPacketHandler.GPSData;
-            short currCompass = AI_ROCKS.PacketHandlers.AscentPacketHandler.Compass;
+            // Get LRF, GPS data 
+            GPS currGPS = AscentPacketHandler.GPSData;
+            short currCompass = AscentPacketHandler.Compass;
 
-            idealDirection = currGPS.GetHeadingTo(finalGPS);
+            // Heading from current GPS to gate GPS
+            double idealDirection = currGPS.GetHeadingTo(finalGPS);
 
             // Check first and last Region gaps (may be same Region if only one Region)
             Region firstRegion = regions.ElementAt(0);
@@ -175,6 +158,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 leftEdgeCoordinate = new Coordinate(-AI_ROCKS.Services.AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
             }
             Line leftEdgeGap = new Line(leftEdgeCoordinate, firstRegion.StartCoordinate);
+            
             // Checking the left edge gap 
             if (leftEdgeGap.Length >= DriveContext.ASCENT_WIDTH)
             {
@@ -208,6 +192,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 rightEdgeCoordinate = new Coordinate(AI_ROCKS.Services.AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
             }
             Line rightEdgeGap = new Line(rightEdgeCoordinate, lastRegion.EndCoordinate);
+            
             //Checking the right edge gap
             if (rightEdgeGap.Length >= DriveContext.ASCENT_WIDTH)
             {
@@ -232,6 +217,10 @@ namespace AI_ROCKS.Drive.DriveStates
                     bestGap = rightEdgeGap;
                 }
             }
+
+            double gap;
+            Line gapLine;
+            Coordinate midpoint;
 
             //start to iterate through the rest of the gaps to find the bestGap by calculating valid (large enough) gaps as Line objects
             for (int i = 0; i < regions.Count - 2; i++) // don't iterate through entire list, will result in index out of bounds error on rightRegion assignment
@@ -277,8 +266,8 @@ namespace AI_ROCKS.Drive.DriveStates
                     }
                 }
             }
+
             return bestGap;
         }
-        
     }
 }
