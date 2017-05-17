@@ -11,7 +11,7 @@ namespace AI_ROCKS.Drive.DriveStates
 {
     class GPSDriveState : IDriveState
     {
-        private const float THRESHOLD_HEADING_ANGLE = 10f;       // Gives threshold that "straight" is considered on either side
+        private const float THRESHOLD_HEADING_ANGLE = 10f;      // Gives threshold that "straight" is considered on either side
         private double GATE_PROXIMITY = 3.0;                    // Distance from gate for when to switch to Vision
         GPS finalGPS = new GPS(43, 4, 19.8f, -89, 24, 41.0f);
         // Other test GPS values:
@@ -39,29 +39,7 @@ namespace AI_ROCKS.Drive.DriveStates
             // Debugging - delete
             Console.Write("currCompass: " + currCompass + " | headingToGoal: " + idealDirection + " | distance: " + distance + " | ");
             
-            // get data in good form 
-            /*float finalLat, finalLong, currLat, currLong;
-            finalLat = finalGPS.LatDegrees + (finalGPS.LatMinutes / 60f) + (finalGPS.LatSeconds / 60f / 60f);
-            finalLong = finalGPS.LongDegrees+ (finalGPS.LongMinutes / 60f) + (finalGPS.LongSeconds / 60f / 60f);
-            currLat = currGPS.LatDegrees + (currGPS.LatMinutes / 60f) + (currGPS.LatSeconds / 60f / 60f);
-            currLong = currGPS.LongDegrees + (currGPS.LongMinutes / 60f) + (currGPS.LongSeconds / 60f / 60f);
-            
-            // calculate ideal direction
-            idealDirection = Math.Atan2((finalLat - currLat), (finalLong - currLong));
-            if (idealDirection < 0)
-            {
-                idealDirection += (float)(2 * Math.PI);
-            }
-            idealDirection = idealDirection * (180 / Math.PI);
-            idealDirection = 90 - idealDirection;
-            if ((finalLong - currLong) < 0)
-            {
-                idealDirection = idealDirection + 180;
-            }
-            //Flipping direction to match the opposite navigation system as in gazebo
-            //idealDirection = (idealDirection + 180) % 360; */
-            // if lined up within numeric precision, drive straight
-            
+            // If current heading within threshold, go straight
             if (IMU.IsHeadingWithinThreshold(currCompass, idealDirection, THRESHOLD_HEADING_ANGLE))
             {
                 return DriveCommand.Straight(Speed.SLOW_OPERATION);
@@ -73,9 +51,9 @@ namespace AI_ROCKS.Drive.DriveStates
             // and the second case takes care of all time when the ideal direction is in some way west of us
             double opposite = (idealDirection + 180) % 360;
 
-            // This means that modulo was not necessary ie ideal direction < 180
             if (idealDirection < opposite)
             {
+                // Modulo not necessary - ideal direction < 180
                 if (currCompass > idealDirection && currCompass < opposite)
                 {
                     // Turn left
@@ -90,7 +68,7 @@ namespace AI_ROCKS.Drive.DriveStates
             else
             {
                 // Modulo necessary
-                if ((currCompass > idealDirection && currCompass < 360) || (currCompass > 0 && currCompass < opposite))
+                if ((currCompass > idealDirection && currCompass < 360) || (currCompass >= 0 && currCompass < opposite))
                 {
                     // Turn left
                     return DriveCommand.LeftTurn(Speed.SLOW_TURN);
