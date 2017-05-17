@@ -28,18 +28,17 @@ namespace AI_ROCKS.Services
         // Obstacle detection
         public event EventHandler<ObstacleEventArgs> ObstacleEvent;
         private UdpClient rocks_lrf_socket;
-        private const int PORT = 11000;
         private bool handshake = false;
 
 
-        public AutonomousService(StateType initialStateType, GPS gate, bool lrfTest = false)
+        public AutonomousService(StateType initialStateType, GPS gate, int lrfPort, bool lrfTest = false)
         {
             this.driveContext = new DriveContext(initialStateType, gate);
             this.ObstacleEvent += driveContext.HandleObstacleEvent;
 
             if (!lrfTest)
             {
-                this.rocks_lrf_socket = new UdpClient(PORT);
+                this.rocks_lrf_socket = new UdpClient(lrfPort);
 
                 // Initialize async receive
                 this.rocks_lrf_socket.BeginReceive(HandleSocketReceive, null);
