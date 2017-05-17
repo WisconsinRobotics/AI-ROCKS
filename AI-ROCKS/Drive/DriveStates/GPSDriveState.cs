@@ -12,16 +12,18 @@ namespace AI_ROCKS.Drive.DriveStates
     class GPSDriveState : IDriveState
     {
         private const float THRESHOLD_HEADING_ANGLE = 10f;      // Gives threshold that "straight" is considered on either side
-        private double GATE_PROXIMITY = 3.0;                    // Distance from gate for when to switch to Vision
-        GPS finalGPS = new GPS(43, 4, 19.8f, -89, 24, 41.0f);
-        // Other test GPS values:
+        private double GATE_PROXIMITY = 6.0;                    // Distance from gate for when to switch to Vision
+        GPS gate = null;
+        // GPS test values:
         // right outside door   //new GPS(43, 4, 17.9f, -89, 24, 41.1f);
         // middle by stop sign  //new GPS(43, 4, 19.8f, -89, 24, 41.0f);
         // end of grass:        //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
         // gazebo:              //new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);
 
+
         public GPSDriveState(GPS gate)
         {
+            this.gate = gate;
         }
 
         
@@ -33,12 +35,18 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             GPS currGPS = AscentPacketHandler.GPSData;
             short currCompass = AscentPacketHandler.Compass;
-            double idealDirection = currGPS.GetHeadingTo(finalGPS);
-            double distance = AscentPacketHandler.GPSData.GetDistanceTo(finalGPS);
+            double idealDirection = currGPS.GetHeadingTo(gate);
+            double distance = AscentPacketHandler.GPSData.GetDistanceTo(gate);
 
             // Debugging - delete
             Console.Write("currCompass: " + currCompass + " | headingToGoal: " + idealDirection + " | distance: " + distance + " | ");
             
+            // Stop when within proximity, wait to switch to Vision
+            if (distance <= GATE_PROXIMITY)
+            {
+                return DriveCommand.Straight(Speed.HALT);
+            }
+
             // If current heading within threshold, go straight
             if (IMU.IsHeadingWithinThreshold(currCompass, idealDirection, THRESHOLD_HEADING_ANGLE))
             {
@@ -88,9 +96,10 @@ namespace AI_ROCKS.Drive.DriveStates
         public StateType GetNextStateType()
         {
             // When to be switch from GPSDriveState to VisionDriveState
-            if (AscentPacketHandler.GPSData.GetDistanceTo(finalGPS) <= GATE_PROXIMITY)
+            if (AscentPacketHandler.GPSData.GetDistanceTo(gate) <= GATE_PROXIMITY)
             {
                 // TODO send log back to base station
+
                 Console.WriteLine("WITHIN PROXIMITY");
                 return StateType.VisionState;
             }
@@ -118,7 +127,7 @@ namespace AI_ROCKS.Drive.DriveStates
             short currCompass = AscentPacketHandler.Compass;
 
             // Heading from current GPS to gate GPS
-            double idealDirection = currGPS.GetHeadingTo(finalGPS);
+            double idealDirection = currGPS.GetHeadingTo(gate);
 
             // Check first and last Region gaps (may be same Region if only one Region)
             Region firstRegion = regions.ElementAt(0);
