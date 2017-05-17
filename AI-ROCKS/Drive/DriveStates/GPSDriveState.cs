@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 
 using AI_ROCKS.Drive.Models;
-using AI_ROCKS.PacketHandlers;
 using AI_ROCKS.Drive.Utils;
+using AI_ROCKS.PacketHandlers;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
@@ -20,7 +20,7 @@ namespace AI_ROCKS.Drive.DriveStates
         // end of grass:        //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
         // gazebo:              //new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);
 
-        public GPSDriveState()
+        public GPSDriveState(GPS gate)
         {
         }
 

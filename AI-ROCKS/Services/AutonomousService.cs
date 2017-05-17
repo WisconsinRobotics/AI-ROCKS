@@ -1,10 +1,11 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Timers;
 
 using AI_ROCKS.Drive;
+using AI_ROCKS.Drive.Models;
 using AI_ROCKS.Drive.Utils;
 using ObstacleLibrarySharp;
 
@@ -31,12 +32,12 @@ namespace AI_ROCKS.Services
         private bool handshake = false;
 
 
-        public AutonomousService(StateType initialStateType, bool isLRF = true)
+        public AutonomousService(StateType initialStateType, GPS gate, bool lrfTest = false)
         {
-            this.driveContext = new DriveContext(initialStateType);
+            this.driveContext = new DriveContext(initialStateType, gate);
             this.ObstacleEvent += driveContext.HandleObstacleEvent;
 
-            if (isLRF)
+            if (!lrfTest)
             {
                 this.rocks_lrf_socket = new UdpClient(PORT);
 

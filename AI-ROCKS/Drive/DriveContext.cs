@@ -5,6 +5,7 @@ using AI_ROCKS.Drive.DriveStates;
 using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
 using ObstacleLibrarySharp;
+using AI_ROCKS.Drive.Models;
 
 namespace AI_ROCKS.Drive
 {
@@ -25,14 +26,17 @@ namespace AI_ROCKS.Drive
 
         private IDriveState driveState;
         private StateType stateType;
+        private GPS gate;
 
         private readonly Object sendDriveCommandLock;
         private long lastObstacleDetected;
 
-        public DriveContext(StateType initialStateType)
+        public DriveContext(StateType initialStateType, GPS gate)
         {
+            this.gate = gate;
+
             // GPSDriveState is default unless specified
-            this.driveState = StateTypeHelper.ToDriveState(initialStateType);
+            this.driveState = StateTypeHelper.ToDriveState(initialStateType, gate);
             this.stateType = initialStateType;
             
             this.sendDriveCommandLock = new Object();
@@ -101,7 +105,7 @@ namespace AI_ROCKS.Drive
                 return this.stateType;
             }
 
-            this.driveState = StateTypeHelper.ToDriveState(nextState);
+            this.driveState = StateTypeHelper.ToDriveState(nextState, this.gate);
             this.stateType = nextState;
 
             return nextState;
