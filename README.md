@@ -128,6 +128,25 @@ COM ports are specfied like eg. `COM4` and UDP ports are specified by their numb
 	
 	Example: `-g 192.168.1.80`.
 
+- `lat`				- Latitude of the GPS coordinates of the gate, in Time format.
+	
+	Note: the list is specified in `degrees` `minutes` `seconds`, separated by spaces. For latitude/longitude to be 
+	specified as a param, both latitude and longitude must be specified (by `-lat` and `-long`)
+	
+	Example: `-lat 43 4 17.9`
+
+- `long`			- Longitude of the GPS coordinates of the gate, in Time format.
+	
+	Note: the list is specified in `degrees` `minutes` `seconds`, separated by spaces. For latitude/longitude to be 
+	specified as a param, both latitude and longitude must be specified (by `-lat` and `-long`)
+	
+	Example: `-long -89 24 41.1`
+
+- 'nogate'			- Test mode for GPS gate coordinates. If specified, do not use any gate GPS coordinates (from 
+parameters via `-lat` or `-long`, or wait to receive from the base station).
+	
+	Note: this initializes the gate as `gate = new GPS(0, 0, 0, 0, 0, 0);`.
+
 ## Necessary installations:
 
 AI-ROCKS requires installing certain frameworks to resolve dependencies and build. The following gives brief explanations

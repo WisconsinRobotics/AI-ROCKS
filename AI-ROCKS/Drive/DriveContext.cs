@@ -14,9 +14,9 @@ namespace AI_ROCKS.Drive
         public const float ASCENT_WIDTH = 1168.4f;
 
         // LRF
-        public const long LRF_MAX_RELIABLE_DISTANCE = 6000;             // TODO get from LRFLibrary
-        public const float LRF_MIN_ANGLE = (float)Math.PI / 4;          // 45 degrees right edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
-        public const float LRF_MAX_ANGLE = 3 * (float)Math.PI / 4;      // 135 degrees left edge    // TODO Rough numbers - good enough for testing but get these more mathematically/for certain 
+        public const long LRF_MAX_RELIABLE_DISTANCE = 6000;
+        public const float LRF_MIN_ANGLE = (float)Math.PI / 4;          // 45 degrees right edge
+        public const float LRF_MAX_ANGLE = 3 * (float)Math.PI / 4;      // 135 degrees left edge
 
         // LRF field of view (FOV) edges
         public static readonly Line LRF_RIGHT_FOV_EDGE =
@@ -29,22 +29,20 @@ namespace AI_ROCKS.Drive
 
         private IDriveState driveState;
         private StateType stateType;
+        private GPS gate;
 
         private readonly Object sendDriveCommandLock;
         private long lastObstacleDetected;
 
-        private GPS gate;   //TODO take in from command line
-
-
-        public DriveContext(StateType initialStateType)
+        public DriveContext(StateType initialStateType, GPS gate)
         {
+            this.gate = gate;
+
             // GPSDriveState is default unless specified
-            this.driveState = StateTypeHelper.ToDriveState(initialStateType);
+            this.driveState = StateTypeHelper.ToDriveState(initialStateType, gate);
             this.stateType = initialStateType;
             
             this.sendDriveCommandLock = new Object();
-
-            this.gate = new GPS(0, 0, 0, 0, 0, 0);  // TODO
         }
 
 
@@ -79,13 +77,18 @@ namespace AI_ROCKS.Drive
             }
         }
 
+        public StateType GetNextStateType()
+        {
+            return this.driveState.GetNextStateType();
+        }
+
         /// <summary>
         /// If the current DriveState has determined that the state must be changed.
         /// </summary>
         /// <returns>bool - If state change is required.</returns>
-        public bool IsStateChangeRequired()
+        public bool IsStateChangeRequired(StateType nextState)
         {
-            return driveState.GetNextStateType() != this.stateType;
+            return nextState != this.stateType;
         }
 
         //TODO look at this function
@@ -93,22 +96,22 @@ namespace AI_ROCKS.Drive
         /// Change the current DriveState if required and return the corresponding StateType of the new DriveState.
         /// </summary>
         /// <returns>StateType - the StateType for the new DriveState</returns>
-        public StateType ChangeState()
+        public StateType ChangeState(StateType nextState)
         {
             // If change is not required, return current state
             // TODO: ALL BELOW THINGS:
             // - Most likely will be an expensive call, so keep nextStateType as a global here?
             // - Even check if state change is required? Or assume this is called after IsStateChangeRequired() has been called -> be safe for calling function or let the call do whatever it wants?
             // - Specify param or nah? Need to assume more than two states
-            if (!IsStateChangeRequired())
+            if (!this.IsStateChangeRequired(nextState))
             {
                 return this.stateType;
             }
 
-            StateType nextStateType = driveState.GetNextStateType();
+            this.driveState = StateTypeHelper.ToDriveState(nextState, this.gate);
+            this.stateType = nextState;
 
-            driveState = StateTypeHelper.ToDriveState(nextStateType);
-            return nextStateType;
+            return nextState;
         }
 
         /// <summary>

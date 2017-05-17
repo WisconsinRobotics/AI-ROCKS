@@ -56,11 +56,8 @@
     <Reference Include="Emgu.CV.World">
       <HintPath>..\Emgu.CV.World.dll</HintPath>
     </Reference>
-    <Reference Include="LRFLibrarySharp">
-      <HintPath>.\LRFLibrarySharp.dll</HintPath>
-    </Reference>
-    <Reference Include="ObstacleLibrary">
-      <HintPath>.\ObstacleLibrary.dll</HintPath>
+    <Reference Include="ObstacleLibrarySharp">
+      <HintPath>..\ObstacleLibrarySharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

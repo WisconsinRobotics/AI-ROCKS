@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using Timer = System.Timers.Timer;
 
 using AI_ROCKS.Drive;
+using AI_ROCKS.Drive.Models;
 using AI_ROCKS.PacketHandlers;
 using AI_ROCKS.Services;
 
@@ -15,9 +18,15 @@ namespace AI_ROCKS
 
         static void Main(string[] args)
         {
-            String lrfPort = String.Empty;
+            int lrfPort = 11000;
             StateType initialStateType = StateType.GPSState;
             IPAddress destinationIP = IPAddress.Loopback;
+            bool lrfTest = false;
+            bool gateGPSTest = false;
+
+            GPS gate = null;
+            List<float> latitude = new List<float>();
+            List<float> longitude = new List<float>();
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -27,7 +36,10 @@ namespace AI_ROCKS
                     case "-l":
                     {
                         // LRF
-                        lrfPort = args[++i];
+                        if (!Int32.TryParse(args[++i], out lrfPort))
+                        {
+                            ExitFromInvalidArgrument("Invalid integer for StateType parsing: " + args[i]);
+                        }
                         break;
                     }
                     case "-d":
@@ -69,6 +81,48 @@ namespace AI_ROCKS
                         
                         break;
                     }
+                    case "-t":
+                    {
+                        // LRF test mode
+                        lrfTest = true;
+                        break;
+                    }
+                    case "-lat":
+                    {
+                        try
+                        {
+                            latitude.Add(float.Parse(args[++i]));       // Degrees
+                            latitude.Add(float.Parse(args[++i]));       // Minutes
+                            latitude.Add(float.Parse(args[++i]));       // Seconds
+                        }
+                        catch (Exception)
+                        {
+                            ExitFromInvalidArgrument("Invalid latitude for GPS");
+                        }
+
+                        break;
+                    }
+                    case "-long":
+                    {
+                        try
+                        {
+                            longitude.Add(float.Parse(args[++i]));      // Degrees
+                            longitude.Add(float.Parse(args[++i]));      // Minutes
+                            longitude.Add(float.Parse(args[++i]));      // Seconds
+                        }
+                        catch (Exception)
+                        {
+                            ExitFromInvalidArgrument("Invalid longitude for GPS");
+                        }
+
+                        break;
+                    }
+                    case "-nogps":
+                    {
+                        // GPS test mode
+                        gateGPSTest = true;
+                        break;
+                    }
                     default:
                     {
                         // Invalid command line argument
@@ -78,19 +132,36 @@ namespace AI_ROCKS
                 }
             }
 
-            if (lrfPort.Equals(String.Empty))
-            {
-                ExitFromInvalidArgrument("Command line argument for LRF port is required!");
-            }
-
             // Initialize AscentPacketHandler
             AscentPacketHandler.Initialize(destinationIP);
 
-            // Create AutonomousService
-            AutonomousService autonomousService = new AutonomousService(lrfPort, initialStateType);
+            if (gateGPSTest)
+            {
+                // Test mode
+                gate = new GPS(0, 0, 0, 0, 0, 0);
+            }
+            else if (longitude != null || latitude != null)
+            {
+                if (longitude != null || latitude != null)
+                {
+                    // Specified as args
+                    gate = new GPS(latitude.ElementAt(0), latitude.ElementAt(1), latitude.ElementAt(2),
+                                    longitude.ElementAt(0), longitude.ElementAt(1), longitude.ElementAt(2));
+                }
+                else
+                {
+                    // Not both specified, throw error
+                    ExitFromInvalidArgrument("Specifying latitude/longitude as a command line arg requires both to be specified");
+                }
+            }
+            else
+            {
+                // Spin, wait for gate GPS from ROCKS (Base Station GUI)
+                // TODO
+            }
 
-            // Set up connection with ROCKS (Service Master?, etc)
-            // TODO
+            // Create AutonomousService
+            AutonomousService autonomousService = new AutonomousService(initialStateType, gate, lrfPort, lrfTest);
 
             // While connection is present, run autonomous service
             

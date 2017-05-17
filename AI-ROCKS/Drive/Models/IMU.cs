@@ -75,5 +75,17 @@ namespace AI_ROCKS.Drive.Models
         {
             get { return this.zOrient; }
         }
+
+        public override String ToString()
+        {
+            String stringy = "xAccel: " + this.xAccel
+                + " yAccel: " + this.yAccel
+                + " zAccel: " + this.zAccel
+                + " xOrient: " + this.xOrient
+                + " yOrient: " + this.yOrient
+                + " zOrient: " + this.zOrient;
+
+            return stringy;
+        }
     }
 }

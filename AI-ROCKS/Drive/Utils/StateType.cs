@@ -1,6 +1,7 @@
 ﻿using System;
 
 using AI_ROCKS.Drive.DriveStates;
+using AI_ROCKS.Drive.Models;
 
 namespace AI_ROCKS.Drive
 {
@@ -20,19 +21,19 @@ namespace AI_ROCKS.Drive
         /// <param name="stateType">The StateType being converted.</param>
         /// <returns>IDriveState - a new instance of the DriveState corresponding to the 
         /// StateType specified.</returns>
-        public static IDriveState ToDriveState(StateType stateType)
+        public static IDriveState ToDriveState(StateType stateType, GPS gate)
         {
             IDriveState driveState;
             switch (stateType)
             {
                 case StateType.GPSState:
                 {
-                    driveState = new GPSDriveState();
+                    driveState = new GPSDriveState(gate);
                     break;
                 }
                 case StateType.VisionState:
                 {
-                    driveState = new VisionDriveState();
+                    driveState = new VisionDriveState(gate);
                     break;
                 }
                 case StateType.ObstacleAvoidanceState:
@@ -42,7 +43,7 @@ namespace AI_ROCKS.Drive
                 }
                 default:
                 {
-                    driveState = new GPSDriveState();
+                    driveState = new GPSDriveState(gate);
                     break;
                 }
             }

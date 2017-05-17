@@ -59,7 +59,7 @@ namespace AI_ROCKS.Drive.DriveStates
         private Scan scan;
 
 
-        public VisionDriveState()//GPS gate)    // TODO get from DriveContext upon instantiation
+        public VisionDriveState(GPS gate)
         {
             StartCamera();
 
@@ -67,7 +67,7 @@ namespace AI_ROCKS.Drive.DriveStates
             this.ballLock = new Object();
 
             // TODO how to access gate
-            this.gate = new GPS(0, 0, 0, 0, 0, 0); // gate;
+            this.gate = gate;
             this.scan = null;
         }
 
