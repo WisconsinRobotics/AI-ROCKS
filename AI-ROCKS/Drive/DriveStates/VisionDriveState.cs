@@ -19,6 +19,7 @@ namespace AI_ROCKS.Drive.DriveStates
         const string CAMERA_PASSWORD = "i#3Er0b0";
         const string CAMERA_IP_MAST = "192.168.1.6";    // TODO should be .8 but for now it's not
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
+        const int CAMERA_DEVICE_ID = 1;
 
         // TODO put these somewhere else? A Vision handler or something?
         // Camera constants
@@ -66,7 +67,6 @@ namespace AI_ROCKS.Drive.DriveStates
             this.ball = null;
             this.ballLock = new Object();
 
-            // TODO how to access gate
             this.gate = gate;
             this.scan = null;
         }
@@ -160,7 +160,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private void StartCamera()
         {
-            this.camera = new VideoCapture(CAMERA_URL);
+            this.camera = new VideoCapture(CAMERA_DEVICE_ID); //CAMERA_URL);
             this.camera.ImageGrabbed += FrameGrabbed;
             this.camera.Start();
         }
