@@ -5,6 +5,7 @@ using System.Linq;
 using AI_ROCKS.Drive.Models;
 using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
+using AI_ROCKS.Services;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.DriveStates
@@ -12,7 +13,7 @@ namespace AI_ROCKS.Drive.DriveStates
     class GPSDriveState : IDriveState
     {
         private const float THRESHOLD_HEADING_ANGLE = 10f;      // Gives threshold that "straight" is considered on either side
-        private double GATE_PROXIMITY = 6.0;                    // Distance from gate for when to switch to Vision
+        private const double GATE_PROXIMITY = 6.0;              // Distance from gate for when to switch to Vision
         GPS gate = null;
         // GPS test values:
         // right outside door   //new GPS(43, 4, 17.9f, -89, 24, 41.1f);
@@ -120,7 +121,6 @@ namespace AI_ROCKS.Drive.DriveStates
             List<Region> regions = obstacles.Regions;
             Line bestGap = null;
             double bestAngle = Double.MaxValue;
-            double angle;
 
             // Get LRF, GPS data 
             GPS currGPS = AscentPacketHandler.GPSData;
@@ -133,23 +133,25 @@ namespace AI_ROCKS.Drive.DriveStates
             Region firstRegion = regions.ElementAt(0);
             Region lastRegion = regions.ElementAt(regions.Count - 1);
 
-            // left and right fields of view (FOV)
+            // Left and right fields of view (FOV)
             Line lrfLeftFOV = DriveContext.LRF_LEFT_FOV_EDGE;
             Line lrfRightFOV = DriveContext.LRF_RIGHT_FOV_EDGE;
 
             // Check if leftmost Coordinate in the leftmost Region is on the right half of the entire FOV. If it is, make leftEdgeCoordinate where the 
-            // max -acceptable-range meets the left FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
+            // max-acceptable-range meets the left FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
             Coordinate leftEdgeCoordinate = Line.FindClosestPointOnLine(lrfLeftFOV, firstRegion.StartCoordinate);
             if (firstRegion.StartCoordinate.X > 0)
             {
-                leftEdgeCoordinate = new Coordinate(-AI_ROCKS.Services.AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
+                leftEdgeCoordinate = new Coordinate(-AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
             }
-            Line leftEdgeGap = new Line(leftEdgeCoordinate, firstRegion.StartCoordinate);
-            
+
             // Checking the left edge gap 
+            Line leftEdgeGap = new Line(leftEdgeCoordinate, firstRegion.StartCoordinate);
             if (leftEdgeGap.Length >= DriveContext.ASCENT_WIDTH)
             {
+                double angle;
                 Coordinate leftMidPoint = leftEdgeGap.FindMidpoint();
+
                 if (leftMidPoint.X > 0)
                 {
                     angle = currCompass + (90 - (Math.Atan2(leftMidPoint.Y, leftMidPoint.X) * (180 / Math.PI)));
@@ -160,10 +162,12 @@ namespace AI_ROCKS.Drive.DriveStates
                     angle = currCompass - (90 - (Math.Atan2(-1 * leftMidPoint.Y, leftMidPoint.X) * (180 / Math.PI)));
                     angle = angle % 360;
                 }
-                else // midpoint.X is 0
+                else
                 {
+                    // midpoint.X is 0
                     angle = currCompass; 
                 }
+
                 if (Math.Abs(idealDirection - angle) < bestAngle)
                 {
                     bestAngle = idealDirection - angle;
@@ -172,18 +176,20 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
             // Check if rightmost Coordinate in the rightmost Region is on the left half of the entire FOV. If it is, make rightEdgeCoordinate where the
-            // max -acceptable-range meets the right FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
+            // max-acceptable-range meets the right FOV line, since the FindClosestPointOnLine function return will cause errors for 180 degree FOV.
             Coordinate rightEdgeCoordinate = Line.FindClosestPointOnLine(lrfRightFOV, lastRegion.EndCoordinate);
             if (lastRegion.EndCoordinate.X < 0)
             {
-                rightEdgeCoordinate = new Coordinate(AI_ROCKS.Services.AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
+                rightEdgeCoordinate = new Coordinate(AutonomousService.OBSTACLE_DETECTION_DISTANCE, 0, CoordSystem.Cartesian);
             }
+
+            // Checking the right edge gap
             Line rightEdgeGap = new Line(rightEdgeCoordinate, lastRegion.EndCoordinate);
-            
-            //Checking the right edge gap
             if (rightEdgeGap.Length >= DriveContext.ASCENT_WIDTH)
             {
+                double angle;
                 Coordinate rightMidPoint = rightEdgeGap.FindMidpoint();
+
                 if (rightMidPoint.X > 0)
                 {
                     angle = currCompass + (90 - (Math.Atan2(rightMidPoint.Y, rightMidPoint.X) * (180 / Math.PI)));
@@ -194,10 +200,12 @@ namespace AI_ROCKS.Drive.DriveStates
                     angle = currCompass - (90 - (Math.Atan2(-1 * rightMidPoint.Y, rightMidPoint.X) * (180 / Math.PI)));
                     angle = angle % 360;
                 }
-                else // midpoint.X is 0
+                else
                 {
+                    // midpoint.X is 0
                     angle = currCompass; 
                 }
+
                 if (Math.Abs(idealDirection - angle) < bestAngle)
                 {
                     bestAngle = angle;
@@ -205,31 +213,28 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
             }
 
-            double gap;
-            Line gapLine;
-            Coordinate midpoint;
-
-            //start to iterate through the rest of the gaps to find the bestGap by calculating valid (large enough) gaps as Line objects
+            // Iterate through the rest of the gaps to find the bestGap by calculating valid (large enough) gaps as Line objects
             for (int i = 0; i < regions.Count - 2; i++) // don't iterate through entire list, will result in index out of bounds error on rightRegion assignment
             {
                 Region leftRegion = regions[i];
                 Region rightRegion = regions[i + 1];
                 
-                // gap is distance, just needs to be big enough, maybe 1.5 times width of robot (Currently the width of the robot)
-                // I have a qualm with get gap distance, raw distance is returned, no projection is done
-                gap = Plot.GapDistanceBetweenRegions(leftRegion, rightRegion); // this returns true gap distance, not horizontal distance
+                // Gap is distance, just needs to be big enough (the width of the robot)
+                double gap = Plot.GapDistanceBetweenRegions(leftRegion, rightRegion);
                 if (gap >= DriveContext.ASCENT_WIDTH)
                 {
-                    gapLine = new Line(new Coordinate(leftRegion.EndCoordinate.X, leftRegion.EndCoordinate.Y, CoordSystem.Cartesian),
-                                       new Coordinate(rightRegion.StartCoordinate.X, rightRegion.StartCoordinate.Y, CoordSystem.Cartesian));
+                    Line gapLine = new Line(new Coordinate(leftRegion.EndCoordinate.X, leftRegion.EndCoordinate.Y, CoordSystem.Cartesian), 
+                                            new Coordinate(rightRegion.StartCoordinate.X, rightRegion.StartCoordinate.Y, CoordSystem.Cartesian));
 
-                    midpoint = gapLine.FindMidpoint();
+                    Coordinate midpoint = gapLine.FindMidpoint();
                     if (bestGap == null)
                     {
                         bestGap = gapLine;
                     }
                     else
                     {
+                        double angle;
+
                         if (midpoint.X > 0)
                         {
                            angle = currCompass + (90 - (Math.Atan2(midpoint.Y, midpoint.X) * (180 / Math.PI)));
@@ -240,11 +245,13 @@ namespace AI_ROCKS.Drive.DriveStates
                             angle = currCompass - (90 - (Math.Atan2(-1 * midpoint.Y, midpoint.X) * (180 / Math.PI)));
                             angle = angle % 360;
                         }
-                        else // midpoint.X is 0
+                        else
                         {
+                            // midpoint.X is 0
                             angle = currCompass; 
                         }
-                        //checks if the gap found gets us closer to our destination 
+
+                        // Check if the gap found gets us closer to our destination 
                         if (Math.Abs(idealDirection - angle) < bestAngle)
                         {
                             bestAngle = angle;
