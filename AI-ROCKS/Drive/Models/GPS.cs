@@ -24,11 +24,11 @@ namespace AI_ROCKS.Drive.Models
 
         public Tuple<double, double> ToDecimalDegrees()
         {
-            bool latNegative = latDegrees < 0 ? true : false;
-            bool longNegative = longDegrees < 0 ? true : false;
+            bool latNegative = latDegrees < 0;
+            bool longNegative = longDegrees < 0;
 
-            float posLatDegrees = latNegative ? Math.Abs(latDegrees) : latDegrees;
-            float posLongDegrees = longNegative ? Math.Abs(longDegrees) : longDegrees;
+            float posLatDegrees = Math.Abs(latDegrees);
+            float posLongDegrees = Math.Abs(longDegrees);
 
             double latDecimalDegrees = posLatDegrees + (latMinutes + latSeconds / 60) / 60;
             double longDecimalDegrees = posLongDegrees + (longMinutes + longSeconds / 60) / 60;
