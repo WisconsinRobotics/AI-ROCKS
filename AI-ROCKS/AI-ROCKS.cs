@@ -18,6 +18,8 @@ namespace AI_ROCKS
 
         static void Main(string[] args)
         {
+            Console.SetWindowSize(110, 25);
+
             int lrfPort = 11000;
             StateType initialStateType = StateType.GPSState;
             IPAddress destinationIP = IPAddress.Loopback;
@@ -25,8 +27,8 @@ namespace AI_ROCKS
             bool gateGPSTest = false;
 
             GPS gate = null;
-            List<float> latitude = new List<float>();
-            List<float> longitude = new List<float>();
+            List<float> latitude = null;
+            List<float> longitude = null;
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -91,6 +93,7 @@ namespace AI_ROCKS
                     {
                         try
                         {
+                            latitude = new List<float>();
                             latitude.Add(float.Parse(args[++i]));       // Degrees
                             latitude.Add(float.Parse(args[++i]));       // Minutes
                             latitude.Add(float.Parse(args[++i]));       // Seconds
@@ -106,6 +109,7 @@ namespace AI_ROCKS
                     {
                         try
                         {
+                            longitude = new List<float>();
                             longitude.Add(float.Parse(args[++i]));      // Degrees
                             longitude.Add(float.Parse(args[++i]));      // Minutes
                             longitude.Add(float.Parse(args[++i]));      // Seconds
@@ -158,6 +162,11 @@ namespace AI_ROCKS
             {
                 // Spin, wait for gate GPS from ROCKS (Base Station GUI)
                 // TODO
+
+                while (true)
+                { 
+                    //this should be handled 
+                }
             }
 
             // Create AutonomousService
