@@ -7,6 +7,7 @@ using Emgu.CV.Structure;
 using Emgu.CV.Util;
 
 using AI_ROCKS.Drive.Models;
+using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
 using ObstacleLibrarySharp;
 
@@ -81,7 +82,7 @@ namespace AI_ROCKS.Drive.DriveStates
             if (ball == null && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < ballTimestamp + DROP_BALL_DELAY)
             {
                 Console.WriteLine("Dropped ball - halting ");
-                return DriveCommand.Straight(DriveCommand.SPEED_HALT);
+                return DriveCommand.Straight(Speed.HALT);
             }
 
             // Ball detected
@@ -263,7 +264,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 Console.Write("WITHIN REQUIRED DISTANCE | ");
 
                 // TODO handle sending success - need ACK too? Look into
-                return DriveCommand.Straight(DriveCommand.SPEED_HALT);
+                return DriveCommand.Straight(Speed.HALT);
             }
 
             return TurnTowardBall();
@@ -290,7 +291,7 @@ namespace AI_ROCKS.Drive.DriveStates
             if (distanceToGate > 5.0)
             {
                 switchToGPS = true;
-                return DriveCommand.Straight(DriveCommand.SPEED_HALT);
+                return DriveCommand.Straight(Speed.HALT);
             }
 
             // Turn to face heading, drive toward it
@@ -302,17 +303,17 @@ namespace AI_ROCKS.Drive.DriveStates
                 // Aligned with heading. Start going straight
                 if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, Scan.HEADING_THRESHOLD))
                 {
-                    return DriveCommand.Straight(DriveCommand.SPEED_VISION);
+                    return DriveCommand.Straight(Speed.VISION);
                 }
 
                 // Turn toward gate heading angle
                 if (IMU.IsHeadingWithinThreshold(ascentHeading, (headingToGate + 90) % 360, 90))
                 {
-                    return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
+                    return DriveCommand.LeftTurn(Speed.VISION_SCAN);
                 }
                 else
                 {
-                    return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                    return DriveCommand.RightTurn(Speed.VISION_SCAN);
                 }
 
                 // Probably would work, kept as reference
@@ -450,17 +451,17 @@ namespace AI_ROCKS.Drive.DriveStates
             if (ballX < leftThreshold)  // TODO look into this for dynamic video sizes. ie. be able to account for 1080, 720, etc.
             {
                 // Ball to left
-                return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION);
+                return DriveCommand.LeftTurn(Speed.VISION);
             }
             else if (ballX > rightThreshold)
             {
                 // Ball to right
-                return DriveCommand.RightTurn(DriveCommand.SPEED_VISION);
+                return DriveCommand.RightTurn(Speed.VISION);
             }
             else
             {
                 // Ball straight ahead
-                return DriveCommand.Straight(DriveCommand.SPEED_VISION);
+                return DriveCommand.Straight(Speed.VISION);
             }
         }
 

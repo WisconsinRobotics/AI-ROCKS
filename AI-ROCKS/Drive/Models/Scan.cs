@@ -1,5 +1,6 @@
 ﻿using System;
 
+using AI_ROCKS.Drive.Utils;
 using AI_ROCKS.PacketHandlers;
 
 namespace AI_ROCKS.Drive.Models
@@ -49,17 +50,17 @@ namespace AI_ROCKS.Drive.Models
                     this.isScanning = true;
                     scanStartHeading = ascentHeading;
 
-                    return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                    return DriveCommand.RightTurn(Speed.VISION_SCAN);
                 }
 
                 // Turn toward heading angle
                 if (ascentHeading < ((headingToGate + 180) % 360) && ascentHeading > headingToGate)
                 {
-                    return DriveCommand.LeftTurn(DriveCommand.SPEED_VISION_SCAN);
+                    return DriveCommand.LeftTurn(Speed.VISION_SCAN);
                 }
                 else
                 {
-                    return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                    return DriveCommand.RightTurn(Speed.VISION_SCAN);
                 }
             }
             else
@@ -76,7 +77,7 @@ namespace AI_ROCKS.Drive.Models
                     isScanNearlyComplete = true;
                 }
 
-                return DriveCommand.RightTurn(DriveCommand.SPEED_VISION_SCAN);
+                return DriveCommand.RightTurn(Speed.VISION_SCAN);
             }
         }
 
