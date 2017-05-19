@@ -20,7 +20,7 @@ namespace AI_ROCKS
         {
             Console.SetWindowSize(110, 25);
 
-            String lrfPort = String.Empty;
+            int lrfPort = 11000;
             StateType initialStateType = StateType.GPSState;
             IPAddress destinationIP = IPAddress.Loopback;
             bool lrfTest = false;
@@ -38,7 +38,10 @@ namespace AI_ROCKS
                     case "-l":
                     {
                         // LRF
-                        lrfPort = args[++i];
+                        if (!Int32.TryParse(args[++i], out lrfPort))
+                        {
+                            ExitFromInvalidArgrument("Invalid integer for StateType parsing: " + args[i]);
+                        }
                         break;
                     }
                     case "-d":
@@ -133,11 +136,6 @@ namespace AI_ROCKS
                 }
             }
 
-            if (!lrfTest && lrfPort.Equals(String.Empty))
-            {
-                ExitFromInvalidArgrument("Command line argument for LRF port is required!");
-            }
-
             // Initialize AscentPacketHandler
             AscentPacketHandler.Initialize(destinationIP);
 
@@ -172,7 +170,7 @@ namespace AI_ROCKS
             }
 
             // Create AutonomousService
-            AutonomousService autonomousService = new AutonomousService(initialStateType, gate, lrfTest);
+            AutonomousService autonomousService = new AutonomousService(initialStateType, gate, lrfPort, lrfTest);
 
             // While connection is present, run autonomous service
             
