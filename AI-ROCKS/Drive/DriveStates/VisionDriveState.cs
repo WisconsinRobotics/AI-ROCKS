@@ -18,13 +18,13 @@ namespace AI_ROCKS.Drive.DriveStates
         // Camera initialization
         const string CAMERA_USERNAME = "admin";
         const string CAMERA_PASSWORD = "i#3Er0b0";
-        const string CAMERA_IP_MAST = "192.168.1.6";    // TODO should be .8 but for now it's not
+        const string CAMERA_IP_MAST = "192.168.1.7";    // TODO should be .8 but for now it's not
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
         const int CAMERA_DEVICE_ID = 1;
 
         // TODO put these somewhere else? A Vision handler or something?
         // Camera constants
-        public const Double FOCAL_LENGTH = 100.0;   // 3.6mm (6mm optional)     //TODO validate, convert into what we need (units)?
+        public const Double FOCAL_LENGTH = 112.0;   // 3.6mm (6mm optional)     //TODO validate, convert into what we need (units)?
         public const Double KNOWN_WIDTH = 2.6;      // inches                   //TODO validate
         public const int PIXELS_WIDTH = 1920;       // May change, make dynamic?
         public const int PIXELS_HEIGHT = 1080;      // May change, make dynamic?
@@ -59,6 +59,9 @@ namespace AI_ROCKS.Drive.DriveStates
         private VideoCapture camera;
         private GPS gate;
         private Scan scan;
+
+        // TODO for testing - remove
+        int count = 0;
 
 
         public VisionDriveState(GPS gate)
@@ -161,13 +164,21 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private void StartCamera()
         {
-            this.camera = new VideoCapture(CAMERA_DEVICE_ID); //CAMERA_URL);
+            this.camera = new VideoCapture(CAMERA_URL);
             this.camera.ImageGrabbed += FrameGrabbed;
             this.camera.Start();
         }
 
         private void FrameGrabbed(Object sender, EventArgs e)
         {
+            // TODO for testing -- remove
+            if (++count < 10)
+            {
+                return;
+            }
+            count = 0;
+
+
             Mat frame = new Mat();
             camera.Retrieve(frame);
             ProcessFrame(frame);
@@ -290,6 +301,8 @@ namespace AI_ROCKS.Drive.DriveStates
             // Kick back to GPS
             if (distanceToGate > 5.0)
             {
+                Console.WriteLine("Distance: " + distanceToGate + ". Switch to GPS");
+
                 switchToGPS = true;
                 return DriveCommand.Straight(Speed.HALT);
             }
@@ -297,8 +310,12 @@ namespace AI_ROCKS.Drive.DriveStates
             // Turn to face heading, drive toward it
             if (distanceToGate > 3.0)
             {
+                Console.WriteLine("Distance: " + distanceToGate + ". Turning toward heading to drive towrad it");
+
                 short ascentHeading = AscentPacketHandler.Compass;
                 double headingToGate = ascent.GetHeadingTo(this.gate);
+
+                Console.Write("currCompass: " + ascentHeading + " | headingToGoal: " + headingToGate + " | distance: " + distanceToGate + " | ");
 
                 // Aligned with heading. Start going straight
                 if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, Scan.HEADING_THRESHOLD))
@@ -349,6 +366,8 @@ namespace AI_ROCKS.Drive.DriveStates
             // If scanning, complete scan
             if (this.scan != null)
             {
+                Console.WriteLine("Scanning... Distance: " + distanceToGate);
+
                 if (!this.scan.IsComplete())
                 {
                     return scan.FindNextDriveCommand();
@@ -362,12 +381,18 @@ namespace AI_ROCKS.Drive.DriveStates
 
             if (distanceToGate > 2.0)
             {
+                // TODO StatusHandler log
+                Console.WriteLine("Distance: " + distanceToGate + ". Scanning (using heading)...");
+
                 // Turn toward heading
                 // Scan, use heading as reference
                 this.scan = new Scan(this.gate, true);
             }
             else
             {
+                // TODO StatusHandler log
+                Console.WriteLine("Distance: " + distanceToGate + ". Scanning...");
+                
                 // Scan
                 // ... more to do for this case
 
@@ -471,6 +496,8 @@ namespace AI_ROCKS.Drive.DriveStates
             {
                 return false;
             }
+
+            Console.Write("Distance to ball: " + ball.DistanceToCenter + " ");
 
             return ball.DistanceToCenter < DriveContext.REQUIRED_DISTANCE_FROM_BALL;
         }

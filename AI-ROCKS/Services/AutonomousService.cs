@@ -127,6 +127,9 @@ namespace AI_ROCKS.Services
             StateType nextState = this.driveContext.GetNextStateType();
             if (this.driveContext.IsStateChangeRequired(nextState))
             {
+                // TODO StatusHandler log 
+                Console.WriteLine("Switching from state: " + this.driveContext.StateType.ToString() + " to: " + nextState.ToString());
+
                 this.driveContext.ChangeState(nextState);
             }
         }
