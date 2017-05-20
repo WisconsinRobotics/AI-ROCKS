@@ -1,7 +1,6 @@
 ﻿using System;
 //using AI_ROCKS.Drive.Models;
 using System.Text;
-using AI_ROCKS.PacketHandlers.AscentPacketHandler;
 using System.Linq;
 
 namespace AI_ROCKS.PacketHandlers
@@ -10,7 +9,8 @@ namespace AI_ROCKS.PacketHandlers
     {
         /* 0-50: General Updates */
         AIS_FOUND_GATE = 0,
-        AIS_LOG = 1,
+        AIS_RELPY = 1, //what should this actually be called?? @ MATT
+        AIS_LOG = 2,
 
         /* 51-100: State change/status update */
         AIS_SWITCH_VISION = 51,
@@ -34,19 +34,25 @@ namespace AI_ROCKS.PacketHandlers
 
     class StatusHandler : PacketHandler
     {
-        private const byte OPCODE_SIMPLE_AI_PACKET = 0x70;
-        private const byte OPCODE_DEBUG_AI_PACKET = 0x71;
-
         public bool HandlePacket(byte opcode, byte[] payload)
         {
+            if (opcode == AscentPacketHandler.OPCODE_SIMPLE_AI)
+            {
+                //TODO
+            }
+
+            if (opcode == AscentPacketHandler.OPCODE_DEBUG_AI)
+            {
+                //TODO
+            }
             return false;
         }
 
         void sendSimpleAIPacket(Status status)
         {
-            byte statusInBytes = (byte)status;
+            byte[] statusInBytes = new byte[] { (byte)status };
 
-            AscentPacketHandler.SendPayloadToROCKS(OPCODE_SIMPLE_AI_PACKET, statusInBytes, 
+            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_SIMPLE_AI, statusInBytes, 
                 AI_ROCKS.PacketHandlers.AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
         }
         
@@ -65,9 +71,9 @@ namespace AI_ROCKS.PacketHandlers
             debugMessageInBytes = Encoding.ASCII.GetBytes(debugMessage);
 
             byte[] payload = new byte[statusInBytes];
-            payload.Concat(DebugMessageInBytes);
+            payload.Concat(debugMessageInBytes);
 
-            AscentPacketHandler.SendPayloadToROCKS(OPCODE_DEBUG_AI_PACKET, payload, 
+            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_DEBUG_AI, payload, 
                 AI_ROCKS.PacketHandlers.AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
         }
     }

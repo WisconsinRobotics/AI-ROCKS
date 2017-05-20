@@ -78,6 +78,7 @@
     <Compile Include="Drive\Utils\ObstacleEventArgs.cs" />
     <Compile Include="Drive\Models\TennisBall.cs" />
     <Compile Include="PacketHandlers\AscentPacketHandler.cs" />
+    <Compile Include="PacketHandlers\StatusHandler.cs" />
     <Compile Include="PacketHandlers\DriveHandler.cs" />
     <Compile Include="PacketHandlers\GPSHandler.cs" />
     <Compile Include="PacketHandlers\IMUHandler.cs" />
