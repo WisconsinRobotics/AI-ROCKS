@@ -8,6 +8,7 @@ using AI_ROCKS.Drive;
 using AI_ROCKS.Drive.Models;
 using AI_ROCKS.Drive.Utils;
 using ObstacleLibrarySharp;
+using AI_ROCKS.PacketHandlers;
 
 namespace AI_ROCKS.Services
 {
@@ -108,12 +109,14 @@ namespace AI_ROCKS.Services
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
                 Console.WriteLine("Watchdog");
+                StatusHandler.SendDebugAIPacket(Status.AIS_IN_WATCHDOG, "Watchdog.");
 
                 // If more than 0.5 seconds have passed since last event, it's safe to start issuing drive 
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
                 {
                     this.driveContext.Drive(DriveCommand.Straight(Speed.CLEAR_OBSTACLE));
+                    StatusHandler.SendDebugAIPacket(Status.AIS_OUT_WATCHDOG, "Out of watchdog.");
                 }
                 
                 return;
@@ -168,6 +171,7 @@ namespace AI_ROCKS.Services
             // If obstacle detected, trigger event
             if (obstacleDetected)
             {
+                StatusHandler.SendDebugAIPacket(Status.AIS_OBS_DETECT, "Obstacle detected.");
                 OnObstacleEvent(new ObstacleEventArgs(this.plot));
             }
         }

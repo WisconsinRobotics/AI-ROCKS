@@ -1,6 +1,4 @@
-﻿using System;
-//using AI_ROCKS.Drive.Models;
-using System.Text;
+﻿using System.Text;
 using System.Linq;
 
 namespace AI_ROCKS.PacketHandlers
@@ -9,14 +7,16 @@ namespace AI_ROCKS.PacketHandlers
     {
         /* 0-50: General Updates */
         AIS_FOUND_GATE = 0,
-        AIS_RELPY = 1, //what should this actually be called?? @ MATT
+        AIS_FOUND_GATE_ACK = 1,
         AIS_LOG = 2,
 
         /* 51-100: State change/status update */
-        AIS_SWITCH_VISION = 51,
-        AIS_SWITCH_GPS = 52,
+        AIS_SWITCH_TO_VISION = 51,
+        AIS_SWITCH_TO_GPS = 52,
         AIS_OBS_DETECT = 53,
         AIS_OBS_AVOID = 54,
+        AIS_IN_WATCHDOG = 55,
+        AIS_OUT_WATCHDOG = 56,
 
         /* 101-150: GPS codes */
         AIS_DIST_FROM_GOAL = 101,
@@ -41,22 +41,22 @@ namespace AI_ROCKS.PacketHandlers
                 //TODO
             }
 
-            if (opcode == AscentPacketHandler.OPCODE_DEBUG_AI)
+            else if (opcode == AscentPacketHandler.OPCODE_DEBUG_AI)
             {
                 //TODO
             }
+
             return false;
         }
 
-        void sendSimpleAIPacket(Status status)
+        public static void SendSimpleAIPacket(Status status)
         {
             byte[] statusInBytes = new byte[] { (byte)status };
 
-            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_SIMPLE_AI, statusInBytes, 
-                AI_ROCKS.PacketHandlers.AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
+            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_SIMPLE_AI, statusInBytes, AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
         }
         
-        void sendDebugAIPacket(Status status, string debugMessage)
+        public static void SendDebugAIPacket(Status status, string debugMessage)
         {
             //if debug message is too long, truncate
             if (debugMessage.Length >= 150)
@@ -73,8 +73,7 @@ namespace AI_ROCKS.PacketHandlers
             byte[] payload = new byte[statusInBytes];
             payload.Concat(debugMessageInBytes);
 
-            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_DEBUG_AI, payload, 
-                AI_ROCKS.PacketHandlers.AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
+            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_DEBUG_AI, payload, AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
         }
     }
 }
