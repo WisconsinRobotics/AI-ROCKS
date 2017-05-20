@@ -9,7 +9,7 @@ namespace AI_ROCKS.PacketHandlers
     {
         /* 0-50: General Updates */
         AIS_FOUND_GATE = 0,
-        AIS_RELPY = 1, //what should this actually be called?? @ MATT
+        AIS_ACK = 1,
         AIS_LOG = 2,
 
         /* 51-100: State change/status update */
@@ -48,7 +48,7 @@ namespace AI_ROCKS.PacketHandlers
             return false;
         }
 
-        void sendSimpleAIPacket(Status status)
+        public static void SendSimpleAIPacket(Status status)
         {
             byte[] statusInBytes = new byte[] { (byte)status };
 
@@ -56,7 +56,7 @@ namespace AI_ROCKS.PacketHandlers
                 AI_ROCKS.PacketHandlers.AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
         }
         
-        void sendDebugAIPacket(Status status, string debugMessage)
+        public static void SendDebugAIPacket(Status status, string debugMessage)
         {
             //if debug message is too long, truncate
             if (debugMessage.Length >= 150)
