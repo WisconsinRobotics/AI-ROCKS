@@ -517,7 +517,10 @@ namespace AI_ROCKS.Drive.DriveStates
             TennisBall ball = null;
             lock (ballLock)
             {
-                ball = new TennisBall(this.tennisBall);
+                if (this.tennisBall != null)
+                {
+                    ball = new TennisBall(this.tennisBall);
+                }
             }
 
             return ball;
