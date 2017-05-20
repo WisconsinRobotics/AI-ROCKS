@@ -24,7 +24,7 @@ namespace AI_ROCKS.PacketHandlers
             byte[] bclPayload = DriveCommandToBclPayload(driveCommand);
 
             // Send opcode, payload to AscentPacketHandler to send drive packet to ROCKS
-            AscentPacketHandler.SendPayloadToROCKS(OPCODE_ALL_WHEEL_SPEED, bclPayload, AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
+            AscentPacketHandler.SendPayloadToROCKS(OPCODE_ALL_WHEEL_SPEED, bclPayload, AscentPacketHandler.ROCKS_AI_SERVICE_ID);
 
             // For debugging
             Console.WriteLine("left: " + (sbyte)driveCommand.Left + " | right: " + (sbyte)driveCommand.Right);

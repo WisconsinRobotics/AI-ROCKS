@@ -219,10 +219,10 @@ namespace AI_ROCKS.PacketHandlers
 
             ai_rocksSocket.BeginReceive(HandleSocketReceive, null);
 
-            if (!ascentControlsIPEndpoint.Address.Equals(recvAddr))
-            {
-                return;
-            }
+            //if (!ascentControlsIPEndpoint.Address.Equals(recvAddr))
+            //{
+            //    return;
+            //}
 
             // Check header bytes
             if (data[0] != 0xBA || data[1] != 0xAD)
