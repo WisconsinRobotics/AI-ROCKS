@@ -20,7 +20,7 @@ namespace AI_ROCKS.Drive.DriveStates
         const string CAMERA_PASSWORD = "i#3Er0b0";
         const string CAMERA_IP_MAST = "192.168.1.7";    // TODO should be .8 but for now it's not
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
-        const int CAMERA_DEVICE_ID = 1;
+        const int CAMERA_DEVICE_ID = 0;
 
         // TODO put these somewhere else? A Vision handler or something?
         // Camera constants
@@ -166,19 +166,28 @@ namespace AI_ROCKS.Drive.DriveStates
         private void StartCamera()
         {
             this.camera = new VideoCapture(CAMERA_URL);
+
+            // TODO for testing - remove
+            //Timer grabTimer = new Timer(100);
+            //grabTimer.AutoReset = true;
+            //grabTimer.Elapsed += FrameGrabbed;
+            //grabTimer.Enabled = true;
+
             this.camera.ImageGrabbed += FrameGrabbed;
             this.camera.Start();
         }
 
         private void FrameGrabbed(Object sender, EventArgs e)
         {
-            // TODO for testing -- remove
+            /*
+            // TODO for testing - remove
             if (++count < 10)
             {
                 return;
             }
             count = 0;
-
+            this.camera.Grab();
+            */
 
             Mat frame = new Mat();
             camera.Retrieve(frame);
@@ -264,7 +273,7 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
 
-            Console.Write("Ball detected ");
+            Console.Write("Ball detected | ");
 
 
             // Detected ball so no longer scan
@@ -292,7 +301,7 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
 
-            Console.Write("Ball not detected ");
+            Console.Write("Ball not detected | ");
 
 
             // Ball not detected

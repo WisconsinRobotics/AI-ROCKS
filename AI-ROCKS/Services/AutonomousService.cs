@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Timers;
 
 using AI_ROCKS.Drive;
@@ -30,6 +31,8 @@ namespace AI_ROCKS.Services
         private UdpClient rocks_lrf_socket;
         private bool handshake = false;
 
+        // Execute() lock - avoid concurrent Execute() calls
+        Object executeLock = new Object();
 
         public AutonomousService(StateType initialStateType, GPS gate, int lrfPort, bool lrfTest = false)
         {
@@ -104,6 +107,16 @@ namespace AI_ROCKS.Services
         /// </summary>
         public void Execute(Object source, ElapsedEventArgs e)
         {
+            // Don't execute if existing execution is not complete
+            if (!Monitor.TryEnter(executeLock))
+            {
+                return;
+            }
+
+            // TODO debugging - delete
+            //Console.WriteLine("The Elapsed event was raised at {0:HH:mm:ss.fff}", e.SignalTime);
+
+
             // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
@@ -132,6 +145,8 @@ namespace AI_ROCKS.Services
 
                 this.driveContext.ChangeState(nextState);
             }
+
+            Monitor.Exit(executeLock);
         }
 
         /// <summary>

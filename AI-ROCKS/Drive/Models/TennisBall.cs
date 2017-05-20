@@ -55,10 +55,13 @@ namespace AI_ROCKS.Drive.Models
 
         public TennisBall(TennisBall ball)
         {
-            this.centerPoint = ball.CenterPoint;
-            this.radius = ball.Radius;
-            this.distanceToCenter = ball.DistanceToCenter;
-            this.angle = ball.Angle;
+            if (ball != null)
+            {
+                this.centerPoint = ball.CenterPoint;
+                this.radius = ball.Radius;
+                this.distanceToCenter = ball.DistanceToCenter;
+                this.angle = ball.Angle;
+            }
         }
 
 
