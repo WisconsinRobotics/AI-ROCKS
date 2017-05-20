@@ -51,7 +51,7 @@ namespace AI_ROCKS.Drive.DriveStates
         private bool switchToGPS = false;
 
         // Detection objects
-        private TennisBall ball;
+        private TennisBall tennisBall;
         private long ballTimestamp;
         private readonly Object ballLock;
 
@@ -68,7 +68,7 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             StartCamera();
 
-            this.ball = null;
+            this.tennisBall = null;
             this.ballLock = new Object();
 
             this.gate = gate;
@@ -81,6 +81,8 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>DriveCommand - the next drive command for ROCKS to execute.</returns>
         public DriveCommand FindNextDriveCommand()
         {
+            TennisBall ball = GetBallCopy();
+
             // Recently detected ball but now don't now. Stop driving to redetect since we may have dropped it due to bouncing.
             if (ball == null && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < ballTimestamp + DROP_BALL_DELAY)
             {
@@ -91,12 +93,11 @@ namespace AI_ROCKS.Drive.DriveStates
             // Ball detected
             if (ball != null)
             {
-                return DriveBallDetected();
+                return DriveBallDetected(ball);
             }
 
             // No ball detected
-            return DriveNoBallDetected();
-
+            return DriveNoBallDetected(ball);
         }
 
         /// <summary>
@@ -127,8 +128,8 @@ namespace AI_ROCKS.Drive.DriveStates
              */
             
             List<Region> regions = obstacles.Regions;
-            
             Line bestGap = null;
+            TennisBall ball = GetBallCopy();
 
             // Sanity check - if zero Regions exist, return Line representing gap straight in front of Ascent
             if (regions.Count == 0)
@@ -142,7 +143,7 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
             // If open path to ball exists, drive toward it
-            if (IsOpenPathToBall(obstacles) || IsBallDetectedRegionAndOpenPath(obstacles))
+            if (IsOpenPathToBall(obstacles, ball) || IsBallDetectedRegionAndOpenPath(obstacles, ball))
             {
                 Coordinate ballCoord = new Coordinate((float)ball.Angle, (float)ball.DistanceToCenter, CoordSystem.Polar);
 
@@ -207,7 +208,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             lock (ballLock)
             {
-                this.ball = isBallDetected ? new TennisBall(candidateBall) : null;
+                this.tennisBall = isBallDetected ? new TennisBall(candidateBall) : null;
             }
             if (isBallDetected)
             {
@@ -253,7 +254,7 @@ namespace AI_ROCKS.Drive.DriveStates
             return found;
         }
 
-        private DriveCommand DriveBallDetected()
+        private DriveCommand DriveBallDetected(TennisBall ball)
         {
             // Sanity check
             if (ball == null)
@@ -278,10 +279,10 @@ namespace AI_ROCKS.Drive.DriveStates
                 return DriveCommand.Straight(Speed.HALT);
             }
 
-            return TurnTowardBall();
+            return TurnTowardBall(ball);
         }
 
-        private DriveCommand DriveNoBallDetected()
+        private DriveCommand DriveNoBallDetected(TennisBall ball)
         {
             // Sanity check
             if (ball != null)
@@ -402,7 +403,7 @@ namespace AI_ROCKS.Drive.DriveStates
             return scan.FindNextDriveCommand();
         }
 
-        private bool IsOpenPathToBall(Plot obstacles)
+        private bool IsOpenPathToBall(Plot obstacles, TennisBall ball)
         {
             // TODO what if we dropped the ball for one frame - check timing threshold
             if (ball == null | obstacles == null)
@@ -430,7 +431,7 @@ namespace AI_ROCKS.Drive.DriveStates
         }
 
         // TODO horrible function name but whatever (for now)
-        private bool IsBallDetectedRegionAndOpenPath(Plot obstacles)
+        private bool IsBallDetectedRegionAndOpenPath(Plot obstacles, TennisBall ball)
         {
             // TODO what if we dropped the ball for one frame - check timing threshold
             if (ball == null)
@@ -462,17 +463,17 @@ namespace AI_ROCKS.Drive.DriveStates
             if (ballIsRegion)
             {
                 obstacles.Regions.RemoveAt(ballRegionIndex);
-                return IsOpenPathToBall(obstacles);
+                return IsOpenPathToBall(obstacles, ball);
             }
 
             return false;
         }
 
         // Could go off angle, but left as X coordinate for now
-        private DriveCommand TurnTowardBall()
+        private DriveCommand TurnTowardBall(TennisBall ball)
         {
             // Not within required distance
-            float ballX = this.ball.CenterPoint.X;
+            float ballX = ball.CenterPoint.X;
             if (ballX < leftThreshold)  // TODO look into this for dynamic video sizes. ie. be able to account for 1080, 720, etc.
             {
                 // Ball to left
@@ -500,6 +501,17 @@ namespace AI_ROCKS.Drive.DriveStates
             Console.Write("Distance to ball: " + ball.DistanceToCenter + " ");
 
             return ball.DistanceToCenter < DriveContext.REQUIRED_DISTANCE_FROM_BALL;
+        }
+
+        private TennisBall GetBallCopy()
+        {
+            TennisBall ball = null;
+            lock (ballLock)
+            {
+                ball = new TennisBall(this.tennisBall);
+            }
+
+            return ball;
         }
     }
 }

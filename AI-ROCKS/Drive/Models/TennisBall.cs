@@ -53,6 +53,14 @@ namespace AI_ROCKS.Drive.Models
             this.angle = FindAngle(circle, distanceToCenter);
         }
 
+        public TennisBall(TennisBall ball)
+        {
+            this.centerPoint = ball.CenterPoint;
+            this.radius = ball.Radius;
+            this.distanceToCenter = ball.DistanceToCenter;
+            this.angle = ball.Angle;
+        }
+
 
         public Coordinate CenterPoint
         {
