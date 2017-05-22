@@ -25,7 +25,8 @@ namespace AI_ROCKS.Drive
             new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MAX_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
 
         // Vision
-        public const double REQUIRED_DISTANCE_FROM_BALL = 2.0;    // Meters
+        public const double REQUIRED_DISTANCE_FROM_BALL = 2.0;  // Meters
+        public const double GPS_PRECISION = 3.0;                // Meters
 
         private IDriveState driveState;
         private StateType stateType;

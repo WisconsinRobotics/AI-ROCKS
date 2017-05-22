@@ -75,6 +75,8 @@
     <Compile Include="Drive\Models\IMU.cs" />
     <Compile Include="Drive\Models\Scan.cs" />
     <Compile Include="Drive\Utils\Angle.cs" />
+    <Compile Include="Drive\Models\DetectedBall.cs" />
+    <Compile Include="Drive\Utils\DetectedBallsQueue.cs" />
     <Compile Include="Drive\Utils\Speed.cs" />
     <Compile Include="Drive\Utils\DriveCommand.cs" />
     <Compile Include="Drive\DriveContext.cs" />

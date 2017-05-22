@@ -46,14 +46,22 @@ namespace AI_ROCKS.Drive.DriveStates
         const double TURN_THRESHOLD_ANGLE_RIGHT = Math.PI / 3;
 
         // Navigation utils
-        private const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
         private const double BALL_REGION_THRESHOLD = 0.0872665;     // 5 degrees in radians
         private bool switchToGPS = false;
 
-        // Detection objects
+        // Detection, verification objects
         private TennisBall tennisBall;
         private long ballTimestamp;
         private readonly Object ballLock;
+        DetectedBallsQueue verificationQueue;   // For verification at end, not consistent logging of balls
+
+        // Detection constants
+        const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
+
+        // Verification constants
+        const int VERIFICATION_QUEUE_SIZE = 50;
+        const double VERIFICATION_DISTANCE_PERCENTAGE = 0.80;   // 80%
+        const int VERIFICATION_TIMESTAMP_THRESHOLD = 5000;      // 5 seconds
 
         // Navigation objects
         private VideoCapture camera;
@@ -70,6 +78,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             this.tennisBall = null;
             this.ballLock = new Object();
+            this.verificationQueue = new DetectedBallsQueue(VERIFICATION_QUEUE_SIZE);
 
             this.gate = gate;
             this.scan = null;
@@ -268,10 +277,13 @@ namespace AI_ROCKS.Drive.DriveStates
             // Sanity check
             if (ball == null)
             {
-                // TODO could this be a race condition? Pass copy of ball as param?
+                this.verificationQueue.Clear();
                 return null;
             }
 
+            // Add to verification queue
+            DetectedBall detectedBall = new DetectedBall(ball, AscentPacketHandler.GPSData.GetDistanceTo(this.gate), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            verificationQueue.Enqueue(detectedBall);
 
             Console.Write("Ball detected | ");
 
@@ -279,16 +291,23 @@ namespace AI_ROCKS.Drive.DriveStates
             // Detected ball so no longer scan
             this.scan = null;
 
-            // Within required distance
-            if (IsWithinRequiredDistance(ball))
+            // Within required distance - use verification queue to determine if we should send back success
+            if (this.verificationQueue.VerifyBallDetection(
+                        VERIFICATION_DISTANCE_PERCENTAGE,
+                        VERIFICATION_TIMESTAMP_THRESHOLD, 
+                        DriveContext.REQUIRED_DISTANCE_FROM_BALL,
+                        DriveContext.REQUIRED_DISTANCE_FROM_BALL + DriveContext.GPS_PRECISION))
             {
                 Console.Write("WITHIN REQUIRED DISTANCE | ");
 
-                // TODO handle sending success - need ACK too? Look into
+                // TODO log/send success to base station 
+                // TODO handle ACK too
+
+                // Halt to wait for success to be sent back to base station
                 return DriveCommand.Straight(Speed.HALT);
             }
 
-            return TurnTowardBall(ball);
+            return DriveTowardBall(ball);
         }
 
         private DriveCommand DriveNoBallDetected(TennisBall ball)
@@ -303,8 +322,9 @@ namespace AI_ROCKS.Drive.DriveStates
 
             Console.Write("Ball not detected | ");
 
+            // Clear verification queue if it has values
+            this.verificationQueue.Clear();
 
-            // Ball not detected
             GPS ascent = AscentPacketHandler.GPSData;
             double distanceToGate = ascent.GetDistanceTo(this.gate);
 
@@ -479,7 +499,7 @@ namespace AI_ROCKS.Drive.DriveStates
         }
 
         // Could go off angle, but left as X coordinate for now
-        private DriveCommand TurnTowardBall(TennisBall ball)
+        private DriveCommand DriveTowardBall(TennisBall ball)
         {
             // Not within required distance
             float ballX = ball.CenterPoint.X;
