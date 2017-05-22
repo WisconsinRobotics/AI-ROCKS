@@ -43,6 +43,10 @@ namespace AI_ROCKS.Drive.Models
                 GPS ascent = AscentPacketHandler.GPSData;
                 double headingToGate = ascent.GetHeadingTo(this.gate);
 
+                Console.Write("Scan aligning toward heading | compass: " + ascentHeading + " | Heading to gate: " + headingToGate + " | ");
+
+
+
                 // Have reached heading. Start turning right
                 if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, HEADING_THRESHOLD))
                 {
@@ -67,9 +71,12 @@ namespace AI_ROCKS.Drive.Models
             {
                 // Scan
                 // ... more to do for this case
+                Console.Write("Scan scanning | ");
 
                 // Increment deltaTheta accordingly
                 deltaTheta = (ascentHeading - scanStartHeading + 360) % 360;
+
+                Console.Write("Scan scanning | compass: " + ascentHeading + " | deltaTheta: " + deltaTheta + " | ");
 
                 if (deltaTheta > 345)
                 {

@@ -16,10 +16,11 @@ namespace AI_ROCKS.Drive.DriveStates
         private const double GATE_PROXIMITY = 5.0;              // Distance from gate for when to switch to Vision
         GPS gate = null;
         // GPS test values:
-        // right outside door   //new GPS(43, 4, 17.9f, -89, 24, 41.1f);
-        // middle by stop sign  //new GPS(43, 4, 19.8f, -89, 24, 41.0f);
-        // end of grass:        //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
-        // gazebo:              //new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);
+        // right outside door:  -lat 43 4 17.9 -long -89 24 41.1
+        // middle by stop sign: -lat 43 4 19.8 -long -89 24 41.0
+        // end of grass:        -lat 43 4 19.5 -long -89 24 42.4
+        // gazebo:              -lat 43 30 29.7 -long -89 30 29.6
+        // front of ehall:      -lat 43 4 19.8 -long -89 24 37.5
 
 
         public GPSDriveState(GPS gate)

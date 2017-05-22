@@ -309,7 +309,7 @@ namespace AI_ROCKS.Drive.DriveStates
             double distanceToGate = ascent.GetDistanceTo(this.gate);
 
             // Kick back to GPS
-            if (distanceToGate > 5.0)
+            if (distanceToGate > 6.0)
             {
                 Console.WriteLine("Distance: " + distanceToGate + ". Switch to GPS");
 
