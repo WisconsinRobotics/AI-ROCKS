@@ -79,6 +79,9 @@ namespace AI_ROCKS.Drive.Utils
         //  - average gps distance within some threshold of required distance (required distance +/- 3m) (80%?)
         public bool VerifyBallDetection(Double distancePercentageThreshold, Double timestampThreshold, Double cameraDistanceThreshold, Double gpsDistanceThreshold)
         {
+            //TODO use copy to avoid holding lock? Look into 
+            //Queue<DetectedBall> detectedBallsCopy = new Queue<DetectedBall>(this.detectedBalls);
+
             lock (queueLock)
             {
                 // Require a full queue (capacity-number of detected balls) to even consider being a success
@@ -121,18 +124,21 @@ namespace AI_ROCKS.Drive.Utils
                 // Timestamp checking
                 if (averageTimestamp > timestampThreshold)
                 {
+                    Console.Write(" Not verified - timestamp | ");
                     return false;
                 }
 
                 // Camera distance checking
                 if (averageCameraDistance > cameraDistanceThreshold)
                 {
+                    Console.Write(" Not verified - camera distance | ");
                     return false;
                 }
 
                 // GPS distance checking
                 if (averageCameraDistance > gpsDistanceThreshold)
                 {
+                    Console.Write(" Not verified - GPS distance | ");
                     return false;
                 }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Emgu.CV;
@@ -18,7 +19,7 @@ namespace AI_ROCKS.Drive.DriveStates
         // Camera initialization
         const string CAMERA_USERNAME = "admin";
         const string CAMERA_PASSWORD = "i#3Er0b0";
-        const string CAMERA_IP_MAST = "192.168.1.7";    // TODO should be .8 but for now it's not
+        const string CAMERA_IP_MAST = "192.168.1.6";    // TODO should be .8 but for now it's not
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
         const int CAMERA_DEVICE_ID = 0;
 
@@ -70,6 +71,9 @@ namespace AI_ROCKS.Drive.DriveStates
 
         // TODO for testing - remove
         int count = 0;
+        ConcurrentStack<Mat> frameStack;
+        const int FRAME_RATE = 15;
+        System.Timers.Timer timer;
 
 
         public VisionDriveState(GPS gate)
@@ -78,7 +82,9 @@ namespace AI_ROCKS.Drive.DriveStates
 
             this.tennisBall = null;
             this.ballLock = new Object();
+
             this.verificationQueue = new DetectedBallsQueue(VERIFICATION_QUEUE_SIZE);
+            this.frameStack = new ConcurrentStack<Mat>();
 
             this.gate = gate;
             this.scan = null;
@@ -176,14 +182,32 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             this.camera = new VideoCapture(CAMERA_URL);
 
-            // TODO for testing - remove
-            //Timer grabTimer = new Timer(100);
-            //grabTimer.AutoReset = true;
-            //grabTimer.Elapsed += FrameGrabbed;
-            //grabTimer.Enabled = true;
-
+            // Use stack to collect frames and process at our own frame rate
             this.camera.ImageGrabbed += FrameGrabbed;
+            timer = new System.Timers.Timer();
+            timer.Interval = 1000 / FRAME_RATE;
+            timer.Elapsed += Tick;
             this.camera.Start();
+            timer.Start();
+
+            //this.camera.ImageGrabbed += FrameGrabbed;
+            //this.camera.Start();
+        }
+
+        private void Tick(Object sender, EventArgs e)
+        {
+            Mat frame = new Mat();
+            Mat[] frames = new Mat[10];
+            if (this.frameStack.TryPopRange(frames) > 0)
+            {
+                ProcessFrame(frames[0]);
+            }
+            this.frameStack.Clear();
+        }
+
+        private void PushFrame(Mat frame)
+        {
+            this.frameStack.Push(frame);
         }
 
         private void FrameGrabbed(Object sender, EventArgs e)
@@ -200,7 +224,8 @@ namespace AI_ROCKS.Drive.DriveStates
 
             Mat frame = new Mat();
             camera.Retrieve(frame);
-            ProcessFrame(frame);
+            //ProcessFrame(frame);
+            PushFrame(frame);
         }
 
         private void ProcessFrame(Mat frame)

@@ -13,9 +13,8 @@ namespace AI_ROCKS.Drive.Utils
         public const byte CLEAR_OBSTACLE = 40;
         public const byte AVOID_OBSTACLE = 30;
         public const byte SLOW_TURN = 35;
-        public const byte VISION = 50;
-        public const byte VISION_REDETECT_BALL = 40;
-        public const byte VISION_SCAN = 40;
+        public const byte VISION = 30;
+        public const byte VISION_SCAN = 35;
         public const byte HALT = 0;
     }
 }
