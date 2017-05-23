@@ -12,8 +12,8 @@ namespace AI_ROCKS.Drive.DriveStates
 {
     class GPSDriveState : IDriveState
     {
-        private const float THRESHOLD_HEADING_ANGLE = 10f;      // Gives threshold that "straight" is considered on either side
-        private const double GATE_PROXIMITY = 5.0;              // Distance from gate for when to switch to Vision
+        private const float THRESHOLD_HEADING_ANGLE = 7.5f;     // Gives threshold that "straight" is considered on either side
+        private const double GATE_PROXIMITY = 4.0;              // Distance from gate for when to switch to Vision
         GPS gate = null;
         // GPS test values:
         // right outside door:  -lat 43 4 17.9 -long -89 24 41.1

@@ -283,9 +283,9 @@ namespace AI_ROCKS.Drive.DriveStates
 
             // Add to verification queue
             DetectedBall detectedBall = new DetectedBall(ball, AscentPacketHandler.GPSData.GetDistanceTo(this.gate), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-            verificationQueue.Enqueue(detectedBall);
+            this.verificationQueue.Enqueue(detectedBall);
 
-            Console.Write("Ball detected | ");
+            Console.Write("Ball detected | Verifying ({0})... ", this.verificationQueue.Count);
 
 
             // Detected ball so no longer scan

@@ -92,12 +92,26 @@ namespace AI_ROCKS.Drive.Utils
                 Double averageCameraDistance = 0.0;
                 Double averageGPSDistance = 0.0;
 
+                int countCameraDistanceOutsideThreshold = 0;
+                int countGPSDistanceOutsideThreshold = 0;
+
                 // Find averages
                 foreach (DetectedBall detectedBall in this.detectedBalls)
                 {
                     averageTimestamp += detectedBall.TimestampMillis;
+
                     averageCameraDistance += detectedBall.CameraDistance;
+                    if (detectedBall.CameraDistance > cameraDistanceThreshold)
+                    {
+                        countCameraDistanceOutsideThreshold++;
+                    }
+
                     averageGPSDistance += detectedBall.GPSDistance;
+                    if (detectedBall.GPSDistance > gpsDistanceThreshold)
+                    {
+                        countGPSDistanceOutsideThreshold++;
+                    }
+
                 }
 
                 averageTimestamp = averageTimestamp / this.capacity;
