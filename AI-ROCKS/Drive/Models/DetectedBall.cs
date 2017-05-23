@@ -11,9 +11,9 @@ namespace AI_ROCKS.Drive.Models
         private TennisBall ball;
         private Double cameraDistance;
         private Double gpsDistance;
-        private Double timestampMillis;
+        private long timestampMillis;
 
-        public DetectedBall(TennisBall ball, Double gpsDistance, Double timestampMillis)
+        public DetectedBall(TennisBall ball, Double gpsDistance, long timestampMillis)
         {
             this.ball = ball;
             this.gpsDistance = gpsDistance;
@@ -28,6 +28,6 @@ namespace AI_ROCKS.Drive.Models
 
         public Double GPSDistance { get { return this.gpsDistance; } }
 
-        public Double TimestampMillis { get { return this.timestampMillis; } }
+        public long TimestampMillis { get { return this.timestampMillis; } }
     }
 }

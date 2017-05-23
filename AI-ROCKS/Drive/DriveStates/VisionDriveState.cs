@@ -319,7 +319,7 @@ namespace AI_ROCKS.Drive.DriveStates
             // Within required distance - use verification queue to determine if we should send back success
             if (this.verificationQueue.VerifyBallDetection(
                         VERIFICATION_DISTANCE_PERCENTAGE,
-                        VERIFICATION_TIMESTAMP_THRESHOLD, 
+                        DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - VERIFICATION_TIMESTAMP_THRESHOLD, 
                         DriveContext.REQUIRED_DISTANCE_FROM_BALL,
                         DriveContext.REQUIRED_DISTANCE_FROM_BALL + DriveContext.GPS_PRECISION))
             {
