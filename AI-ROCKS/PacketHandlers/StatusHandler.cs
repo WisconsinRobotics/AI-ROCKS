@@ -1,9 +1,10 @@
 ﻿using System.Text;
-using System.Linq;
+using System.Collections.Generic;
+using System;
 
 namespace AI_ROCKS.PacketHandlers
 {
-    public enum Status
+    public enum Status : byte
     {
         /* 0-50: General Updates */
         AIS_FOUND_GATE = 0,
@@ -34,6 +35,8 @@ namespace AI_ROCKS.PacketHandlers
 
     class StatusHandler : PacketHandler
     {
+        private static readonly byte[] EMPTY_OPTION = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
         public bool HandlePacket(byte opcode, byte[] payload)
         {
             if (opcode == AscentPacketHandler.OPCODE_SIMPLE_AI)
@@ -49,15 +52,23 @@ namespace AI_ROCKS.PacketHandlers
             return false;
         }
 
-        public static void SendSimpleAIPacket(Status status)
+        public static void SendSimpleAIPacket(Status status, byte[] option = null)
         {
-            byte[] statusInBytes = new byte[] { (byte)status };
+            option = option ?? new byte[8];
 
-            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_SIMPLE_AI, statusInBytes, AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
+            if (option.Length > 8)
+                return;
+
+            List<byte> payload = new List<byte>(new byte[] { (byte)status });
+            payload.AddRange(option);
+
+            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_SIMPLE_AI, payload.ToArray(), AscentPacketHandler.ROCKS_AI_SERVICE_ID);
         }
         
         public static void SendDebugAIPacket(Status status, string debugMessage)
         {
+            List<byte> payload = new List<byte>();
+
             //if debug message is too long, truncate
             if (debugMessage.Length >= 150)
             {
@@ -65,15 +76,11 @@ namespace AI_ROCKS.PacketHandlers
             }
 
             //convert everything to bytes
-            byte statusInBytes = (byte)status;
+            payload.Add((byte)status);
+            payload.AddRange(Encoding.ASCII.GetBytes(debugMessage));
+            payload.AddRange(new byte[151 - payload.Count]); // zero extend
 
-            byte[] debugMessageInBytes;
-            debugMessageInBytes = Encoding.ASCII.GetBytes(debugMessage);
-
-            byte[] payload = new byte[statusInBytes];
-            payload.Concat(debugMessageInBytes);
-
-            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_DEBUG_AI, payload, AscentPacketHandler.AI_ROCKS_AI_SERVICE_ID);
+            AscentPacketHandler.SendPayloadToROCKS(AscentPacketHandler.OPCODE_DEBUG_AI, payload.ToArray(), AscentPacketHandler.ROCKS_AI_SERVICE_ID);
         }
     }
 }

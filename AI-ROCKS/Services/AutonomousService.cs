@@ -70,7 +70,7 @@ namespace AI_ROCKS.Services
                 {
                     if (list[0] == 0xDE && list[1] == 0xAD && list[2] == 0xBE && list[3] == 0xEF)
                     {
-                        IPEndPoint sendAddr = new IPEndPoint(IPAddress.Loopback, 10000);
+                        IPEndPoint sendAddr = new IPEndPoint(IPAddress.Loopback, 11001);
 
                         byte[] lrf_min_angle = BitConverter.GetBytes(DriveContext.LRF_MIN_ANGLE);
                         byte[] lrf_max_angle = BitConverter.GetBytes(DriveContext.LRF_MAX_ANGLE);
@@ -105,6 +105,7 @@ namespace AI_ROCKS.Services
         /// </summary>
         public void Execute(Object source, ElapsedEventArgs e)
         {
+            
             // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
