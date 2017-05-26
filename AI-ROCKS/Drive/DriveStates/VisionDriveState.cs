@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using Emgu.CV;
-using Emgu.CV.CvEnum;
-using Emgu.CV.Structure;
-using Emgu.CV.Util;
 
 using AI_ROCKS.Drive.Models;
 using AI_ROCKS.Drive.Utils;
@@ -19,79 +14,45 @@ namespace AI_ROCKS.Drive.DriveStates
         // Camera initialization
         const string CAMERA_USERNAME = "admin";
         const string CAMERA_PASSWORD = "i#3Er0b0";
-        const string CAMERA_IP_MAST = "192.168.1.9";    // TODO should be .8 but for now it's not
+        const string CAMERA_IP_MAST = "192.168.1.5";    // TODO should be .8 but for now it's not
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
         const int CAMERA_DEVICE_ID = 0;
 
-        // TODO put these somewhere else? A Vision handler or something?
         // Camera constants
-        public const Double FOCAL_LENGTH = 112.0;   // 3.6mm (6mm optional)     //TODO validate, convert into what we need (units)?
-        public const Double KNOWN_WIDTH = 2.6;      // inches                   //TODO validate
         public const int PIXELS_WIDTH = 1920;       // May change, make dynamic?
         public const int PIXELS_HEIGHT = 1080;      // May change, make dynamic?
-
-        // Circle detection
-        const int MIN_RADIUS = 10;
-
-        // Gaussian blur
-        const int GAUSSIAN_KERNELSIZE = 15;
-
-        // Limits of HSV masking
-        Hsv minHSV = new Hsv(30 , 30, 70);
-        //(20, 30, 90); - something worked kind of
-        //(20, 20, 68); - top 1/4 lit, bottom underlit (lit overhead from side)
-        //(20, 30, 70); - top 1/4 lit, bottom underlit (lit overhead behind)    -- note, moving saturation down detected concrete/cement as ball
-        //(30, 30, 90); - ball is almost entirely front lit, completely lit up
-        //(30, 30, 90); - ball is 1/2 covered on a slant. lit from overhead side        works well with 70 too
-        //(25, 30, 70); - ball is completely backlit, this distinguishes yellow (parking lines) from green
-
-        Hsv maxHSV = new Hsv(50, 170, 255);
 
         // Turning thresholds
         const int leftThreshold = 3 * PIXELS_WIDTH / 8;     // 3/8 from left
         const int rightThreshold = 5 * PIXELS_WIDTH / 8;    // 5/8 from left
-        const double TURN_THRESHOLD_ANGLE_LEFT = 2 * Math.PI / 3;
-        const double TURN_THRESHOLD_ANGLE_RIGHT = Math.PI / 3;
+
+        // Detection constants
+        const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
 
         // Navigation utils
         private const double BALL_REGION_THRESHOLD = 0.0872665;     // 5 degrees in radians
         private bool switchToGPS = false;
 
-        // Detection, verification objects
-        private TennisBall tennisBall;
-        private long ballTimestamp;
-        private readonly Object ballLock;
-        DetectedBallsQueue verificationQueue;   // For verification at end, not consistent logging of balls
+        // Navigation objects
+        private GPS gate;
+        private Scan scan;
+        private Camera camera;
 
-        // Detection constants
-        const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
+        // Verification
+        DetectedBallsQueue verificationQueue;   // For verification at end, not consistent logging of balls
+        bool isWithinRequiredDistance = false;
 
         // Verification constants
         const int VERIFICATION_QUEUE_SIZE = 25;
         const double VERIFICATION_DISTANCE_PERCENTAGE = 0.80;   // 80%
         const int VERIFICATION_TIMESTAMP_THRESHOLD = 5000;      // 5 seconds
 
-        // Navigation objects
-        private VideoCapture camera;
-        private GPS gate;
-        private Scan scan;
-
-        // TODO for testing - remove
-        ConcurrentStack<Mat> frameStack;
-        const int FRAME_RATE = 15;
-        System.Timers.Timer timer;
-        bool isWithinRequiredDistance = false;
-
 
         public VisionDriveState(GPS gate)
         {
-            StartCamera();
-
-            this.tennisBall = null;
-            this.ballLock = new Object();
-
+            this.camera = new Camera(CAMERA_URL);
+            
             this.verificationQueue = new DetectedBallsQueue(VERIFICATION_QUEUE_SIZE);
-            this.frameStack = new ConcurrentStack<Mat>();
 
             this.gate = gate;
             this.scan = null;
@@ -103,16 +64,9 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>DriveCommand - the next drive command for ROCKS to execute.</returns>
         public DriveCommand FindNextDriveCommand()
         {
-            TennisBall ball = GetBallCopy();
+            TennisBall ball = this.camera.GetBallCopy();
 
-            // Recently detected ball but now don't now. Stop driving to redetect since we may have dropped it due to bouncing.
-            if (ball == null && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < ballTimestamp + DROP_BALL_DELAY)
-            {
-                Console.WriteLine("Dropped ball - halting ");
-                return DriveCommand.Straight(Speed.HALT);
-            }
-
-            if (isWithinRequiredDistance)
+            if (this.isWithinRequiredDistance)
             {
                 // TODO send success back to base station until receive ACK
                 // TODO log/send success to base station 
@@ -120,6 +74,15 @@ namespace AI_ROCKS.Drive.DriveStates
 
                 Console.WriteLine("Within required distance - halting ");
 
+                return DriveCommand.Straight(Speed.HALT);
+            }
+
+            // Recently detected ball but now don't now. Stop driving to redetect since we may have dropped it due to bouncing.
+            if (ball == null && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < this.camera.BallTimestamp + DROP_BALL_DELAY)
+            {
+                Console.WriteLine("Dropped ball - halting ");
+
+                this.verificationQueue.Clear();
                 return DriveCommand.Straight(Speed.HALT);
             }
 
@@ -162,7 +125,7 @@ namespace AI_ROCKS.Drive.DriveStates
             
             List<Region> regions = obstacles.Regions;
             Line bestGap = null;
-            TennisBall ball = GetBallCopy();
+            TennisBall ball = this.camera.GetBallCopy();
 
             // Sanity check - if zero Regions exist, return Line representing gap straight in front of Ascent
             if (regions.Count == 0)
@@ -195,112 +158,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             // TODO this logic! This will certainly not suffice in competition
         }
-
-        private void StartCamera()
-        {
-            this.camera = new VideoCapture(CAMERA_URL);
-
-            // Use stack to collect frames and process at our own frame rate
-            this.camera.ImageGrabbed += FrameGrabbed;
-            timer = new System.Timers.Timer();
-            timer.Interval = 1000 / FRAME_RATE;
-            timer.Elapsed += Tick;
-            this.camera.Start();
-            timer.Start();
-        }
-
-        private void Tick(Object sender, EventArgs e)
-        {
-            Mat frame = new Mat();
-            Mat[] frames = new Mat[10];
-            if (this.frameStack.TryPopRange(frames) > 0)
-            {
-                ProcessFrame(frames[0]);
-            }
-            this.frameStack.Clear();
-        }
-
-        private void PushFrame(Mat frame)
-        {
-            this.frameStack.Push(frame);
-        }
-
-        private void FrameGrabbed(Object sender, EventArgs e)
-        {
-            Mat frame = new Mat();
-            camera.Retrieve(frame);
-            PushFrame(frame);
-        }
-
-        private void ProcessFrame(Mat frame)
-        {
-            // Convert to Image type
-            Image<Bgr, byte> frameImage = frame.ToImage<Bgr, byte>();
-
-            // Apply Gaussian Blur and Perform HSV masking
-            Image<Bgr, byte> blur = frameImage.SmoothGaussian(GAUSSIAN_KERNELSIZE);
-            Image<Gray, byte> mask = blur.Convert<Hsv, byte>().InRange(minHSV, maxHSV);
-
-            // Erode and Dilate
-            mask = mask.Erode(2).Dilate(2);
-
-            // Produce a Colored mask and Grayscaled mask
-            Image<Bgr, byte> coloredMask = mask.Convert<Bgr, byte>() & frameImage;
-            Image<Gray, byte> grayMask = mask & frameImage.Convert<Gray, byte>();
-            //Image<Gray, byte> grayMask = coloredMask.Convert<Gray, byte>();
-
-            // Find the tennis ball
-            CircleF candidateBall = new CircleF();
-            bool isBallDetected = FindTennisBall(grayMask, ref candidateBall);
-
-            lock (ballLock)
-            {
-                this.tennisBall = isBallDetected ? new TennisBall(candidateBall) : null;
-            }
-            if (isBallDetected)
-            {
-                ballTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            }
-        }
-
-        private bool FindTennisBall(Image<Gray, byte> mask, ref CircleF outCircle)
-        {
-            return FindEnclosingCircle(mask, ref outCircle);
-        }
-
-        private bool FindEnclosingCircle(Image<Gray, byte> mask, ref CircleF outCircle)
-        {
-            bool found = false;
-
-            VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
-            CvInvoke.FindContours(mask.Copy(), contours, null, RetrType.External, ChainApproxMethod.ChainApproxSimple);
-
-            if (contours.Size > 0)
-            {
-                VectorOfPoint max = contours[0];
-                
-                for (int i = 0; i < contours.Size; i++)
-                {
-                    VectorOfPoint contour = contours[i];
-                    if (CvInvoke.ContourArea(contour, false) > CvInvoke.ContourArea(max, false))
-                    {
-                        max = contour;
-                    }
-                }
-                if (CvInvoke.ContourArea(max, false) > 300)
-                {
-                    CircleF tempCircle = CvInvoke.MinEnclosingCircle(max);
-                    if (tempCircle.Radius > MIN_RADIUS)
-                    {
-                        found = true;
-                        outCircle = tempCircle;
-                    }
-                }
-            }
-
-            return found;
-        }
-
+        
         private DriveCommand DriveBallDetected(TennisBall ball)
         {
             // Sanity check
@@ -560,20 +418,6 @@ namespace AI_ROCKS.Drive.DriveStates
             Console.Write("Distance to ball: " + ball.DistanceToCenter + " ");
 
             return ball.DistanceToCenter < DriveContext.REQUIRED_DISTANCE_FROM_BALL;
-        }
-
-        private TennisBall GetBallCopy()
-        {
-            TennisBall ball = null;
-            lock (ballLock)
-            {
-                if (this.tennisBall != null)
-                {
-                    ball = new TennisBall(this.tennisBall);
-                }
-            }
-
-            return ball;
         }
     }
 }
