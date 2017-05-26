@@ -77,7 +77,6 @@ namespace AI_ROCKS.Drive.DriveStates
         private Scan scan;
 
         // TODO for testing - remove
-        int count = 0;
         ConcurrentStack<Mat> frameStack;
         const int FRAME_RATE = 15;
         System.Timers.Timer timer;
@@ -208,9 +207,6 @@ namespace AI_ROCKS.Drive.DriveStates
             timer.Elapsed += Tick;
             this.camera.Start();
             timer.Start();
-
-            //this.camera.ImageGrabbed += FrameGrabbed;
-            //this.camera.Start();
         }
 
         private void Tick(Object sender, EventArgs e)
@@ -231,19 +227,8 @@ namespace AI_ROCKS.Drive.DriveStates
 
         private void FrameGrabbed(Object sender, EventArgs e)
         {
-            /*
-            // TODO for testing - remove
-            if (++count < 10)
-            {
-                return;
-            }
-            count = 0;
-            this.camera.Grab();
-            */
-
             Mat frame = new Mat();
             camera.Retrieve(frame);
-            //ProcessFrame(frame);
             PushFrame(frame);
         }
 
@@ -361,7 +346,6 @@ namespace AI_ROCKS.Drive.DriveStates
             // Sanity check
             if (ball != null)
             {
-                // TODO could this be a race condition? Pass copy of ball as param?
                 return null;
             }
 
