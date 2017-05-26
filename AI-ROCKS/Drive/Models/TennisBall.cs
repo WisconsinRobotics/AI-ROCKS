@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using Emgu.CV.Structure;
-using ObstacleLibrarySharp;
+
 using AI_ROCKS.Drive.DriveStates;
+using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Drive.Models
 {
@@ -17,31 +13,7 @@ namespace AI_ROCKS.Drive.Models
         private Double radius;
         private Double distanceToCenter;
         private Double angle;
-
-
-        // TODO have this?
-        /*
-        public TennisBall(Coordinate centerPoint, Double radius, Double distanceToCenter)
-        {
-            this.centerPoint = centerPoint;
-            this.radius = radius;
-            this.distanceToCenter = distanceToCenter;
-            this.angle = centerPoint.Theta;
-        }
-        */
-
-        // TODO have this? Or have only CircleF constructor
-        /*
-        public TennisBall(CircleF circle, Double distanceToCenter, Double angle)
-        {
-            PointF center = circle.Center;
-            this.centerPoint = new Coordinate(center.X, center.Y, CoordSystem.Cartesian);
-
-            this.radius = circle.Radius;
-            this.distanceToCenter = distanceToCenter;
-            this.angle = angle;
-        }
-        */
+        
 
         public TennisBall(CircleF circle)
         {
@@ -57,7 +29,7 @@ namespace AI_ROCKS.Drive.Models
         {
             if (ball != null)
             {
-                this.centerPoint = ball.CenterPoint;
+                this.centerPoint = new Coordinate(ball.CenterPoint);
                 this.radius = ball.Radius;
                 this.distanceToCenter = ball.DistanceToCenter;
                 this.angle = ball.Angle;
@@ -86,9 +58,13 @@ namespace AI_ROCKS.Drive.Models
         }
 
         // perveivedWidth = pixels
+        /// <summary>
+        /// Find distance using the perceived width, in pixels, of an object.
+        /// </summary>
+        /// <param name="perceivedWidth">Perceived width, in pixels, of an object/</param>
+        /// <returns>Double - distance to center, in meters.</returns>
         private Double FindDistanceToCenter(Double perceivedWidth)
         {
-            // TODO better usage of these consts (somewhere in some handler?)
             Double distanceFt = (Camera.KNOWN_WIDTH * Camera.FOCAL_LENGTH) / perceivedWidth;
             return distanceFt / 3.28084;
         }
@@ -105,6 +81,5 @@ namespace AI_ROCKS.Drive.Models
 
             return topDown.Theta;
         }
-
     }
 }

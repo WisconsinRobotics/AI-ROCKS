@@ -15,6 +15,7 @@ namespace AI_ROCKS.Drive.Utils
         private Object queueLock;
         private int capacity;
 
+
         public DetectedBallsQueue(int capacity)
         {
             this.detectedBalls = new Queue<DetectedBall>(capacity);
@@ -75,7 +76,7 @@ namespace AI_ROCKS.Drive.Utils
         /// <param name="timestampThreshold">DetectedBalls must average to be within this timestamp threshold.</param>
         /// <param name="cameraDistanceThreshold">Distance threshold for distance calculated by camera.</param>
         /// <param name="gpsDistanceThreshold">Distance threshold for distance calculated by GPS.</param>
-        /// <returns></returns>
+        /// <returns>bool - If the current queue's DetectedBalls represent a valid, detected ball.</returns>
         public bool VerifyBallDetection(Double distancePercentageThreshold, Double timestampThreshold, Double cameraDistanceThreshold, Double gpsDistanceThreshold)
         {
             Queue<DetectedBall> detectedBallsCopy = new Queue<DetectedBall>(this.detectedBalls);
@@ -85,9 +86,6 @@ namespace AI_ROCKS.Drive.Utils
             {
                 return false;
             }
-
-            // TODO move these averages into the Enqueue/Dequeue methods to reduce complexity? Look into
-            // Also not done frequently enough to really care? Probably
 
             // TODO other parameters to be checking on:
             // Radius? Get average and standard deviation to be sure
