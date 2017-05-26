@@ -54,10 +54,12 @@ namespace AI_ROCKS.PacketHandlers
 
         public static void SendSimpleAIPacket(Status status, byte[] option = null)
         {
+            // check whether an additional 8 bytes are specified
             option = option ?? new byte[8];
 
-            if (option.Length > 8)
-                return;
+            // truncate if option is larger than 8 bytes
+            if(option.Length > 8)
+                option = new byte[8] { option[0], option[1], option[2], option[3], option[4], option[5], option[6], option[7] };
 
             List<byte> payload = new List<byte>(new byte[] { (byte)status });
             payload.AddRange(option);
@@ -69,13 +71,13 @@ namespace AI_ROCKS.PacketHandlers
         {
             List<byte> payload = new List<byte>();
 
-            //if debug message is too long, truncate
+            // if debug message is too long, truncate
             if (debugMessage.Length >= 150)
             {
                 debugMessage = debugMessage.Substring(0, 150);
             }
 
-            //convert everything to bytes
+            // convert everything to bytes
             payload.Add((byte)status);
             payload.AddRange(Encoding.ASCII.GetBytes(debugMessage));
             payload.AddRange(new byte[151 - payload.Count]); // zero extend
