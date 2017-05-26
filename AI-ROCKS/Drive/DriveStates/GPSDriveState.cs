@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,9 +23,10 @@ namespace AI_ROCKS.Drive.DriveStates
         // gazebo:              -lat 43 30 29.7 -long -89 30 29.6
         // front of ehall:      -lat 43 4 19.8 -long -89 24 37.5
         // old arrow at top of parking garage:  -lat 43 4 18.084 -long -89 24 43.938
-        
-        private Queue<double> averagingQueue = new Queue<double>(5);
 
+        // Averaging queue for distances - used for state switching logic
+        private ConcurrentQueue<double> averagingQueue = new ConcurrentQueue<double>();
+        private const int AVERAGING_QUEUE_CAPACITY = 5;
 
         public GPSDriveState(GPS gate)
         {
@@ -43,10 +45,10 @@ namespace AI_ROCKS.Drive.DriveStates
             double idealDirection = currGPS.GetHeadingTo(gate);
             double distance = AscentPacketHandler.GPSData.GetDistanceTo(gate);
 
-            // TODO only enqueue/dequeue when no obstacles -- look into this
-            if (this.averagingQueue.Count >= 5)
+            // Add distance to averaging queue
+            while (this.averagingQueue.Count >= AVERAGING_QUEUE_CAPACITY)
             {
-                this.averagingQueue.Dequeue();
+                this.averagingQueue.TryDequeue(out double value);
             }
             this.averagingQueue.Enqueue(distance);
 
@@ -144,9 +146,17 @@ namespace AI_ROCKS.Drive.DriveStates
             Line bestGap = null;
             double bestAngle = Double.MaxValue;
 
-            // Get LRF, GPS data 
+            // Get GPS, heading data 
             GPS currGPS = AscentPacketHandler.GPSData;
             short currCompass = AscentPacketHandler.Compass;
+
+            // Add distance to averaging queue
+            double distance = currGPS.GetDistanceTo(this.gate);
+            while (this.averagingQueue.Count >= AVERAGING_QUEUE_CAPACITY)
+            {
+                this.averagingQueue.TryDequeue(out double value);
+            }
+            this.averagingQueue.Enqueue(distance);
 
             // Heading from current GPS to gate GPS
             double idealDirection = currGPS.GetHeadingTo(gate);
