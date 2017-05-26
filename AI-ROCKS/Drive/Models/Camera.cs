@@ -1,18 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using Timer = System.Timers.Timer;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
 
-using AI_ROCKS.Drive.Models;
-using AI_ROCKS.Drive.Utils;
-using ObstacleLibrarySharp;
-
-namespace AI_ROCKS.Drive.DriveStates
+namespace AI_ROCKS.Drive.Models
 {
     class Camera
     {
@@ -112,10 +106,9 @@ namespace AI_ROCKS.Drive.DriveStates
         private void Tick(Object sender, EventArgs e)
         {
             Mat frame = new Mat();
-            Mat[] frames = new Mat[10];
-            if (this.frameStack.TryPopRange(frames) > 0)
+            if (this.frameStack.TryPop(out frame))
             {
-                ProcessFrame(frames[0]);
+                ProcessFrame(frame);
             }
 
             this.frameStack.Clear();
@@ -208,6 +201,5 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             get { return this.ballTimestamp;  }
         }
-
     }
 }

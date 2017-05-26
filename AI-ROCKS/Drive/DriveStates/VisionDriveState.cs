@@ -66,6 +66,7 @@ namespace AI_ROCKS.Drive.DriveStates
         {
             TennisBall ball = this.camera.GetBallCopy();
 
+            // If verified to be within required distance, send success to ROCKS and halt
             if (this.isWithinRequiredDistance)
             {
                 // TODO send success back to base station until receive ACK
@@ -172,6 +173,7 @@ namespace AI_ROCKS.Drive.DriveStates
             DetectedBall detectedBall = new DetectedBall(ball, AscentPacketHandler.GPSData.GetDistanceTo(this.gate), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             this.verificationQueue.Enqueue(detectedBall);
 
+            // TODO debugging - delete
             Console.Write("Ball detected | Verifying ({0})... ", this.verificationQueue.Count);
 
 
