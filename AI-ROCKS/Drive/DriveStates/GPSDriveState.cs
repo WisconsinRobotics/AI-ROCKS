@@ -120,7 +120,8 @@ namespace AI_ROCKS.Drive.DriveStates
             // When to be switch from GPSDriveState to VisionDriveState
             if (averageDistance <= GATE_PROXIMITY)  //AscentPacketHandler.GPSData.GetDistanceTo(gate) <= GATE_PROXIMITY)
             {
-                // TODO send log back to base station
+                // send log back to base station
+                StatusHandler.SendDebugAIPacket(Status.AIS_SWITCH_TO_VISION, "Drive state switch: GPS to Vision.");
 
                 Console.WriteLine("WITHIN PROXIMITY | ");
                 return StateType.VisionState;

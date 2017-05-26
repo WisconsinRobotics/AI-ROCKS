@@ -28,6 +28,8 @@ namespace AI_ROCKS.PacketHandlers
         const byte OPCODE_REPORT_GPS = 0x51;
         const byte OPCODE_QUERY_IMU = 0x55;
         const byte OPCODE_REPORT_IMU = 0x56;
+        public const byte OPCODE_SIMPLE_AI = 0x70;
+        public const byte OPCODE_DEBUG_AI = 0x71;
 
         // BCL constants
         public const int ROCKS_ROBOT_ID = 15;
@@ -51,6 +53,7 @@ namespace AI_ROCKS.PacketHandlers
         private GPSHandler gpsHandler;
         private IMUHandler imuHandler;
         private DriveHandler driveHandler;
+        private StatusHandler statusHandler;
 
         private static AscentPacketHandler instance;
 
@@ -109,6 +112,7 @@ namespace AI_ROCKS.PacketHandlers
             this.gpsHandler = new GPSHandler();
             this.imuHandler = new IMUHandler();
             this.driveHandler = new DriveHandler();
+            this.statusHandler = new StatusHandler();
 
             // Initialize async receive
             ai_rocksSocket.BeginReceive(HandleSocketReceive, null);
@@ -250,6 +254,16 @@ namespace AI_ROCKS.PacketHandlers
                 case OPCODE_REPORT_IMU:
                 {
                     imuHandler.HandlePacket(OPCODE_REPORT_IMU, payload);
+                    break;
+                }
+                case OPCODE_SIMPLE_AI:
+                {
+                    statusHandler.HandlePacket(OPCODE_SIMPLE_AI, payload);
+                    break;
+                }
+                case OPCODE_DEBUG_AI:
+                {
+                    statusHandler.HandlePacket(OPCODE_DEBUG_AI, payload);
                     break;
                 }
                 default:
