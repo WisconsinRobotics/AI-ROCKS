@@ -16,11 +16,14 @@ namespace AI_ROCKS.Drive.DriveStates
         private const double GATE_PROXIMITY = 4.0;              // Distance from gate for when to switch to Vision
         GPS gate = null;
         // GPS test values:
-        // right outside door:  -lat 43 4 17.9 -long -89 24 41.1
+        // right outside door:  -lat 43 4 17.9 -long -89 24 41.1    (or 17.7 for further back)
         // middle by stop sign: -lat 43 4 19.8 -long -89 24 41.0
         // end of grass:        -lat 43 4 19.5 -long -89 24 42.4
         // gazebo:              -lat 43 30 29.7 -long -89 30 29.6
         // front of ehall:      -lat 43 4 19.8 -long -89 24 37.5
+        // old arrow at top of parking garage:  -lat 43 4 18.084 -long -89 24 43.938
+        
+        private Queue<double> averagingQueue = new Queue<double>(5);
 
 
         public GPSDriveState(GPS gate)
@@ -40,10 +43,18 @@ namespace AI_ROCKS.Drive.DriveStates
             double idealDirection = currGPS.GetHeadingTo(gate);
             double distance = AscentPacketHandler.GPSData.GetDistanceTo(gate);
 
+            // TODO only enqueue/dequeue when no obstacles -- look into this
+            if (this.averagingQueue.Count >= 5)
+            {
+                this.averagingQueue.Dequeue();
+            }
+            this.averagingQueue.Enqueue(distance);
+
             // Debugging - delete
             Console.Write("currCompass: " + currCompass + " | headingToGoal: " + idealDirection + " | distance: " + distance + " | ");
-            
-            // Stop when within proximity, wait to switch to Vision
+
+            // Stop when within proximity to see if average distance of last 5 distances is within proximity. 
+            // If so, wait to switch to Vision, otherwise this acts as a buffer.
             if (distance <= GATE_PROXIMITY)
             {
                 return DriveCommand.Straight(Speed.HALT);
@@ -97,8 +108,17 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>StateType - the next StateType</returns>
         public StateType GetNextStateType()
         {
+            // Get average distance to avoid erroneous switching due to noise
+            double averageDistance = 0.0;
+            foreach (double distanceItr in this.averagingQueue)
+            {
+                averageDistance += distanceItr;
+            }
+
+            averageDistance = averageDistance / 5;
+
             // When to be switch from GPSDriveState to VisionDriveState
-            if (AscentPacketHandler.GPSData.GetDistanceTo(gate) <= GATE_PROXIMITY)
+            if (averageDistance <= GATE_PROXIMITY)  //AscentPacketHandler.GPSData.GetDistanceTo(gate) <= GATE_PROXIMITY)
             {
                 // TODO send log back to base station
 

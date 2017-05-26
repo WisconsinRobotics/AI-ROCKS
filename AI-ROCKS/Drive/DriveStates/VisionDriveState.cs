@@ -19,7 +19,7 @@ namespace AI_ROCKS.Drive.DriveStates
         // Camera initialization
         const string CAMERA_USERNAME = "admin";
         const string CAMERA_PASSWORD = "i#3Er0b0";
-        const string CAMERA_IP_MAST = "192.168.1.6";    // TODO should be .8 but for now it's not
+        const string CAMERA_IP_MAST = "192.168.1.9";    // TODO should be .8 but for now it's not
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
         const int CAMERA_DEVICE_ID = 0;
 
@@ -37,7 +37,14 @@ namespace AI_ROCKS.Drive.DriveStates
         const int GAUSSIAN_KERNELSIZE = 15;
 
         // Limits of HSV masking
-        Hsv minHSV = new Hsv(30, 30, 110);
+        Hsv minHSV = new Hsv(30 , 30, 70);
+        //(20, 30, 90); - something worked kind of
+        //(20, 20, 68); - top 1/4 lit, bottom underlit (lit overhead from side)
+        //(20, 30, 70); - top 1/4 lit, bottom underlit (lit overhead behind)    -- note, moving saturation down detected concrete/cement as ball
+        //(30, 30, 90); - ball is almost entirely front lit, completely lit up
+        //(30, 30, 90); - ball is 1/2 covered on a slant. lit from overhead side        works well with 70 too
+        //(25, 30, 70); - ball is completely backlit, this distinguishes yellow (parking lines) from green
+
         Hsv maxHSV = new Hsv(50, 170, 255);
 
         // Turning thresholds
@@ -60,7 +67,7 @@ namespace AI_ROCKS.Drive.DriveStates
         const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
 
         // Verification constants
-        const int VERIFICATION_QUEUE_SIZE = 50;
+        const int VERIFICATION_QUEUE_SIZE = 25;
         const double VERIFICATION_DISTANCE_PERCENTAGE = 0.80;   // 80%
         const int VERIFICATION_TIMESTAMP_THRESHOLD = 5000;      // 5 seconds
 
@@ -74,6 +81,7 @@ namespace AI_ROCKS.Drive.DriveStates
         ConcurrentStack<Mat> frameStack;
         const int FRAME_RATE = 15;
         System.Timers.Timer timer;
+        bool isWithinRequiredDistance = false;
 
 
         public VisionDriveState(GPS gate)
@@ -102,6 +110,17 @@ namespace AI_ROCKS.Drive.DriveStates
             if (ball == null && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < ballTimestamp + DROP_BALL_DELAY)
             {
                 Console.WriteLine("Dropped ball - halting ");
+                return DriveCommand.Straight(Speed.HALT);
+            }
+
+            if (isWithinRequiredDistance)
+            {
+                // TODO send success back to base station until receive ACK
+                // TODO log/send success to base station 
+                // TODO handle ACK too
+
+                Console.WriteLine("Within required distance - halting ");
+
                 return DriveCommand.Straight(Speed.HALT);
             }
 
@@ -317,16 +336,18 @@ namespace AI_ROCKS.Drive.DriveStates
             this.scan = null;
 
             // Within required distance - use verification queue to determine if we should send back success
-            if (this.verificationQueue.VerifyBallDetection(
-                        VERIFICATION_DISTANCE_PERCENTAGE,
-                        DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - VERIFICATION_TIMESTAMP_THRESHOLD, 
-                        DriveContext.REQUIRED_DISTANCE_FROM_BALL,
-                        DriveContext.REQUIRED_DISTANCE_FROM_BALL + DriveContext.GPS_PRECISION))
+            if (IsWithinRequiredDistance(ball))
             {
-                Console.Write("WITHIN REQUIRED DISTANCE | ");
+                if (this.verificationQueue.VerifyBallDetection(
+                            VERIFICATION_DISTANCE_PERCENTAGE,
+                            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - VERIFICATION_TIMESTAMP_THRESHOLD,
+                            DriveContext.REQUIRED_DISTANCE_FROM_BALL,
+                            DriveContext.REQUIRED_DISTANCE_FROM_BALL + DriveContext.GPS_PRECISION))
+                {
+                    this.isWithinRequiredDistance = true;
+                }
 
-                // TODO log/send success to base station 
-                // TODO handle ACK too
+                Console.Write("WITHIN REQUIRED DISTANCE | ");
 
                 // Halt to wait for success to be sent back to base station
                 return DriveCommand.Straight(Speed.HALT);
