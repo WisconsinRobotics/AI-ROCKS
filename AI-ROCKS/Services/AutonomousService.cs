@@ -105,7 +105,6 @@ namespace AI_ROCKS.Services
         /// </summary>
         public void Execute(Object source, ElapsedEventArgs e)
         {
-            
             // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
