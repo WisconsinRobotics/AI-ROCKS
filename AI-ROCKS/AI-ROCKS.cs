@@ -186,9 +186,11 @@ namespace AI_ROCKS
             obstacleTimer.Elapsed += autonomousService.DetectObstacleEvent;
             obstacleTimer.Enabled = true;
 
-            while (true) { }
+            while (!autonomousService.IsComplete())
+            {
+            }
 
-            // TODO when to end? When gate is detected?
+            Console.Write("WE DONE BITCHES");
         }
 
         private static void ExitFromInvalidArgrument(String errorMessage)

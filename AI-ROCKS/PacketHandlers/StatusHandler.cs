@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Collections.Generic;
-using System;
 
 namespace AI_ROCKS.PacketHandlers
 {
@@ -41,7 +40,11 @@ namespace AI_ROCKS.PacketHandlers
         {
             if (opcode == AscentPacketHandler.OPCODE_SIMPLE_AI)
             {
-                //TODO
+                // ACK packet
+                if (payload[0] == (byte)Status.AIS_ACK)
+                {
+                    AscentPacketHandler.GetInstance().receivedAck = true;
+                }
             }
 
             else if (opcode == AscentPacketHandler.OPCODE_DEBUG_AI)

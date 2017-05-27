@@ -8,6 +8,7 @@ using System.Timers;
 using AI_ROCKS.Drive;
 using AI_ROCKS.Drive.Models;
 using AI_ROCKS.Drive.Utils;
+using AI_ROCKS.PacketHandlers;
 using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Services
@@ -214,6 +215,11 @@ namespace AI_ROCKS.Services
         private bool IsLastObstacleWithinInterval(long milliseconds)
         {
             return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < this.driveContext.LastObstacleDetected + milliseconds;
+        }
+
+        public bool IsComplete()
+        {
+            return AscentPacketHandler.GetInstance().ReceivedAck && this.driveContext.IsComplete;
         }
     }
 }

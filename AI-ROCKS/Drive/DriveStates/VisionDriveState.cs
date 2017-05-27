@@ -26,6 +26,11 @@ namespace AI_ROCKS.Drive.DriveStates
         const int leftThreshold = 3 * PIXELS_WIDTH / 8;     // 3/8 from left
         const int rightThreshold = 5 * PIXELS_WIDTH / 8;    // 5/8 from left
 
+        // Distance constants
+        const double DISTANCE_SWITCH_TO_GPS = 6.0;
+        const double DISTANCE_USE_HEADING = 6.0;
+        const double DISTANCE_CLOSE_RANGE = 2.0;
+
         // Detection constants
         const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
 
@@ -72,6 +77,8 @@ namespace AI_ROCKS.Drive.DriveStates
                 // TODO send success back to base station until receive ACK
                 // TODO log/send success to base station 
                 // TODO handle ACK too
+
+                StatusHandler.SendSimpleAIPacket(Status.AIS_FOUND_GATE);
 
                 Console.WriteLine("Within required distance - halting ");
 
@@ -159,7 +166,12 @@ namespace AI_ROCKS.Drive.DriveStates
 
             // TODO this logic! This will certainly not suffice in competition
         }
-        
+
+        public bool IsTaskComplete()
+        {
+            return this.isWithinRequiredDistance;
+        }
+
         private DriveCommand DriveBallDetected(TennisBall ball)
         {
             // Sanity check
@@ -219,7 +231,7 @@ namespace AI_ROCKS.Drive.DriveStates
             double distanceToGate = ascent.GetDistanceTo(this.gate);
 
             // Kick back to GPS
-            if (distanceToGate > 6.0)
+            if (distanceToGate > DISTANCE_SWITCH_TO_GPS)    // 6 meters
             {
                 Console.WriteLine("Distance: " + distanceToGate + ". Switch to GPS");
 
@@ -228,7 +240,7 @@ namespace AI_ROCKS.Drive.DriveStates
             }
 
             // Turn to face heading, drive toward it
-            if (distanceToGate > 3.0)
+            if (distanceToGate > DISTANCE_USE_HEADING)      // 3 meters
             {
                 Console.WriteLine("Distance: " + distanceToGate + ". Turning toward heading to drive towrad it");
 
@@ -299,9 +311,11 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
             }
 
-            if (distanceToGate > 2.0)
+            if (distanceToGate > DISTANCE_CLOSE_RANGE)      // 2 meters
             {
                 // TODO StatusHandler log
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGAN_SCAN, "Distance > 2m: Using heading as reference");
+
                 Console.WriteLine("Distance: " + distanceToGate + ". Scanning (using heading)...");
 
                 // Turn toward heading
@@ -311,6 +325,8 @@ namespace AI_ROCKS.Drive.DriveStates
             else
             {
                 // TODO StatusHandler log
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGAN_SCAN, "Distance < 2m: Not using heading as reference");
+
                 Console.WriteLine("Distance: " + distanceToGate + ". Scanning...");
                 
                 // Scan

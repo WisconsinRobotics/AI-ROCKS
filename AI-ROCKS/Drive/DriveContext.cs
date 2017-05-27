@@ -28,10 +28,12 @@ namespace AI_ROCKS.Drive
         public const double REQUIRED_DISTANCE_FROM_BALL = 2.0;  // Meters
         public const double GPS_PRECISION = 3.0;                // Meters
 
+        // Drive states
         private IDriveState driveState;
         private StateType stateType;
         private GPS gate;
 
+        // Obstacles
         private readonly Object sendDriveCommandLock;
         private long lastObstacleDetected;
 
@@ -185,6 +187,15 @@ namespace AI_ROCKS.Drive
         public GPS Gate
         {
             get { return this.gate; }
+        }
+
+        /// <summary>
+        /// Property for finding if the current DriveState is complete. Only Vision will set this to true 
+        /// when finding a TennisBall within the required distance.
+        /// </summary>
+        public bool IsComplete
+        {
+            get { return this.driveState.IsTaskComplete(); }
         }
 
         /// <summary>

@@ -26,5 +26,12 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <param name="obstacles">The Plot containing Regions to analyze to find the best gap.</param>
         /// <returns>Line - the Line representing the best gap, or null if no sufficient best gap was found.</returns>
         Line FindBestGap(Plot obstacles);
+
+        /// <summary>
+        /// Is the Autonomous Task complete. All DriveStates should return false except for Vision, which should return
+        /// true when the ball is within the required distance.
+        /// </summary>
+        /// <returns>bool - If the Autonomous Task is complete or not.</returns>
+        bool IsTaskComplete();
     }
 }

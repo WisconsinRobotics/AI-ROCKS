@@ -295,5 +295,11 @@ namespace AI_ROCKS.Drive.DriveStates
 
             return bestGap;
         }
+
+        public bool IsTaskComplete()
+        {
+            return false;
+        }
+
     }
 }
