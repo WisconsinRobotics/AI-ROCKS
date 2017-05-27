@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using AI_ROCKS.Drive.Models;
+using AI_ROCKS.PacketHandlers;
 
 namespace AI_ROCKS.Drive.Utils
 {
@@ -124,9 +125,9 @@ namespace AI_ROCKS.Drive.Utils
             // Timestamp checking
             if (averageTimestamp <= timestampThreshold)
             {
-                // TODO log to base station
-
+                StatusHandler.SendDebugAIPacket(Status.AIS_VERIFY_FAIL_TIMESTAMP, "Verification: Timestamp average failure");
                 Console.Write(" Not verified - timestamp | ");
+
                 return false;
             }
 
@@ -134,17 +135,17 @@ namespace AI_ROCKS.Drive.Utils
             Double cameraDistancePercentageInThreshold = 1 - ((double)countCameraDistanceOutsideThreshold / this.capacity);
             if (cameraDistancePercentageInThreshold < distancePercentageThreshold)
             {
-                // TODO log to base station
-
+                StatusHandler.SendDebugAIPacket(Status.AIS_VERIFY_FAIL_CAM_PERCENT, "Verification: Camera distance percentage failure");
                 Console.Write(" Not verified - camera distance percentage | ");
+
                 return false;
             }
 
             if (averageCameraDistance > cameraDistanceThreshold)
             {
-                // TODO log to base station
-
+                StatusHandler.SendDebugAIPacket(Status.AIS_VERIFY_FAIL_CAM_AVG, "Verification: Camera distance average failure");
                 Console.Write(" Not verified - average camera distance | ");
+
                 return false;
             }
 
@@ -152,20 +153,21 @@ namespace AI_ROCKS.Drive.Utils
             Double gpsDistancePercentageInThreshold = 1 - ((double)countGPSDistanceOutsideThreshold / this.capacity);
             if (gpsDistancePercentageInThreshold < distancePercentageThreshold)
             {
-                // TODO log to base station
-
+                StatusHandler.SendDebugAIPacket(Status.AIS_VERIFY_FAIL_GPS_PERCENT, "Verification: GPS distance percentage failure");
                 Console.Write(" Not verified - GPS distance percentage | ");
+
                 return false;
             }
 
             if (averageCameraDistance > gpsDistanceThreshold)
             {
-                // TODO log to base station
-
+                StatusHandler.SendDebugAIPacket(Status.AIS_VERIFY_FAIL_GPS_AVG, "Verification: GPS distance average failure");
                 Console.Write(" Not verified - GPS distance | ");
+
                 return false;
             }
 
+            StatusHandler.SendDebugAIPacket(Status.AIS_VERIFY_SUCCESS, "Verification: Success");
             Console.Write(" Verified: averageTimestamp: {0}, averageCameraDistance: {1}, averageGPSDistance: {2} | ", averageTimestamp, averageCameraDistance, averageGPSDistance);
 
             return true;

@@ -94,7 +94,8 @@ namespace AI_ROCKS.Services
 
                         this.rocks_lrf_socket.Send(buffer.ToArray(), buffer.Count, sendAddr);
 
-                        handshake = true;
+                        this.handshake = true;
+                        StatusHandler.SendDebugAIPacket(Status.AIS_LOG, "Received LRF handshare");
                     }
                 }
                 return;
@@ -121,6 +122,7 @@ namespace AI_ROCKS.Services
             // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
+                StatusHandler.SendSimpleAIPacket(Status.AIS_OUT_WATCHDOG);
                 Console.WriteLine("Watchdog");
 
                 // If more than 0.5 seconds have passed since last event, it's safe to start issuing drive 
@@ -141,7 +143,6 @@ namespace AI_ROCKS.Services
             StateType nextState = this.driveContext.GetNextStateType();
             if (this.driveContext.IsStateChangeRequired(nextState))
             {
-                // TODO StatusHandler log 
                 Console.WriteLine("Switching from state: " + this.driveContext.StateType.ToString() + " to: " + nextState.ToString());
 
                 this.driveContext.ChangeState(nextState);
@@ -187,6 +188,7 @@ namespace AI_ROCKS.Services
             // If obstacle detected, trigger event
             if (obstacleDetected)
             {
+                StatusHandler.SendDebugAIPacket(Status.AIS_OBS_DETECT, "Obstacle detected");
                 OnObstacleEvent(new ObstacleEventArgs(this.plot));
             }
         }

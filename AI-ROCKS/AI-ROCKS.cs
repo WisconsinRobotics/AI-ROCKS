@@ -171,9 +171,8 @@ namespace AI_ROCKS
 
             // Create AutonomousService
             AutonomousService autonomousService = new AutonomousService(initialStateType, gate, lrfPort, lrfTest);
+            StatusHandler.SendDebugAIPacket(Status.AIS_LOG, "Autonomous Service initialized");
 
-            // While connection is present, run autonomous service
-            
             // Create Timer for Execute function
             Timer executeTimer = new Timer(EXECUTE_INTERVAL_MILLIS);
             executeTimer.AutoReset = true;
@@ -186,18 +185,21 @@ namespace AI_ROCKS
             obstacleTimer.Elapsed += autonomousService.DetectObstacleEvent;
             obstacleTimer.Enabled = true;
 
+            // Execute while not receive an ACK from base station and DriveContext is not complete
             while (!autonomousService.IsComplete())
             {
             }
 
+            StatusHandler.SendDebugAIPacket(Status.AIS_LOG, "Received ACK from Base Station and drive is complete. Exiting AI-ROCKS..");
             Console.Write("WE DONE BITCHES");
         }
 
         private static void ExitFromInvalidArgrument(String errorMessage)
         {
-            // Invalid command line argument - write to both error and debug outputs
+            // Invalid command line argument - write to error output, debug output, and base station
             Console.Error.Write(errorMessage + "\n");
             System.Diagnostics.Debug.Write(errorMessage + "\n");
+            StatusHandler.SendDebugAIPacket(Status.AIS_FATAL_ERROR, "Error: " + errorMessage);
 
             // Exit with Windows ERROR_BAD_ARGUMENTS system error code
             Environment.Exit(160);

@@ -24,7 +24,15 @@ namespace AI_ROCKS.PacketHandlers
         /* 151-200: Vision codes */
         AIS_BALL_DETECT = 151, 
         AIS_DIST_DETECT_BALL = 152,
-        AIS_BEGAN_SCAN = 153,
+        AIS_BEGIN_SCAN = 153,
+        AIS_DROP_BALL = 154,
+
+        AIS_VERIFY_SUCCESS = 170,
+        AIS_VERIFY_FAIL_TIMESTAMP = 171,
+        AIS_VERIFY_FAIL_CAM_AVG = 172,
+        AIS_VERIFY_FAIL_CAM_PERCENT = 173,
+        AIS_VERIFY_FAIL_GPS_AVG = 174,
+        AIS_VERIFY_FAIL_GPS_PERCENT = 175,
 
         /* 201-255: Error codes */
         AIS_FATAL_ERROR = 201,

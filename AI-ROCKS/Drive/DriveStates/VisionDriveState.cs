@@ -14,7 +14,7 @@ namespace AI_ROCKS.Drive.DriveStates
         // Camera initialization
         const string CAMERA_USERNAME = "admin";
         const string CAMERA_PASSWORD = "i#3Er0b0";
-        const string CAMERA_IP_MAST = "192.168.1.5";    // TODO should be .8 but for now it's not
+        const string CAMERA_IP_MAST = "192.168.1.6";
         const string CAMERA_URL = "rtsp://" + CAMERA_USERNAME + ":" + CAMERA_PASSWORD + "@" + CAMERA_IP_MAST + ":554/cam/realmonitor?channel=1&subtype=0";
         const int CAMERA_DEVICE_ID = 0;
 
@@ -74,12 +74,8 @@ namespace AI_ROCKS.Drive.DriveStates
             // If verified to be within required distance, send success to ROCKS and halt
             if (this.isWithinRequiredDistance)
             {
-                // TODO send success back to base station until receive ACK
-                // TODO log/send success to base station 
-                // TODO handle ACK too
-
+                // Send success back to base station until receive ACK
                 StatusHandler.SendSimpleAIPacket(Status.AIS_FOUND_GATE);
-
                 Console.WriteLine("Within required distance - halting ");
 
                 return DriveCommand.Straight(Speed.HALT);
@@ -88,6 +84,7 @@ namespace AI_ROCKS.Drive.DriveStates
             // Recently detected ball but now don't now. Stop driving to redetect since we may have dropped it due to bouncing.
             if (ball == null && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < this.camera.BallTimestamp + DROP_BALL_DELAY)
             {
+                StatusHandler.SendSimpleAIPacket(Status.AIS_DROP_BALL);
                 Console.WriteLine("Dropped ball - halting ");
 
                 this.verificationQueue.Clear();
@@ -110,7 +107,13 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>StateType - the next StateType</returns>
         public StateType GetNextStateType()
         {
-            return switchToGPS ? StateType.GPSState : StateType.VisionState;
+            if (this.switchToGPS)
+            {
+                StatusHandler.SendDebugAIPacket(Status.AIS_SWITCH_TO_GPS, "Drive state switch: Vision to GPS.");
+                return StateType.GPSState;
+            }
+
+            return StateType.VisionState;
         }
 
         // Given a Plot representing the obstacles, find Line representing the best gap.
@@ -313,8 +316,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
             if (distanceToGate > DISTANCE_CLOSE_RANGE)      // 2 meters
             {
-                // TODO StatusHandler log
-                StatusHandler.SendDebugAIPacket(Status.AIS_BEGAN_SCAN, "Distance > 2m: Using heading as reference");
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Using heading as reference");
 
                 Console.WriteLine("Distance: " + distanceToGate + ". Scanning (using heading)...");
 
@@ -324,8 +326,7 @@ namespace AI_ROCKS.Drive.DriveStates
             }
             else
             {
-                // TODO StatusHandler log
-                StatusHandler.SendDebugAIPacket(Status.AIS_BEGAN_SCAN, "Distance < 2m: Not using heading as reference");
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance < 2m: Not using heading as reference");
 
                 Console.WriteLine("Distance: " + distanceToGate + ". Scanning...");
                 

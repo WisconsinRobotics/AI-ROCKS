@@ -101,11 +101,6 @@ namespace AI_ROCKS.Drive
         /// <returns>StateType - the StateType for the new DriveState</returns>
         public StateType ChangeState(StateType nextState)
         {
-            // If change is not required, return current state
-            // TODO: ALL BELOW THINGS:
-            // - Most likely will be an expensive call, so keep nextStateType as a global here?
-            // - Even check if state change is required? Or assume this is called after IsStateChangeRequired() has been called -> be safe for calling function or let the call do whatever it wants?
-            // - Specify param or nah? Need to assume more than two states
             if (!this.IsStateChangeRequired(nextState))
             {
                 return this.stateType;
