@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Timers;
 
 using AI_ROCKS.Drive;
 using AI_ROCKS.Drive.Models;
 using AI_ROCKS.Drive.Utils;
-using ObstacleLibrarySharp;
 using AI_ROCKS.PacketHandlers;
+using ObstacleLibrarySharp;
 
 namespace AI_ROCKS.Services
 {
@@ -31,6 +32,8 @@ namespace AI_ROCKS.Services
         private UdpClient rocks_lrf_socket;
         private bool handshake = false;
 
+        // Execute() lock - avoid concurrent Execute() calls
+        Object executeLock = new Object();
 
         public AutonomousService(StateType initialStateType, GPS gate, int lrfPort, bool lrfTest = false)
         {
@@ -70,7 +73,7 @@ namespace AI_ROCKS.Services
                 {
                     if (list[0] == 0xDE && list[1] == 0xAD && list[2] == 0xBE && list[3] == 0xEF)
                     {
-                        IPEndPoint sendAddr = new IPEndPoint(IPAddress.Loopback, 11001);
+                        IPEndPoint sendAddr = new IPEndPoint(IPAddress.Loopback, 10000);
 
                         byte[] lrf_min_angle = BitConverter.GetBytes(DriveContext.LRF_MIN_ANGLE);
                         byte[] lrf_max_angle = BitConverter.GetBytes(DriveContext.LRF_MAX_ANGLE);
@@ -91,7 +94,8 @@ namespace AI_ROCKS.Services
 
                         this.rocks_lrf_socket.Send(buffer.ToArray(), buffer.Count, sendAddr);
 
-                        handshake = true;
+                        this.handshake = true;
+                        StatusHandler.SendDebugAIPacket(Status.AIS_LOG, "Received LRF handshare");
                     }
                 }
                 return;
@@ -105,18 +109,27 @@ namespace AI_ROCKS.Services
         /// </summary>
         public void Execute(Object source, ElapsedEventArgs e)
         {
+            // Don't execute if existing execution is not complete
+            if (!Monitor.TryEnter(executeLock))
+            {
+                return;
+            }
+
+            // TODO debugging - delete
+            //Console.WriteLine("The Elapsed event was raised at {0:HH:mm:ss.fff}", e.SignalTime);
+
+
             // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
             {
+                StatusHandler.SendSimpleAIPacket(Status.AIS_OUT_WATCHDOG);
                 Console.WriteLine("Watchdog");
-                StatusHandler.SendDebugAIPacket(Status.AIS_IN_WATCHDOG, "Watchdog.");
 
                 // If more than 0.5 seconds have passed since last event, it's safe to start issuing drive 
                 // commands - otherwise race condition may occur when continually detecting an obstacle
                 if (!IsLastObstacleWithinInterval(CLEAR_OBSTACLE_DELAY_MILLIS))
                 {
                     this.driveContext.Drive(DriveCommand.Straight(Speed.CLEAR_OBSTACLE));
-                    StatusHandler.SendDebugAIPacket(Status.AIS_OUT_WATCHDOG, "Out of watchdog.");
                 }
                 
                 return;
@@ -130,8 +143,12 @@ namespace AI_ROCKS.Services
             StateType nextState = this.driveContext.GetNextStateType();
             if (this.driveContext.IsStateChangeRequired(nextState))
             {
+                Console.WriteLine("Switching from state: " + this.driveContext.StateType.ToString() + " to: " + nextState.ToString());
+
                 this.driveContext.ChangeState(nextState);
             }
+
+            Monitor.Exit(executeLock);
         }
 
         /// <summary>
@@ -171,7 +188,7 @@ namespace AI_ROCKS.Services
             // If obstacle detected, trigger event
             if (obstacleDetected)
             {
-                StatusHandler.SendDebugAIPacket(Status.AIS_OBS_DETECT, "Obstacle detected.");
+                StatusHandler.SendDebugAIPacket(Status.AIS_OBS_DETECT, "Obstacle detected");
                 OnObstacleEvent(new ObstacleEventArgs(this.plot));
             }
         }
@@ -200,6 +217,11 @@ namespace AI_ROCKS.Services
         private bool IsLastObstacleWithinInterval(long milliseconds)
         {
             return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < this.driveContext.LastObstacleDetected + milliseconds;
+        }
+
+        public bool IsComplete()
+        {
+            return AscentPacketHandler.GetInstance().ReceivedAck && this.driveContext.IsComplete;
         }
     }
 }

@@ -53,11 +53,15 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Emgu.CV.World">
+      <HintPath>..\Emgu.CV.World.dll</HintPath>
+    </Reference>
     <Reference Include="ObstacleLibrarySharp">
       <HintPath>..\ObstacleLibrarySharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -68,8 +72,12 @@
   <ItemGroup>
     <Compile Include="AI-ROCKS.cs" />
     <Compile Include="Drive\DriveStates\ObstacleAvoidanceDriveState.cs" />
+    <Compile Include="Drive\Models\Camera.cs" />
     <Compile Include="Drive\Models\IMU.cs" />
+    <Compile Include="Drive\Models\Scan.cs" />
     <Compile Include="Drive\Utils\Angle.cs" />
+    <Compile Include="Drive\Models\DetectedBall.cs" />
+    <Compile Include="Drive\Utils\DetectedBallsQueue.cs" />
     <Compile Include="Drive\Utils\Speed.cs" />
     <Compile Include="Drive\Utils\DriveCommand.cs" />
     <Compile Include="Drive\DriveContext.cs" />
@@ -91,7 +99,20 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="cvextern.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="msvcp140.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="opencv_ffmpeg310_64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="vcruntime140.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

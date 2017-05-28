@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,15 +13,20 @@ namespace AI_ROCKS.Drive.DriveStates
 {
     class GPSDriveState : IDriveState
     {
-        private const float THRESHOLD_HEADING_ANGLE = 10f;      // Gives threshold that "straight" is considered on either side
-        private const double GATE_PROXIMITY = 6.0;              // Distance from gate for when to switch to Vision
+        private const float THRESHOLD_HEADING_ANGLE = 7.5f;     // Gives threshold that "straight" is considered on either side
+        private const double GATE_PROXIMITY = 4.0;              // Distance from gate for when to switch to Vision
         GPS gate = null;
         // GPS test values:
-        // right outside door   //new GPS(43, 4, 17.9f, -89, 24, 41.1f);
-        // middle by stop sign  //new GPS(43, 4, 19.8f, -89, 24, 41.0f);
-        // end of grass:        //new GPS(43, 4, 19.5f, -89, 24, 42.4f);
-        // gazebo:              //new GPS(42, 59.99f, 59.99f, -90, 59.98f, 59.14f);
+        // right outside door:  -lat 43 4 17.9 -long -89 24 41.1    (or 17.7 for further back)
+        // middle by stop sign: -lat 43 4 19.8 -long -89 24 41.0
+        // end of grass:        -lat 43 4 19.5 -long -89 24 42.4
+        // gazebo:              -lat 43 30 29.7 -long -89 30 29.6
+        // front of ehall:      -lat 43 4 19.8 -long -89 24 37.5
+        // old arrow at top of parking garage:  -lat 43 4 18.084 -long -89 24 43.938
 
+        // Averaging queue for distances - used for state switching logic
+        private ConcurrentQueue<double> averagingQueue = new ConcurrentQueue<double>();
+        private const int AVERAGING_QUEUE_CAPACITY = 5;
 
         public GPSDriveState(GPS gate)
         {
@@ -39,10 +45,19 @@ namespace AI_ROCKS.Drive.DriveStates
             double idealDirection = currGPS.GetHeadingTo(gate);
             double distance = AscentPacketHandler.GPSData.GetDistanceTo(gate);
 
+            // Add distance to averaging queue
+            while (this.averagingQueue.Count >= AVERAGING_QUEUE_CAPACITY)
+            {
+                double value;
+                this.averagingQueue.TryDequeue(out value);
+            }
+            this.averagingQueue.Enqueue(distance);
+
             // Debugging - delete
             Console.Write("currCompass: " + currCompass + " | headingToGoal: " + idealDirection + " | distance: " + distance + " | ");
-            
-            // Stop when within proximity, wait to switch to Vision
+
+            // Stop when within proximity to see if average distance of last 5 distances is within proximity. 
+            // If so, wait to switch to Vision, otherwise this acts as a buffer.
             if (distance <= GATE_PROXIMITY)
             {
                 return DriveCommand.Straight(Speed.HALT);
@@ -96,13 +111,22 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>StateType - the next StateType</returns>
         public StateType GetNextStateType()
         {
-            // When to be switch from GPSDriveState to VisionDriveState
-            if (AscentPacketHandler.GPSData.GetDistanceTo(gate) <= GATE_PROXIMITY)
+            // Get average distance to avoid erroneous switching due to noise
+            double averageDistance = 0.0;
+            foreach (double distanceItr in this.averagingQueue)
             {
-                // send log back to base station
-                StatusHandler.SendDebugAIPacket(Status.AIS_SWITCH_TO_VISION, "Drive state switch: GPS to Vision.");
+                averageDistance += distanceItr;
+            }
 
-                Console.WriteLine("WITHIN PROXIMITY");
+            averageDistance = averageDistance / 5;
+
+            // When to be switch from GPSDriveState to VisionDriveState
+            if (averageDistance <= GATE_PROXIMITY)
+            {
+                // Send log back to base station
+                StatusHandler.SendDebugAIPacket(Status.AIS_SWITCH_TO_VISION, "Drive state switch: GPS to Vision.");
+                Console.WriteLine("WITHIN PROXIMITY | ");
+
                 return StateType.VisionState;
             }
 
@@ -123,9 +147,18 @@ namespace AI_ROCKS.Drive.DriveStates
             Line bestGap = null;
             double bestAngle = Double.MaxValue;
 
-            // Get LRF, GPS data 
+            // Get GPS, heading data 
             GPS currGPS = AscentPacketHandler.GPSData;
             short currCompass = AscentPacketHandler.Compass;
+
+            // Add distance to averaging queue
+            double distance = currGPS.GetDistanceTo(this.gate);
+            while (this.averagingQueue.Count >= AVERAGING_QUEUE_CAPACITY)
+            {
+                double value;
+                this.averagingQueue.TryDequeue(out value);
+            }
+            this.averagingQueue.Enqueue(distance);
 
             // Heading from current GPS to gate GPS
             double idealDirection = currGPS.GetHeadingTo(gate);
@@ -264,5 +297,11 @@ namespace AI_ROCKS.Drive.DriveStates
 
             return bestGap;
         }
+
+        public bool IsTaskComplete()
+        {
+            return false;
+        }
+
     }
 }

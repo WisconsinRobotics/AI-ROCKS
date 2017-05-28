@@ -54,6 +54,7 @@ namespace AI_ROCKS.PacketHandlers
         private IMUHandler imuHandler;
         private DriveHandler driveHandler;
         private StatusHandler statusHandler;
+        public bool receivedAck = false;
 
         private static AscentPacketHandler instance;
 
@@ -294,7 +295,23 @@ namespace AI_ROCKS.PacketHandlers
         /// </summary>
         public static short Compass
         {
-            get { return GetInstance().imuHandler.Compass; }
+            get
+            {
+                short ascentHeading = GetInstance().imuHandler.Compass;
+                if (ascentHeading < 0)
+                {
+                    ascentHeading += 180;
+                }
+                return ascentHeading;
+            }
+        }
+
+        /// <summary>
+        /// Property representing if we have received an ACK from the Base Station after sending an "AI Complete" packet.
+        /// </summary>
+        public bool ReceivedAck
+        {
+            get { return this.receivedAck; }
         }
     }
 }

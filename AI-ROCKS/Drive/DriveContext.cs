@@ -24,10 +24,16 @@ namespace AI_ROCKS.Drive
         public static readonly Line LRF_LEFT_FOV_EDGE =
             new Line(new Coordinate(0, 0, CoordSystem.Polar), new Coordinate(LRF_MAX_ANGLE, LRF_MAX_RELIABLE_DISTANCE, CoordSystem.Polar));
 
+        // Vision
+        public const double REQUIRED_DISTANCE_FROM_BALL = 2.0;  // Meters
+        public const double GPS_PRECISION = 3.0;                // Meters
+
+        // Drive states
         private IDriveState driveState;
         private StateType stateType;
         private GPS gate;
 
+        // Obstacles
         private readonly Object sendDriveCommandLock;
         private long lastObstacleDetected;
 
@@ -95,11 +101,6 @@ namespace AI_ROCKS.Drive
         /// <returns>StateType - the StateType for the new DriveState</returns>
         public StateType ChangeState(StateType nextState)
         {
-            // If change is not required, return current state
-            // TODO: ALL BELOW THINGS:
-            // - Most likely will be an expensive call, so keep nextStateType as a global here?
-            // - Even check if state change is required? Or assume this is called after IsStateChangeRequired() has been called -> be safe for calling function or let the call do whatever it wants?
-            // - Specify param or nah? Need to assume more than two states
             if (!this.IsStateChangeRequired(nextState))
             {
                 return this.stateType;
@@ -173,6 +174,23 @@ namespace AI_ROCKS.Drive
         {
             get { return this.lastObstacleDetected; }
             set { this.lastObstacleDetected = value; }
+        }
+
+        /// <summary>
+        /// Property for the GPS coordinates of the gate.
+        /// </summary>
+        public GPS Gate
+        {
+            get { return this.gate; }
+        }
+
+        /// <summary>
+        /// Property for finding if the current DriveState is complete. Only Vision will set this to true 
+        /// when finding a TennisBall within the required distance.
+        /// </summary>
+        public bool IsComplete
+        {
+            get { return this.driveState.IsTaskComplete(); }
         }
 
         /// <summary>
