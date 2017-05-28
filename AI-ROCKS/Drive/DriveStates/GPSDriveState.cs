@@ -48,7 +48,8 @@ namespace AI_ROCKS.Drive.DriveStates
             // Add distance to averaging queue
             while (this.averagingQueue.Count >= AVERAGING_QUEUE_CAPACITY)
             {
-                this.averagingQueue.TryDequeue(out double value);
+                double value;
+                this.averagingQueue.TryDequeue(out value);
             }
             this.averagingQueue.Enqueue(distance);
 
@@ -154,7 +155,8 @@ namespace AI_ROCKS.Drive.DriveStates
             double distance = currGPS.GetDistanceTo(this.gate);
             while (this.averagingQueue.Count >= AVERAGING_QUEUE_CAPACITY)
             {
-                this.averagingQueue.TryDequeue(out double value);
+                double value;
+                this.averagingQueue.TryDequeue(out value);
             }
             this.averagingQueue.Enqueue(distance);
 
