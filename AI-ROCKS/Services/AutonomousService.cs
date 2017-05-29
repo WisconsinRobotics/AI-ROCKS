@@ -221,7 +221,7 @@ namespace AI_ROCKS.Services
 
         public bool IsComplete()
         {
-            return AscentPacketHandler.GetInstance().ReceivedAck && this.driveContext.IsComplete;
+            return AscentPacketHandler.ReceivedAck && this.driveContext.IsComplete;
         }
     }
 }

@@ -24,10 +24,11 @@ namespace AI_ROCKS.PacketHandlers
     class AscentPacketHandler
     {
         // BCL opcodes
-        const byte OPCODE_QUERY_GPS = 0x50;
-        const byte OPCODE_REPORT_GPS = 0x51;
-        const byte OPCODE_QUERY_IMU = 0x55;
-        const byte OPCODE_REPORT_IMU = 0x56;
+        public const byte OPCODE_QUERY_GPS = 0x50;
+        public const byte OPCODE_REPORT_GPS = 0x51;
+        public const byte OPCODE_SET_GPS = 0x52;
+        public const byte OPCODE_QUERY_IMU = 0x55;
+        public const byte OPCODE_REPORT_IMU = 0x56;
         public const byte OPCODE_SIMPLE_AI = 0x70;
         public const byte OPCODE_DEBUG_AI = 0x71;
 
@@ -55,6 +56,7 @@ namespace AI_ROCKS.PacketHandlers
         private DriveHandler driveHandler;
         private StatusHandler statusHandler;
         public bool receivedAck = false;
+        public bool receivedGate = false;
 
         private static AscentPacketHandler instance;
 
@@ -252,6 +254,14 @@ namespace AI_ROCKS.PacketHandlers
                     gpsHandler.HandlePacket(OPCODE_REPORT_GPS, payload);
                     break;
                 }
+                case OPCODE_SET_GPS:
+                {
+                    if (gpsHandler.HandlePacket(OPCODE_SET_GPS, payload))
+                    {
+                        this.receivedGate = true;
+                    }
+                    break;
+                }
                 case OPCODE_REPORT_IMU:
                 {
                     imuHandler.HandlePacket(OPCODE_REPORT_IMU, payload);
@@ -272,6 +282,27 @@ namespace AI_ROCKS.PacketHandlers
                     return;
                 }
             }
+        }
+
+        /// <summary>
+        /// Property representing if we have received an ACK from the Base Station after sending an "AI Complete" packet.
+        /// </summary>
+        public static bool ReceivedAck
+        {
+            get { return GetInstance().receivedAck; }
+        }
+        
+        /// <summary>
+        /// Property representing if we have received an ACK from the Base Station after sending an "AI Complete" packet.
+        /// </summary>
+        public static bool ReceivedGate
+        {
+            get { return GetInstance().receivedGate; }
+        }
+
+        public static GPS Gate
+        {
+            get { return GetInstance().gpsHandler.Gate; }
         }
 
         /// <summary>
@@ -304,14 +335,6 @@ namespace AI_ROCKS.PacketHandlers
                 }
                 return ascentHeading;
             }
-        }
-
-        /// <summary>
-        /// Property representing if we have received an ACK from the Base Station after sending an "AI Complete" packet.
-        /// </summary>
-        public bool ReceivedAck
-        {
-            get { return this.receivedAck; }
         }
     }
 }

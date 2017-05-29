@@ -6,14 +6,16 @@ namespace AI_ROCKS.PacketHandlers
 {
     class GPSHandler : PacketHandler
     {
-        //private <?> path      // Current path driven by the cumulative GPS coordinates received, processed by the Ramer Douglass Peucker algorithm
         private GPS gps;
+        private GPS receivedGate;
 
 
         public GPSHandler()
         {
-            // TODO better way of doing this to avoid null pointers?
+            // Initialize to avoid null pointers
             this.gps = new GPS(0, 0, 0, 0, 0, 0);
+
+            this.receivedGate = null;
         }
 
 
@@ -27,12 +29,27 @@ namespace AI_ROCKS.PacketHandlers
         {
             // Is opcode, payload valid (able to be made into GPS object). If no, return false
 
-            // Form payload into GPS object, update current data
-            GPS parsedGPS = BclPayloadToGPS(payload);
-            this.gps = parsedGPS;
+            switch (opcode)
+            {
+                case AscentPacketHandler.OPCODE_REPORT_GPS:
+                {
+                    // Form payload into GPS object, update current data
+                    GPS parsedGPS = BclPayloadToGPS(payload);
+                    this.gps = parsedGPS;
 
-            //TODO return value
+                    break;
+                }
+                case AscentPacketHandler.OPCODE_SET_GPS:
+                {
+                    GPS parsedGPS = BclPayloadToGPS(payload);
+                    this.receivedGate = parsedGPS;
+
+                    break;
+                }
+            }
+
             return true;
+
         }
 
         /// <summary>
@@ -65,6 +82,14 @@ namespace AI_ROCKS.PacketHandlers
         public GPS Data
         {
             get { return this.gps; }
+        }
+        
+        /// <summary>
+        /// Property for the GPS coordinates of the gate.
+        /// </summary>
+        public GPS Gate
+        {
+            get { return this.receivedGate; }
         }
     }
 }

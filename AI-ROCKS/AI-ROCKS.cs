@@ -161,12 +161,12 @@ namespace AI_ROCKS
             else
             {
                 // Spin, wait for gate GPS from ROCKS (Base Station GUI)
-                // TODO
-
-                while (true)
-                { 
-                    //this should be handled 
+                while (!AscentPacketHandler.ReceivedGate)
+                {
+                    Console.Write("\rWaiting for gate GPS from base station");
                 }
+
+                gate = AscentPacketHandler.Gate;
             }
 
             // Create AutonomousService
