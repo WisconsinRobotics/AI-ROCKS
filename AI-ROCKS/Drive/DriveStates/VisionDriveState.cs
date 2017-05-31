@@ -43,6 +43,8 @@ namespace AI_ROCKS.Drive.DriveStates
         private Scan scan;
         private Camera camera;
 
+        int completedScans = 0;
+
         // Verification
         DetectedBallsQueue verificationQueue;   // For verification at end, not consistent logging of balls
         bool isWithinRequiredDistance = false;
@@ -309,19 +311,28 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
                 else
                 {
+                     this.completedScans++;
+                    
                     // Clear scan, will rescan below
                     this.scan = null;
                 }
             }
 
-            if (distanceToGate > DISTANCE_CLOSE_RANGE)      // 2 meters
+            if (this.completedScans >= 2)
             {
-                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Using heading as reference");
+                // Align toward heading, drive for 5ish seconds, 
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Driving 5m away, using heading as reference");
+                Console.WriteLine("Distance: " + distanceToGate + ". Scanning (using heading). Driving 5m away...");
 
-                Console.WriteLine("Distance: " + distanceToGate + ". Scanning (using heading)...");
-
+                this.scan = new Scan(this.gate, 10000);
+            }
+            else if (distanceToGate > DISTANCE_CLOSE_RANGE)      // 2 meters
+            {
                 // Turn toward heading
                 // Scan, use heading as reference
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Using heading as reference");
+                Console.WriteLine("Distance: " + distanceToGate + ". Scanning (using heading)...");
+                
                 this.scan = new Scan(this.gate, true);
             }
             else

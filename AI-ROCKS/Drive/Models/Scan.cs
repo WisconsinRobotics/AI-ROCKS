@@ -16,6 +16,10 @@ namespace AI_ROCKS.Drive.Models
         double scanStartHeading;
         double deltaTheta = 0.0;
 
+        bool isDrivingStraightForDuration;
+        long driveTowardHeadingForMillis = 0;
+        long driveStraightUntilMillis;
+
         public const double HEADING_THRESHOLD = 5.0; // 5 degrees
 
 
@@ -31,11 +35,24 @@ namespace AI_ROCKS.Drive.Models
             }
         }
 
+        // Implies we use heading first, then drive toward it.
+        // Once aligned, drive straight for driveTowardHeadingForMillis milliseconds
+        public Scan(GPS gate, long driveTowardHeadingForMillis)
+        {
+            this.gate = gate;
+
+            this.isAligningToHeading = true;
+            this.isScanning = false;
+
+            this.driveTowardHeadingForMillis = driveTowardHeadingForMillis;
+            this.isDrivingStraightForDuration = false;
+        }
+
         public DriveCommand FindNextDriveCommand()
         {
             short ascentHeading = AscentPacketHandler.Compass;
 
-            if (isAligningToHeading)
+            if (this.isAligningToHeading)
             {
                 // Turn toward heading
                 // Scan, use heading as reference
@@ -51,10 +68,24 @@ namespace AI_ROCKS.Drive.Models
                 if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, HEADING_THRESHOLD))
                 {
                     this.isAligningToHeading = false;
-                    this.isScanning = true;
-                    scanStartHeading = ascentHeading;
 
-                    return DriveCommand.RightTurn(Speed.VISION_SCAN);
+                    // If driving for a certain duration
+                    if (driveTowardHeadingForMillis > 0)
+                    {
+                        // Drive straight for a duration
+                        this.isDrivingStraightForDuration = true;
+                        this.driveStraightUntilMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + this.driveTowardHeadingForMillis;
+
+                        return DriveCommand.Straight(Speed.VISION_SCAN);
+                    }
+                    else
+                    {
+                        // Start scan
+                        this.isScanning = true;
+                        scanStartHeading = ascentHeading;
+
+                        return DriveCommand.RightTurn(Speed.VISION_SCAN);
+                    }
                 }
 
                 // Turn toward heading angle
@@ -64,6 +95,24 @@ namespace AI_ROCKS.Drive.Models
                 }
                 else
                 {
+                    return DriveCommand.RightTurn(Speed.VISION_SCAN);
+                }
+            }
+            else if (this.isDrivingStraightForDuration)
+            {
+                if (this.driveStraightUntilMillis > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                {
+                    // Drive straight for duration
+                    return DriveCommand.Straight(Speed.VISION_SCAN);
+                }
+                else
+                {
+                    // Start scan
+                    this.isDrivingStraightForDuration = false;
+
+                    this.isScanning = true;
+                    scanStartHeading = ascentHeading;
+
                     return DriveCommand.RightTurn(Speed.VISION_SCAN);
                 }
             }
