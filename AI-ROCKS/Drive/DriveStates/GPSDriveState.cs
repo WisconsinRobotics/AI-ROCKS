@@ -13,8 +13,8 @@ namespace AI_ROCKS.Drive.DriveStates
 {
     class GPSDriveState : IDriveState
     {
-        private const float THRESHOLD_HEADING_ANGLE = 7.5f;     // Gives threshold that "straight" is considered on either side
-        private const double GATE_PROXIMITY = 4.0;              // Distance from gate for when to switch to Vision
+        private const float THRESHOLD_HEADING_ANGLE = 10.0f;     // Gives threshold that "straight" is considered on either side
+        private const double GATE_PROXIMITY = 3.0;              // Distance from gate for when to switch to Vision
         GPS gate = null;
         // GPS test values:
         // right outside door:  -lat 43 4 17.9 -long -89 24 41.1    (or 17.7 for further back)
@@ -23,6 +23,9 @@ namespace AI_ROCKS.Drive.DriveStates
         // gazebo:              -lat 43 30 29.7 -long -89 30 29.6
         // front of ehall:      -lat 43 4 19.8 -long -89 24 37.5
         // old arrow at top of parking garage:  -lat 43 4 18.084 -long -89 24 43.938
+
+        // circle on ground: -lat 38 22 17.892 -long -110 42 15.114
+        // north side of parking lot: 38,22,19.216, -110,42,15.5575
 
         // Averaging queue for distances - used for state switching logic
         private ConcurrentQueue<double> averagingQueue = new ConcurrentQueue<double>();
@@ -111,6 +114,12 @@ namespace AI_ROCKS.Drive.DriveStates
         /// <returns>StateType - the next StateType</returns>
         public StateType GetNextStateType()
         {
+            // Avoid trashing
+            if (this.averagingQueue.Count < 5)
+            {
+                return StateType.GPSState;
+            }
+
             // Get average distance to avoid erroneous switching due to noise
             double averageDistance = 0.0;
             foreach (double distanceItr in this.averagingQueue)

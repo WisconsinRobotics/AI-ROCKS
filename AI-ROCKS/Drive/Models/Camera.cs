@@ -18,13 +18,13 @@ namespace AI_ROCKS.Drive.Models
         const int FRAME_RATE = 15;
 
         // Circle detection
-        const int MIN_RADIUS = 10;
+        const int MIN_RADIUS = 5;
 
         // Gaussian blur
         const int GAUSSIAN_KERNELSIZE = 15;
 
         // Limits of HSV masking
-        Hsv minHSV = new Hsv(30, 30, 70);
+        Hsv minHSV = new Hsv(30, 40, 110);
         //(20, 30, 90); - something worked kind of
         //(20, 20, 68); - top 1/4 lit, bottom underlit (lit overhead from side)
         //(20, 30, 70); - top 1/4 lit, bottom underlit (lit overhead behind)    -- note, moving saturation down detected concrete/cement as ball
@@ -32,7 +32,12 @@ namespace AI_ROCKS.Drive.Models
         //(30, 30, 90); - ball is 1/2 covered on a slant. lit from overhead side        works well with 70 too
         //(25, 30, 70); - ball is completely backlit, this distinguishes yellow (parking lines) from green
 
-        Hsv maxHSV = new Hsv(50, 170, 255);
+        //(37, 30, 90); - stronger threshold
+        //(30, 50, 110); - kind of works in clouds
+        //(30, 40, 110); (55, 150, 255); - kind of works in clouds
+
+        //Hsv maxHSV = new Hsv(50, 170, 255);
+        Hsv maxHSV = new Hsv(55, 150, 255);
 
         // Detection objects
         private TennisBall tennisBall;

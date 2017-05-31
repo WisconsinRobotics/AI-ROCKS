@@ -32,7 +32,7 @@ namespace AI_ROCKS.Drive.DriveStates
         const double DISTANCE_CLOSE_RANGE = 2.0;
 
         // Detection constants
-        const int DROP_BALL_DELAY = 5000;   // maybe name this more appropriately lol
+        const int DROP_BALL_DELAY = 3000;   // maybe name this more appropriately lol
 
         // Navigation utils
         private const double BALL_REGION_THRESHOLD = 0.0872665;     // 5 degrees in radians
