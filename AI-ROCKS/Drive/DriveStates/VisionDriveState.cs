@@ -318,7 +318,8 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
             }
 
-            if (this.completedScans >= 2)
+            // Can be done better but I ain't got no time for that
+            if (this.completedScans == 2)
             {
                 // Align toward heading, drive for 5ish seconds, 
                 StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Driving 5m away, using heading as reference");
@@ -326,13 +327,73 @@ namespace AI_ROCKS.Drive.DriveStates
 
                 this.scan = new Scan(this.gate, 10000);
             }
+            else if (this.completedScans == 3)
+            {
+                if (distanceToGate > 1.0)
+                {
+                    return NavigateTowardGate();
+                }
+
+                // Get to 0, go north
+                // Align toward heading, drive for 5ish seconds, 
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Scanning north");
+                Console.WriteLine("Distance: " + distanceToGate + ". Scanning north. Driving 5m away...");
+
+                this.scan = new Scan(this.gate, 0, 10000);
+
+                // Get to 0, go south
+                // Get to 0, go east
+                // Get to 0, go west
+            }
+            else if (this.completedScans == 4)
+            {
+                if (distanceToGate > 1.0)
+                {
+                    return NavigateTowardGate();
+                }
+
+                // Get to 0, go north
+                // Align toward heading, drive for 5ish seconds, 
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Scanning north");
+                Console.WriteLine("Distance: " + distanceToGate + ". Scanning north. Driving 5m away...");
+
+                this.scan = new Scan(this.gate, 180, 10000);
+            }
+            else if (this.completedScans == 5)
+            {
+                if (distanceToGate > 1.0)
+                {
+                    return NavigateTowardGate();
+                }
+
+                // Get to 0, go north
+                // Align toward heading, drive for 5ish seconds, 
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Scanning north");
+                Console.WriteLine("Distance: " + distanceToGate + ". Scanning north. Driving 5m away...");
+
+                this.scan = new Scan(this.gate, 90, 10000);
+            }
+            else if (this.completedScans == 6)
+            {
+                if (distanceToGate > 1.0)
+                {
+                    return NavigateTowardGate();
+                }
+
+                // Get to 0, go north
+                // Align toward heading, drive for 5ish seconds, 
+                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Scanning north");
+                Console.WriteLine("Distance: " + distanceToGate + ". Scanning north. Driving 5m away...");
+
+                this.scan = new Scan(this.gate, 270, 10000);
+            }
             else if (distanceToGate > DISTANCE_CLOSE_RANGE)      // 2 meters
             {
                 // Turn toward heading
                 // Scan, use heading as reference
                 StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Using heading as reference");
                 Console.WriteLine("Distance: " + distanceToGate + ". Scanning (using heading)...");
-                
+
                 this.scan = new Scan(this.gate, true);
             }
             else
@@ -340,7 +401,7 @@ namespace AI_ROCKS.Drive.DriveStates
                 StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance < 2m: Not using heading as reference");
 
                 Console.WriteLine("Distance: " + distanceToGate + ". Scanning...");
-                
+
                 // Scan
                 // ... more to do for this case
 
@@ -435,6 +496,33 @@ namespace AI_ROCKS.Drive.DriveStates
             {
                 // Ball straight ahead
                 return DriveCommand.Straight(Speed.VISION);
+            }
+        }
+
+        private DriveCommand NavigateTowardGate()
+        {
+            GPS ascentGPS = AscentPacketHandler.GPSData;
+            double distanceToGate = ascentGPS.GetDistanceTo(this.gate);
+
+            short ascentHeading = AscentPacketHandler.Compass;
+            double headingToGate = ascentGPS.GetHeadingTo(this.gate);
+
+            Console.Write("currCompass: " + ascentHeading + " | headingToGoal: " + headingToGate + " | distance: " + distanceToGate + " | ");
+
+            // Aligned with heading. Start going straight
+            if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, Scan.HEADING_THRESHOLD))
+            {
+                return DriveCommand.Straight(Speed.VISION);
+            }
+
+            // Turn toward gate heading angle
+            if (IMU.IsHeadingWithinThreshold(ascentHeading, (headingToGate + 90) % 360, 90))
+            {
+                return DriveCommand.LeftTurn(Speed.VISION_SCAN);
+            }
+            else
+            {
+                return DriveCommand.RightTurn(Speed.VISION_SCAN);
             }
         }
 

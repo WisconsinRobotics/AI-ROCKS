@@ -26,6 +26,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         // circle on ground: -lat 38 22 17.892 -long -110 42 15.114
         // north side of parking lot: 38,22,19.216, -110,42,15.5575
+        // 38,27,38.29 -110,40,23.42
 
         // Averaging queue for distances - used for state switching logic
         private ConcurrentQueue<double> averagingQueue = new ConcurrentQueue<double>();

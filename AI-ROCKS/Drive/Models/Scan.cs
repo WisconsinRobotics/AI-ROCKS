@@ -9,7 +9,8 @@ namespace AI_ROCKS.Drive.Models
     {
         GPS gate;
 
-        bool isAligningToHeading;       // Is the Scan currently aligning to the heading of the gate
+        bool isAligningToGateHeading;       // Is the Scan currently aligning to the heading of the gate
+        bool isAligningToSpecifiedHeading;
         bool isScanning;                // Is the Scan currently scanning (and not aligning)
 
         bool isScanNearlyComplete = false;    // Kind of a hack
@@ -23,15 +24,15 @@ namespace AI_ROCKS.Drive.Models
         public const double HEADING_THRESHOLD = 5.0; // 5 degrees
 
 
-        public Scan(GPS gate, bool useHeading)
+        public Scan(GPS gate, bool useGateHeading)
         {
             this.gate = gate;
 
-            this.isAligningToHeading = useHeading;
-            this.isScanning = !useHeading;
-            if (!useHeading)
+            this.isAligningToGateHeading = useGateHeading;
+            this.isScanning = !useGateHeading;
+            if (!useGateHeading)
             {
-                scanStartHeading = AscentPacketHandler.Compass;
+                this.scanStartHeading = AscentPacketHandler.Compass;
             }
         }
 
@@ -41,25 +42,39 @@ namespace AI_ROCKS.Drive.Models
         {
             this.gate = gate;
 
-            this.isAligningToHeading = true;
+            this.isAligningToGateHeading = true;
             this.isScanning = false;
 
             this.driveTowardHeadingForMillis = driveTowardHeadingForMillis;
             this.isDrivingStraightForDuration = false;
         }
 
+        public Scan(GPS gate, double alignToHeading, long driveTowardHeadingForMillis)
+        {
+            this.gate = gate;
+
+            this.isAligningToGateHeading = false;
+            this.isAligningToSpecifiedHeading = true;
+            this.isScanning = false;
+
+            this.driveTowardHeadingForMillis = driveTowardHeadingForMillis;
+            this.isDrivingStraightForDuration = false;
+
+            this.scanStartHeading = alignToHeading;
+        }
+
+
         public DriveCommand FindNextDriveCommand()
         {
             short ascentHeading = AscentPacketHandler.Compass;
 
-            if (this.isAligningToHeading)
+            if (this.isAligningToGateHeading)
             {
                 // Turn toward heading
                 // Scan, use heading as reference
 
                 GPS ascent = AscentPacketHandler.GPSData;
                 double headingToGate = ascent.GetHeadingTo(this.gate);
-
                 Console.Write("Scan aligning toward heading | compass: " + ascentHeading + " | Heading to gate: " + headingToGate + " | ");
 
 
@@ -67,7 +82,52 @@ namespace AI_ROCKS.Drive.Models
                 // Have reached heading. Start turning right
                 if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, HEADING_THRESHOLD))
                 {
-                    this.isAligningToHeading = false;
+                    this.isAligningToGateHeading = false;
+
+                    // If driving for a certain duration
+                    if (driveTowardHeadingForMillis > 0)
+                    {
+                        // Drive straight for a duration
+                        this.isDrivingStraightForDuration = true;
+                        this.driveStraightUntilMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + this.driveTowardHeadingForMillis;
+
+                        return DriveCommand.Straight(Speed.VISION_SCAN);
+                    }
+                    else
+                    {
+                        // Start scan
+                        this.isScanning = true;
+                        scanStartHeading = ascentHeading;
+
+                        return DriveCommand.RightTurn(Speed.VISION_SCAN);
+                    }
+                }
+
+                // Turn toward heading angle
+                if (ascentHeading < ((headingToGate + 180) % 360) && ascentHeading > headingToGate)
+                {
+                    return DriveCommand.LeftTurn(Speed.VISION_SCAN);
+                }
+                else
+                {
+                    return DriveCommand.RightTurn(Speed.VISION_SCAN);
+                }
+            }
+            else if (this.isAligningToSpecifiedHeading)
+            {
+                // Turn toward heading
+                // Scan, use heading as reference
+
+                GPS ascent = AscentPacketHandler.GPSData;
+                double headingToGate = this.scanStartHeading;
+                Console.Write("Scan aligning toward heading | compass: " + ascentHeading + " | Heading to gate: " + headingToGate + " | ");
+
+
+
+                // Have reached heading. Start turning right
+                if (IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, HEADING_THRESHOLD))
+                {
+                    this.isAligningToSpecifiedHeading = false;
 
                     // If driving for a certain duration
                     if (driveTowardHeadingForMillis > 0)

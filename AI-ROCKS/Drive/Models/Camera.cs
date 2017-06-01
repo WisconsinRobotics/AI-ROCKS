@@ -24,7 +24,7 @@ namespace AI_ROCKS.Drive.Models
         const int GAUSSIAN_KERNELSIZE = 15;
 
         // Limits of HSV masking
-        Hsv minHSV = new Hsv(30, 40, 110);
+        Hsv minHSV = new Hsv(30, 30, 80);
         //(20, 30, 90); - something worked kind of
         //(20, 20, 68); - top 1/4 lit, bottom underlit (lit overhead from side)
         //(20, 30, 70); - top 1/4 lit, bottom underlit (lit overhead behind)    -- note, moving saturation down detected concrete/cement as ball
@@ -35,6 +35,8 @@ namespace AI_ROCKS.Drive.Models
         //(37, 30, 90); - stronger threshold
         //(30, 50, 110); - kind of works in clouds
         //(30, 40, 110); (55, 150, 255); - kind of works in clouds
+        //(30, 30, 60); - real generous
+        //(30, 30, 80); - less generous
 
         //Hsv maxHSV = new Hsv(50, 170, 255);
         Hsv maxHSV = new Hsv(55, 150, 255);
