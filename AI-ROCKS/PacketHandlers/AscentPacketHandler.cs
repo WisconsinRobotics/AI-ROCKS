@@ -40,7 +40,7 @@ namespace AI_ROCKS.PacketHandlers
         public const int AI_ROCKS_AI_SERVICE_ID = 0;
 
         // Query interval for GPS, IMU sensors
-        private const long QUERY_SENSOR_INTERVAL_MILLIS = 500;
+        private const long QUERY_SENSOR_INTERVAL_MILLIS = 200;
         static readonly byte[] QUERY_OPCODES = { OPCODE_QUERY_GPS, OPCODE_QUERY_IMU };      // Query GPS and IMU
 
         // Constants for communicating with ROCKS

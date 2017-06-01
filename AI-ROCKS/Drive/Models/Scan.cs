@@ -14,13 +14,14 @@ namespace AI_ROCKS.Drive.Models
 
         bool isScanNearlyComplete = false;    // Kind of a hack
         double scanStartHeading;
+        long scanStartTimestampMillis;
         double deltaTheta = 0.0;
 
         bool isDrivingStraightForDuration;
         long driveTowardHeadingForMillis = 0;
         long driveStraightUntilMillis;
 
-        public const double HEADING_THRESHOLD = 5.0; // 5 degrees
+        public const double HEADING_THRESHOLD = 10.0;   // 10 degrees
 
 
         public Scan(GPS gate, bool useHeading)
@@ -32,6 +33,7 @@ namespace AI_ROCKS.Drive.Models
             if (!useHeading)
             {
                 scanStartHeading = AscentPacketHandler.Compass;
+                scanStartTimestampMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
         }
 
@@ -83,6 +85,7 @@ namespace AI_ROCKS.Drive.Models
                         // Start scan
                         this.isScanning = true;
                         scanStartHeading = ascentHeading;
+                        scanStartTimestampMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
                         return DriveCommand.RightTurn(Speed.VISION_SCAN);
                     }
@@ -112,6 +115,7 @@ namespace AI_ROCKS.Drive.Models
 
                     this.isScanning = true;
                     scanStartHeading = ascentHeading;
+                    scanStartTimestampMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
                     return DriveCommand.RightTurn(Speed.VISION_SCAN);
                 }
@@ -127,7 +131,7 @@ namespace AI_ROCKS.Drive.Models
 
                 Console.Write("Scan scanning | compass: " + ascentHeading + " | deltaTheta: " + deltaTheta + " | ");
 
-                if (deltaTheta > 345)
+                if (deltaTheta > 330 && (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > scanStartTimestampMillis + 2000))
                 {
                     // Use boolean incase of wrap around to 0 due to mod
                     isScanNearlyComplete = true;
@@ -144,7 +148,7 @@ namespace AI_ROCKS.Drive.Models
             GPS ascent = AscentPacketHandler.GPSData;
             double headingToGate = ascent.GetHeadingTo(this.gate);
 
-            return isScanning && isScanNearlyComplete && IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, HEADING_THRESHOLD);
+            return isScanning && isScanNearlyComplete && IMU.IsHeadingWithinThreshold(ascentHeading, headingToGate, HEADING_THRESHOLD) && (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > scanStartTimestampMillis + 2000);
         }
     }
 }

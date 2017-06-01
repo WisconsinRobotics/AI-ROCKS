@@ -24,7 +24,7 @@ namespace AI_ROCKS.Drive.DriveStates
         // front of ehall:      -lat 43 4 19.8 -long -89 24 37.5
         // old arrow at top of parking garage:  -lat 43 4 18.084 -long -89 24 43.938
 
-        // circle on ground: -lat 38 22 17.892 -long -110 42 15.114
+        // circle on ground: -lat 38 22 17.892 -long -110 42 15.114  38,22,17.892 -110,42,15.114
         // north side of parking lot: 38,22,19.216, -110,42,15.5575
 
         // Averaging queue for distances - used for state switching logic
@@ -139,12 +139,19 @@ namespace AI_ROCKS.Drive.DriveStates
             // When to be switch from GPSDriveState to VisionDriveState
             if (averageDistance <= GATE_PROXIMITY)
             {
-                // Send log back to base station
-                StatusHandler.SendDebugAIPacket(Status.AIS_SWITCH_TO_VISION, "Drive state switch: GPS to Vision.");
-                Console.WriteLine("WITHIN PROXIMITY | ");
-                
                 if (GATE_PROXIMITY == DriveContext.HAIL_MARY_GATE_PROXIMITY)
+                {
+                    StatusHandler.SendSimpleAIPacket(Status.AIS_FOUND_GATE);
+                    Console.WriteLine("Hail mary is within required distance - halting ");
+
                     this.isTaskComplete = true;
+                }
+                else
+                {
+                    // Send log back to base station
+                    StatusHandler.SendDebugAIPacket(Status.AIS_SWITCH_TO_VISION, "Drive state switch: GPS to Vision.");
+                    Console.WriteLine("WITHIN PROXIMITY | ");
+                }
 
                 return StateType.VisionState;
             }

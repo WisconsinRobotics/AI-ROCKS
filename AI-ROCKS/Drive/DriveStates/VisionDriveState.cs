@@ -28,7 +28,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         // Distance constants
         const double DISTANCE_SWITCH_TO_GPS = 6.0;
-        const double DISTANCE_USE_HEADING = 6.0;
+        const double DISTANCE_USE_HEADING = 3.0;
         const double DISTANCE_CLOSE_RANGE = 2.0;
 
         // Detection constants
