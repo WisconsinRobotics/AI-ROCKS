@@ -14,7 +14,7 @@ namespace AI_ROCKS.Drive.DriveStates
     class GPSDriveState : IDriveState
     {
         private const float THRESHOLD_HEADING_ANGLE = 10.0f;     // Gives threshold that "straight" is considered on either side
-        private const double GATE_PROXIMITY = 3.0;              // Distance from gate for when to switch to Vision
+        private double GATE_PROXIMITY = 3.0;              // Distance from gate for when to switch to Vision
         GPS gate = null;
         // GPS test values:
         // right outside door:  -lat 43 4 17.9 -long -89 24 41.1    (or 17.7 for further back)
@@ -31,11 +31,18 @@ namespace AI_ROCKS.Drive.DriveStates
         private ConcurrentQueue<double> averagingQueue = new ConcurrentQueue<double>();
         private const int AVERAGING_QUEUE_CAPACITY = 5;
 
+        private bool isTaskComplete = false;
+
         public GPSDriveState(GPS gate)
         {
             this.gate = gate;
         }
 
+        public GPSDriveState(GPS gate, double proxy)
+        {
+            this.gate = gate;
+            this.GATE_PROXIMITY = proxy;
+        }
         
         /// <summary>
         /// Find the next DriveCommand to be issued to ROCKS.
@@ -135,9 +142,13 @@ namespace AI_ROCKS.Drive.DriveStates
                 // Send log back to base station
                 StatusHandler.SendDebugAIPacket(Status.AIS_SWITCH_TO_VISION, "Drive state switch: GPS to Vision.");
                 Console.WriteLine("WITHIN PROXIMITY | ");
+                
+                if (GATE_PROXIMITY == DriveContext.HAIL_MARY_GATE_PROXIMITY)
+                    this.isTaskComplete = true;
 
                 return StateType.VisionState;
             }
+
 
             return StateType.GPSState;
         }
@@ -309,7 +320,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
         public bool IsTaskComplete()
         {
-            return false;
+            return isTaskComplete;
         }
 
     }

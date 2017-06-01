@@ -30,6 +30,8 @@ namespace AI_ROCKS
             List<float> latitude = null;
             List<float> longitude = null;
 
+            int fuckItGoForItCountDown = 480_000;
+
             for (int i = 0; i < args.Length; i++)
             {
                 String curr = args[i];
@@ -127,6 +129,14 @@ namespace AI_ROCKS
                         gateGPSTest = true;
                         break;
                     }
+                    case "-h":
+                    {
+                        if (!Int32.TryParse(args[++i], out fuckItGoForItCountDown))
+                        {
+                            ExitFromInvalidArgrument("Invalid integer for StateType parsing: " + args[i]);
+                        }
+                        break;
+                    }
                     default:
                     {
                         // Invalid command line argument
@@ -170,7 +180,7 @@ namespace AI_ROCKS
             }
 
             // Create AutonomousService
-            AutonomousService autonomousService = new AutonomousService(initialStateType, gate, lrfPort, lrfTest);
+            AutonomousService autonomousService = new AutonomousService(initialStateType, gate, lrfPort, fuckItGoForItCountDown, lrfTest);
             StatusHandler.SendDebugAIPacket(Status.AIS_LOG, "Autonomous Service initialized");
 
             // Create Timer for Execute function

@@ -35,7 +35,11 @@ namespace AI_ROCKS.Services
         // Execute() lock - avoid concurrent Execute() calls
         Object executeLock = new Object();
 
-        public AutonomousService(StateType initialStateType, GPS gate, int lrfPort, bool lrfTest = false)
+        public DateTimeOffset startTimeStamp;
+        int fuckItGoForItCountDown;
+        bool panic = false;
+
+        public AutonomousService(StateType initialStateType, GPS gate, int lrfPort, int fuckItGoForItCountDown, bool lrfTest = false)
         {
             this.driveContext = new DriveContext(initialStateType, gate);
             this.ObstacleEvent += driveContext.HandleObstacleEvent;
@@ -51,57 +55,9 @@ namespace AI_ROCKS.Services
             {
                 this.plot = new Plot();
             }
-        }
 
-        void HandleSocketReceive(IAsyncResult result)
-        {
-            IPEndPoint recvAddr = new IPEndPoint(IPAddress.Loopback, 0);
-            byte[] data = rocks_lrf_socket.EndReceive(result, ref recvAddr);
-
-            this.rocks_lrf_socket.BeginReceive(HandleSocketReceive, null);
-
-            List<byte> list = new List<byte>();
-
-            for (int i = 0; i < data.Length; i++)
-            {
-                list.Add(data[i]);
-            }
-
-            if (!this.handshake)
-            {
-                if (list.Count == 4)
-                {
-                    if (list[0] == 0xDE && list[1] == 0xAD && list[2] == 0xBE && list[3] == 0xEF)
-                    {
-                        IPEndPoint sendAddr = new IPEndPoint(IPAddress.Loopback, 10000);
-
-                        byte[] lrf_min_angle = BitConverter.GetBytes(DriveContext.LRF_MIN_ANGLE);
-                        byte[] lrf_max_angle = BitConverter.GetBytes(DriveContext.LRF_MAX_ANGLE);
-                        byte[] region_separation_distance = BitConverter.GetBytes(REGION_SEPARATION_DISTANCE);
-                        byte[] rdp_threshold = BitConverter.GetBytes(RDP_THRESHOLD);
-                        
-                        List<byte> buffer = new List<byte>();
-                        buffer.Add(0xDE);
-                        buffer.Add(0xAD);
-
-                        buffer.AddRange(lrf_min_angle);
-                        buffer.AddRange(lrf_max_angle);
-                        buffer.AddRange(region_separation_distance);
-                        buffer.AddRange(rdp_threshold);
-
-                        buffer.Add(0xBE);
-                        buffer.Add(0xEF);
-
-                        this.rocks_lrf_socket.Send(buffer.ToArray(), buffer.Count, sendAddr);
-
-                        this.handshake = true;
-                        StatusHandler.SendDebugAIPacket(Status.AIS_LOG, "Received LRF handshare");
-                    }
-                }
-                return;
-            }
-
-            this.plot = Plot.Deserialize(list);
+            this.startTimeStamp = DateTime.Now;
+            this.fuckItGoForItCountDown = fuckItGoForItCountDown;
         }
 
         /// <summary>
@@ -118,6 +74,13 @@ namespace AI_ROCKS.Services
             // TODO debugging - delete
             //Console.WriteLine("The Elapsed event was raised at {0:HH:mm:ss.fff}", e.SignalTime);
 
+            // this is for when we're running out of time and just roll back to only gps and hope for the best
+            if (!this.panic && (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - this.startTimeStamp.ToUnixTimeMilliseconds() > this.fuckItGoForItCountDown))
+            {
+                StatusHandler.SendDebugAIPacket(Status.AIS_LOG, "Starting hail mary");
+                this.panic = true;
+                this.driveContext.HandleFinalCountDown();
+            }
 
             // If detected an obstacle within the last 5 seconds, continue straight to clear obstacle
             if (IsLastObstacleWithinInterval(OBSTACLE_WATCHDOG_MILLIS))
@@ -222,6 +185,58 @@ namespace AI_ROCKS.Services
         public bool IsComplete()
         {
             return AscentPacketHandler.ReceivedAck && this.driveContext.IsComplete;
+        }
+
+
+        void HandleSocketReceive(IAsyncResult result)
+        {
+            IPEndPoint recvAddr = new IPEndPoint(IPAddress.Loopback, 0);
+            byte[] data = rocks_lrf_socket.EndReceive(result, ref recvAddr);
+
+            this.rocks_lrf_socket.BeginReceive(HandleSocketReceive, null);
+
+            List<byte> list = new List<byte>();
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                list.Add(data[i]);
+            }
+
+            if (!this.handshake)
+            {
+                if (list.Count == 4)
+                {
+                    if (list[0] == 0xDE && list[1] == 0xAD && list[2] == 0xBE && list[3] == 0xEF)
+                    {
+                        IPEndPoint sendAddr = new IPEndPoint(IPAddress.Loopback, 10000);
+
+                        byte[] lrf_min_angle = BitConverter.GetBytes(DriveContext.LRF_MIN_ANGLE);
+                        byte[] lrf_max_angle = BitConverter.GetBytes(DriveContext.LRF_MAX_ANGLE);
+                        byte[] region_separation_distance = BitConverter.GetBytes(REGION_SEPARATION_DISTANCE);
+                        byte[] rdp_threshold = BitConverter.GetBytes(RDP_THRESHOLD);
+
+                        List<byte> buffer = new List<byte>();
+                        buffer.Add(0xDE);
+                        buffer.Add(0xAD);
+
+                        buffer.AddRange(lrf_min_angle);
+                        buffer.AddRange(lrf_max_angle);
+                        buffer.AddRange(region_separation_distance);
+                        buffer.AddRange(rdp_threshold);
+
+                        buffer.Add(0xBE);
+                        buffer.Add(0xEF);
+
+                        this.rocks_lrf_socket.Send(buffer.ToArray(), buffer.Count, sendAddr);
+
+                        this.handshake = true;
+                        StatusHandler.SendDebugAIPacket(Status.AIS_LOG, "Received LRF handshare");
+                    }
+                }
+                return;
+            }
+
+            this.plot = Plot.Deserialize(list);
         }
     }
 }

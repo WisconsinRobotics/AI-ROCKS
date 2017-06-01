@@ -37,6 +37,9 @@ namespace AI_ROCKS.Drive
         private readonly Object sendDriveCommandLock;
         private long lastObstacleDetected;
 
+        private bool fuckItWereGoingForIt = false;
+        public const double HAIL_MARY_GATE_PROXIMITY = 0.5;
+
         public DriveContext(StateType initialStateType, GPS gate)
         {
             this.gate = gate;
@@ -106,7 +109,11 @@ namespace AI_ROCKS.Drive
                 return this.stateType;
             }
 
-            this.driveState = StateTypeHelper.ToDriveState(nextState, this.gate);
+            if (!this.fuckItWereGoingForIt)
+                this.driveState = StateTypeHelper.ToDriveState(nextState, this.gate);
+            else
+                this.driveState = new GPSDriveState(this.gate, HAIL_MARY_GATE_PROXIMITY);
+            
             this.stateType = nextState;
 
             return nextState;
@@ -147,6 +154,11 @@ namespace AI_ROCKS.Drive
                 DriveHandler.SendDriveCommand(driveCommand);
                 this.lastObstacleDetected = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
+        }
+        
+        public void HandleFinalCountDown()
+        {
+            this.fuckItWereGoingForIt = true;
         }
 
         /// <summary>
