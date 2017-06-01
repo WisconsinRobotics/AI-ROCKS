@@ -43,7 +43,9 @@ namespace AI_ROCKS.Drive.DriveStates
         private Scan scan;
         private Camera camera;
 
+        // Scan constants
         int completedScans = 0;
+        const int SCAN_DRIVE_STRAIGHT_DURATION_MILLIS = 10000;
 
         // Verification
         DetectedBallsQueue verificationQueue;   // For verification at end, not consistent logging of balls
@@ -318,33 +320,71 @@ namespace AI_ROCKS.Drive.DriveStates
                 }
             }
 
-            if (this.completedScans >= 2)
+            switch (this.completedScans)
             {
-                // Align toward heading, drive for 5ish seconds, 
-                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Driving 5m away, using heading as reference");
-                Console.WriteLine("Distance: " + distanceToGate + ". Scanning (using heading). Driving 5m away...");
+                case 0:
+                {
+                    // Initialize the first scan
+                    if (distanceToGate > DISTANCE_CLOSE_RANGE)      // 2 meters
+                    {
+                        // Turn toward heading. Scan, use heading as reference
+                        StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Scan: Using heading as reference. Distance: " + Math.Round(distanceToGate, 2));
+                        Console.WriteLine("Scan: Using heading as reference. Distance: " + Math.Round(distanceToGate, 2));
 
-                this.scan = new Scan(this.gate, 10000);
-            }
-            else if (distanceToGate > DISTANCE_CLOSE_RANGE)      // 2 meters
-            {
-                // Turn toward heading
-                // Scan, use heading as reference
-                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance > 2m: Using heading as reference");
-                Console.WriteLine("Distance: " + distanceToGate + ". Scanning (using heading)...");
-                
-                this.scan = new Scan(this.gate, true);
-            }
-            else
-            {
-                StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Distance < 2m: Not using heading as reference");
+                        this.scan = new Scan(this.gate, true);
+                    }
+                    else
+                    {
+                        // Scan
+                        StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Scan: Not using heading as reference. Distance: " + Math.Round(distanceToGate, 2));
+                        Console.WriteLine("Scan: Not using heading as reference. Distance: " + Math.Round(distanceToGate, 2));
+                            
+                        this.scan = new Scan(this.gate, false);
+                    }
 
-                Console.WriteLine("Distance: " + distanceToGate + ". Scanning...");
-                
-                // Scan
-                // ... more to do for this case
+                    break;
+                }
+                case 1:
+                {
+                    // Align toward heading, drive for 10ish seconds, 
+                    StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Scan: 1st 10s scan toward heading. Distance: " + Math.Round(distanceToGate, 2));
+                    Console.WriteLine("Scan: Distance: " + Math.Round(distanceToGate, 2) + ". Scanning (using heading). Driving 5m away...");
 
-                this.scan = new Scan(this.gate, false);
+                    this.scan = new Scan(this.gate, SCAN_DRIVE_STRAIGHT_DURATION_MILLIS);
+
+                    break;
+                }
+                case 2:
+                {
+                    // Broaden HSV values, scan
+                    StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Scan: Broadening HSV values. Distance: " + Math.Round(distanceToGate, 2));
+                    Console.WriteLine("Scan: Broadening HSV values. Distance: " + Math.Round(distanceToGate, 2));
+
+                    this.camera.BroadenHsvValues();
+
+                    this.scan = new Scan(this.gate, false);
+
+                    break;
+                }
+                case 3:
+                {
+                    // Align toward heading (again), drive for 5ish seconds, 
+                    StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Scan: 2nd 5m scan toward heading. Distance: " + Math.Round(distanceToGate, 2));
+                    Console.WriteLine("Scan: 2nd 5m scan toward heading. Distance: " + Math.Round(distanceToGate, 2));
+
+                    this.scan = new Scan(this.gate, SCAN_DRIVE_STRAIGHT_DURATION_MILLIS);
+
+                    break;
+                }
+                case 4:
+                {
+                    // We've already run 1 scan, 1 5m scan, 1 broaden HSV, 1 more 5m scan, so drive straight to kick back to GPS and do it over again
+                    return DriveCommand.Straight(Speed.VISION);
+                }
+                default:
+                {
+                    break;
+                }
             }
 
             return scan.FindNextDriveCommand();

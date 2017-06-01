@@ -202,6 +202,12 @@ namespace AI_ROCKS.Drive.Models
             return ball;
         }
 
+        public void BroadenHsvValues()
+        {
+            this.minHSV = new Hsv(30, 30, 80);
+
+        }
+
         public long BallTimestamp
         {
             get { return this.ballTimestamp;  }
