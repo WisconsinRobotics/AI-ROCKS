@@ -18,7 +18,7 @@ namespace AI_ROCKS.Drive.Models
         const int FRAME_RATE = 15;
 
         // Circle detection
-        const int MIN_RADIUS = 5;
+        const int MIN_RADIUS = 2;
 
         // Gaussian blur
         const int GAUSSIAN_KERNELSIZE = 15;

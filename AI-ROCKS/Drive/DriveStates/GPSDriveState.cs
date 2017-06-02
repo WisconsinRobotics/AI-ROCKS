@@ -156,7 +156,6 @@ namespace AI_ROCKS.Drive.DriveStates
                 return StateType.VisionState;
             }
 
-
             return StateType.GPSState;
         }
 

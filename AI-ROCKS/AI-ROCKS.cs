@@ -189,11 +189,13 @@ namespace AI_ROCKS
             executeTimer.Elapsed += autonomousService.Execute;
             executeTimer.Enabled = true;
 
+            /*
             // Create timer for ObstacleEvent, tied in to autonomousService.DetectObstacleEvent()
             Timer obstacleTimer = new Timer(OBSTACLE_INTERVAL_MILLIS);
             obstacleTimer.AutoReset = true;
             obstacleTimer.Elapsed += autonomousService.DetectObstacleEvent;
             obstacleTimer.Enabled = true;
+            */        
 
             // Execute while not receive an ACK from base station and DriveContext is not complete
             while (!autonomousService.IsComplete())

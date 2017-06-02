@@ -354,6 +354,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
                     break;
                 }
+                /*
                 case 2:
                 {
                     // Broaden HSV values, scan
@@ -366,7 +367,8 @@ namespace AI_ROCKS.Drive.DriveStates
 
                     break;
                 }
-                case 3:
+                */
+                case 2:
                 {
                     // Align toward heading (again), drive for 5ish seconds, 
                     StatusHandler.SendDebugAIPacket(Status.AIS_BEGIN_SCAN, "Scan: 2nd 5m scan toward heading. Distance: " + Math.Round(distanceToGate, 2));
@@ -376,7 +378,7 @@ namespace AI_ROCKS.Drive.DriveStates
 
                     break;
                 }
-                case 4:
+                case 3:
                 {
                     // We've already run 1 scan, 1 5m scan, 1 broaden HSV, 1 more 5m scan, so drive straight to kick back to GPS and do it over again
                     return DriveCommand.Straight(Speed.VISION);
