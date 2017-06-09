@@ -15,7 +15,7 @@ namespace AI_ROCKS.PacketHandlers
     /// Interface to be implemented by all other PacketHandlers to implement 
     /// their own handling of receiving and parsing packets.
     /// </summary>
-    interface PacketHandler
+    interface IPacketHandler
     {
         bool HandlePacket(byte opcode, byte[] payload);
     }
@@ -46,11 +46,9 @@ namespace AI_ROCKS.PacketHandlers
         // Constants for communicating with ROCKS
         const int AI_ROCKS_PORT = 15000;
         const int ROCKS_PORT = 10000;
-        const string LAUNCHPAD_COM_PORT = "COM4";       //TODO remove
 
         private static IPEndPoint ascentControlsIPEndpoint;
         private UdpClient ai_rocksSocket;
-        private SerialPort launchpad;
         private GPSHandler gpsHandler;
         private IMUHandler imuHandler;
         private DriveHandler driveHandler;
@@ -106,10 +104,6 @@ namespace AI_ROCKS.PacketHandlers
             this.ai_rocksSocket = new UdpClient(AI_ROCKS_PORT);
 
             ascentControlsIPEndpoint = new IPEndPoint(destinationIP, ROCKS_PORT);
-
-            // TODO delete once BCL communication works top-down
-            //this.launchpad = new SerialPort(LAUNCHPAD_COM_PORT, 115200, Parity.None, 8, StopBits.One);
-            //this.launchpad.Open();
 
             // Initialize handlers
             this.gpsHandler = new GPSHandler();
@@ -192,9 +186,6 @@ namespace AI_ROCKS.PacketHandlers
             // End
             bclPacket.Add(0xFE);
 
-            // Send over Serial on the COM port of the launchpad
-            //GetInstance().launchpad.Write(bclPacket.ToArray(), 0, bclPacket.Count);
-
             // Send to Gazebo or ROCKS
             GetInstance().ai_rocksSocket.Send(bclPacket.ToArray(), bclPacket.Count, ascentControlsIPEndpoint);
         }
@@ -221,11 +212,6 @@ namespace AI_ROCKS.PacketHandlers
             byte[] data = ai_rocksSocket.EndReceive(result, ref recvAddr);
 
             ai_rocksSocket.BeginReceive(HandleSocketReceive, null);
-
-            //if (!ascentControlsIPEndpoint.Address.Equals(recvAddr))
-            //{
-            //    return;
-            //}
 
             // Check header bytes
             if (data[0] != 0xBA || data[1] != 0xAD)

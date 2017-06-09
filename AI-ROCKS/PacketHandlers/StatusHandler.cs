@@ -40,7 +40,7 @@ namespace AI_ROCKS.PacketHandlers
         AIS_CAM_ERR = 203
     }
 
-    class StatusHandler : PacketHandler
+    class StatusHandler : IPacketHandler
     {
         private static readonly byte[] EMPTY_OPTION = { 0, 0, 0, 0, 0, 0, 0, 0 };
 

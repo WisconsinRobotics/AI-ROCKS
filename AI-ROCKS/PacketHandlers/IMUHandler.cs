@@ -4,7 +4,7 @@ using AI_ROCKS.Drive.Models;
 
 namespace AI_ROCKS.PacketHandlers
 {
-    class IMUHandler : PacketHandler
+    class IMUHandler : IPacketHandler
     {
         private IMU imu;
 

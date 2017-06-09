@@ -4,7 +4,7 @@ using AI_ROCKS.Drive.Models;
 
 namespace AI_ROCKS.PacketHandlers
 {
-    class GPSHandler : PacketHandler
+    class GPSHandler : IPacketHandler
     {
         private GPS gps;
         private GPS receivedGate;

@@ -4,7 +4,7 @@ using AI_ROCKS.Drive;
 
 namespace AI_ROCKS.PacketHandlers
 {
-    class DriveHandler : PacketHandler
+    class DriveHandler : IPacketHandler
     {
         private const byte OPCODE_ALL_WHEEL_SPEED = 0x2E;
 
