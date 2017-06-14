@@ -1,7 +1,5 @@
 # AI-ROCKS
 
-Readme in progress...
-
 This README has various sections:
 - Overview
 - Building (and dependencies)
@@ -13,13 +11,13 @@ This README has various sections:
 AI-ROCKS contains the autonomous navigation software designed for usage with ROCKS, Wisconsin Robotics' control software 
 for Ascent. This code is intended for the Autonomous Traversal Task of the 2017 University Rover Challenge.
 
-AI-ROCKS is structured using the state pattern design to model a state machine. The two drive states of AI-ROCKS are GPS 
-and Vision, with obstacle avoidance running underneath both of these drive states. Specifically:
+AI-ROCKS is structured using a state pattern design to model a state machine based on drive states. The two drive states 
+of AI-ROCKS are GPS and Vision, with obstacle avoidance running underneath both of these drive states. Specifically:
 
 - **GPS**: GPS handles long-range, broad navigation to get us "close" to the tennis ball, using GPS and IMU sensors. 
 - **Vision**: Vision handles short-range, precise movements to detect the tennis ball and navigate to within 3 meters of 
-it. Vision uses a camera (USB or IP) for vision, and also uses the GPS and IMU sensors.
-- **Obstacle avoidance**: Obstacle avoidance runs in its own thread and notifies the current drive state if any obstacles
+it. Vision uses a camera (USB or IP) for vision and also uses the GPS and IMU sensors.
+- **Obstacle Avoidance**: Obstacle avoidance runs in its own thread and notifies the current drive state if any obstacles
 are detected. The LRF data is received from ROCKS-LRF, which is the small separate solution for reading and sending LRF 
 data.
 
@@ -53,7 +51,8 @@ Add .dlls:
 - Find and copy the following .dlls to the top-level of AI-ROCKS:
 	- `Emgu.CV.World.dll`
 - Navigate to `/bin/x64`:
-- Copy all four of the following .dlls to the `AI-ROCKS/AI-ROCKS/` project directory (not the top-level directory):
+- Copy all four of the following .dlls to the `AI-ROCKS/AI-ROCKS/` project directory (not the top-level 
+directory):
 	- `cvextern.dll`
 	- `msvcp140.dll`
 	- `opencv_ffmpeg310_64.dll`
@@ -75,11 +74,13 @@ Building AI-ROCKS:
 AI-ROCKS is currently run from Visual Studio in Windows. To run, do the following:
 ```
 If doing obstacle detection (via LRF or Gazebo):
-- Run ROCKS-LRF before running AI-ROCKS. Rever to ROCKS-LRF readme. This will allow you to receive LRF data over UDP.
-- You should see 'Waiting for handshake' in a console window. This will wait until ROCKS-LRF and AI-ROCKS have completed
-a handshake before sending LRF data.
+- Run ROCKS-LRF before running AI-ROCKS. Rever to ROCKS-LRF README. This will allow you to receive LRF data 
+over UDP.
+- You should see 'Waiting for handshake' in a console window. This will wait until ROCKS-LRF and AI-ROCKS have
+completed a handshake before sending LRF data.
 - Run AI-ROCKS (below). 
-- Once AI-ROCKS is running, ROCKS-LRF should give output that the handshake has succeeded. Let ROCKS-LRF run in background.
+- Once AI-ROCKS is running, ROCKS-LRF should give output that the handshake has succeeded. Let ROCKS-LRF run
+in background.
 
 Running AI-ROCKS:
 - Open `AI-ROCKS.sln` in Visual Studio (VS).
@@ -92,13 +93,9 @@ Running AI-ROCKS:
 ### Command line arguments
 The only required command line arg is for the LRF port, or `-l <port>` as shown below. All possible command line arguments 
 to AI-ROCKS are as follows:
-- `-l <port>`		- COM or UDP port that the LRF is communicating over. 
-COM ports are specfied like eg. `COM4` and UDP ports are specified by their number, eg `20001`.
+- `-l <port>`		- UDP port that AI-ROCKS communicates with ROCKS-LRF over. Default is 11000 and does not need to be 
+specified.
 	
-	Note: COM ports are primarily used when the LRF is connected to the computer which is running AI-ROCKS (i.e. Ascent),
-	while UDP ports are primarly used when the LRF data is coming from some other source over UDP (i.e. Gazebo).
-	
-	Note 2: This is the **only required command line argument!**
 - `-d <state>`		- Initial `DriveState` to start AI-ROCKS in, according to `StateType` enum.
 	
 	Note: 0 = `GPSDriveState`, 1 = `VisionDriveState`, and 2 = `ObstacleAvoidanceDriveState`.
@@ -106,40 +103,40 @@ COM ports are specfied like eg. `COM4` and UDP ports are specified by their numb
 
 - `-g <address>`	- IP address to communicate to ROCKS over. 
 	
-	The default is Loopback (127.0.0.1) as this is used
-	for communicating to Ascent, so if no value is specified, Loopback is used. If using Gazebo (i.e. testing), 
-	specify the IP address of the computer running Gazebo (i.e. the IP of the comupter acting as Ascent) in dot notation. 
+	The default is loopback (127.0.0.1) as this is used	for communicating with Ascent. If no value is specified, loopback 
+	is used. If running AI-ROCKS remotely or using Gazebo for testing, specify the IP address of the computer running 
+	ROCKS (i.e. the robot) or Gazebo in dot notation. 
 	
 	Example: `-g 192.168.1.80`.
 
-- `lat`				- Latitude of the GPS coordinates of the gate, in Time format.
+- `-lat`			- Latitude of the GPS coordinates of the gate, in Degrees, Minutes, Seconds format.
 	
 	Note: the list is specified in `degrees` `minutes` `seconds`, separated by spaces. For latitude/longitude to be 
 	specified as a param, both latitude and longitude must be specified (by `-lat` and `-long`)
 	
 	Example: `-lat 43 4 17.9`
 
-- `long`			- Longitude of the GPS coordinates of the gate, in Time format.
+- `-long`			- Longitude of the GPS coordinates of the gate, in Degrees, Minutes, Seconds format.
 	
 	Note: the list is specified in `degrees` `minutes` `seconds`, separated by spaces. For latitude/longitude to be 
 	specified as a param, both latitude and longitude must be specified (by `-lat` and `-long`)
 	
 	Example: `-long -89 24 41.1`
 
-- `nogate`			- Test mode for GPS gate coordinates. If specified, do not use any gate GPS coordinates (from 
+- `-nogate`			- Test mode for GPS gate coordinates. If specified, do not use any gate GPS coordinates (from 
 parameters via `-lat` or `-long`, or wait to receive from the base station).
 	
-	Note: this initializes the gate as `gate = new GPS(0, 0, 0, 0, 0, 0);`.
+	Note: this initializes the gate as having both latitude and longitude as 0,0,0.
 	
-- `-t`				- Test mode for LRF data. This flag will not try a handshake with ROCKS-LRF and no obstacle avoidance code
-will run.
+- `-t`				- Test mode for LRF data. This flag will not try a handshake with ROCKS-LRF and no obstacle avoidance
+code will run.
 
 ## Necessary installations:
 
 AI-ROCKS requires installing certain frameworks to resolve dependencies and build. The following gives brief explanations
 of these frameworks and describes short summaries for install processes.
 
-### OpenCV (Windows)
+### OpenCV (Windows) (still in progress)
 How To Install and Setup OpenCV For Python.
 
 1. Install Python 2.7 (32 bit version)
