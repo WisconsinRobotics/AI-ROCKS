@@ -3,16 +3,30 @@
 Readme in progress...
 
 This README has various sections:
+- Overview
 - Building (and dependencies)
 - Running
 - Necessary installations
 - References
 
+## Overview:
+AI-ROCKS contains the autonomous navigation software designed for usage with ROCKS, Wisconsin Robotics' control software 
+for Ascent. This code is intended for the Autonomous Traversal Task of the 2017 University Rover Challenge.
+
+AI-ROCKS is structured using the state pattern design to model a state machine. The two drive states of AI-ROCKS are GPS 
+and Vision, with obstacle avoidance running underneath both of these drive states. Specifically:
+
+- **GPS**: GPS handles long-range, broad navigation to get us "close" to the tennis ball, using GPS and IMU sensors. 
+- **Vision**: Vision handles short-range, precise movements to detect the tennis ball and navigate to within 3 meters of 
+it. Vision uses a camera (USB or IP) for vision, and also uses the GPS and IMU sensors.
+- **Obstacle avoidance**: Obstacle avoidance runs in its own thread and notifies the current drive state if any obstacles
+are detected. The LRF data is received from ROCKS-LRF, which is the small separate solution for reading and sending LRF 
+data.
+
 ## Building:
 
 To build AI-ROCKS, all dependencies must have their `.dll`s in the top level of AI-ROCKS.
-AI-ROCKS has the following dependencies: **ObstacleLibrary**, **LRFLibrary**, **EmguCV**, **AForge.NET**, and 
-{other things from Vision - TODO}.
+AI-ROCKS has the following dependencies: **ObstacleLibrary** and **EmguCV**.
 
 **Build everything in x64.**
 
@@ -30,27 +44,6 @@ Buildling ObstacleLibrary:
 - Copy `ObstacleLibrary.dll` into top level of AI-ROCKS
 ```
 
-#### LRFLibrary (Windows):
-LRFLibrary has ObstacleLibrary as a dependency itself. As a result, do the following for ObstacleLibrary:
-```
-Building ObstacleLibrary for LRFLibrary:
-- Clone ObstacleLibrary into the top level of LRFLibrary
-  (Note: required to clone into top level - cannot just copy .dlls)
-- Complete the above build instructions for ObstacleLibrary (which is cloned in LRFLibrary top level)
-- Copy the `ObstacleLibrary.dll` and `ObstacleLibraryNative.lib` files into the top level of LRFLibrary
-```
-
-Now, build LRFLibrary:
-```
-Building LRFLibrary:
-- Open `build/windows/LRFLibrary.sln` in Vision Studio
-- Ensure you are building in x64: Navigate to Build > Configuration Manager.
-  Set `Active Solution Platform` to x64 and both `LRFLibrarySharp` and `LRFLibrary` projects to x64.
-- Build solution, or if there are issues, `LRFLibrary` and then `LRFLibrarySharp` in that order
-- Resultant `LRFLibrarySharp.dll` is in the `build/windows/x64/Debug` directory
-- Copy `LRFLibrarySharp.dll` into top level of AI-ROCKS
-```
-
 #### EmguCV (Windows):
 If EmguCV has not been installed, refer to the install guides for required Vision dependencies (below).
 ```
@@ -59,29 +52,13 @@ Add .dlls:
 - Navigate to the `/bin` directory
 - Find and copy the following .dlls to the top-level of AI-ROCKS:
 	- `Emgu.CV.World.dll`
-	- {TODO more to come?}
-- (TODO below is for VisionGUI. Transfer to AI-ROCKS? Look for update)
-Navigate to `/bin/x64`:
-- Copy all four .dlls (below) to the top level of AI-ROCKS:
+- Navigate to `/bin/x64`:
+- Copy all four of the following .dlls to the `AI-ROCKS/AI-ROCKS/` project directory (not the top-level directory):
 	- `cvextern.dll`
 	- `msvcp140.dll`
 	- `opencv_ffmpeg310_64.dll`
 	- `vcruntime140.dll`
 ```
-
-#### AForge.NET (Windows):
-If AForge.NET has not been installed, refer to the install guides for required Vision dependencies (below).
-```
-- Open your AForge.NET install location in the file explorer
-- Navigate to `/Framework/Release` directory
-- Find and copy the following .dlls to the top-level of AI-ROCKS:
-	- `AForge.dll`
-	- `AForge.Video.dll`
-	- `AForge.Vision.dll`
-```
-
-#### Other (yet to come...)
-TODO
 
 ### Building AI-ROCKS
 Once all dependencies are in the top level of AI-ROCKS (above), build AI-ROCKS:
@@ -97,6 +74,13 @@ Building AI-ROCKS:
 ### Running AI-ROCKS
 AI-ROCKS is currently run from Visual Studio in Windows. To run, do the following:
 ```
+If doing obstacle detection (via LRF or Gazebo):
+- Run ROCKS-LRF before running AI-ROCKS. Rever to ROCKS-LRF readme. This will allow you to receive LRF data over UDP.
+- You should see 'Waiting for handshake' in a console window. This will wait until ROCKS-LRF and AI-ROCKS have completed
+a handshake before sending LRF data.
+- Run AI-ROCKS (below). 
+- Once AI-ROCKS is running, ROCKS-LRF should give output that the handshake has succeeded. Let ROCKS-LRF run in background.
+
 Running AI-ROCKS:
 - Open `AI-ROCKS.sln` in Visual Studio (VS).
 - Ensure AI-ROCKS builds. Refer to 'Building' for details.
@@ -142,10 +126,13 @@ COM ports are specfied like eg. `COM4` and UDP ports are specified by their numb
 	
 	Example: `-long -89 24 41.1`
 
-- 'nogate'			- Test mode for GPS gate coordinates. If specified, do not use any gate GPS coordinates (from 
+- `nogate`			- Test mode for GPS gate coordinates. If specified, do not use any gate GPS coordinates (from 
 parameters via `-lat` or `-long`, or wait to receive from the base station).
 	
 	Note: this initializes the gate as `gate = new GPS(0, 0, 0, 0, 0, 0);`.
+	
+- `-t`				- Test mode for LRF data. This flag will not try a handshake with ROCKS-LRF and no obstacle avoidance code
+will run.
 
 ## Necessary installations:
 
@@ -209,19 +196,6 @@ Version we use: 3.1.0.2504.
 Install:
 ```
 Install EmguCV:
-- Download from above link
-- Run `.exe` downloaded to install. Change destination directory if desired.
-- {TODO more?}
-```
-
-### AForge.NET (Windows) (still in progress):
-AForge.NET is {TODO}
-Download: http://www.aforgenet.com/framework/downloads.html.
-Click 'Download Installer'
-
-Install:
-```
-Install AForge.NET:
 - Download from above link
 - Run `.exe` downloaded to install. Change destination directory if desired.
 - {TODO more?}
