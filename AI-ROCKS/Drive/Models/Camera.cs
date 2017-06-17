@@ -47,7 +47,7 @@ namespace AI_ROCKS.Drive.Models
         private Timer timer;
 
         // Navigation objects
-        private VideoCapture camera;
+        private Capture camera;
 
         
         // For use with IP cameras that use a URL
@@ -73,13 +73,13 @@ namespace AI_ROCKS.Drive.Models
         
         private void StartCamera(int cameraDeviceId)
         {
-            this.camera = new VideoCapture(cameraDeviceId);
+            this.camera = new Capture(cameraDeviceId);
             StartCamera();
         }
 
         private void StartCamera(String cameraUrl)
         {
-            this.camera = new VideoCapture(cameraUrl);
+            this.camera = new Capture(cameraUrl);
             StartCamera();
         }
 
