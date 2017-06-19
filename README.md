@@ -71,9 +71,10 @@ Building AI-ROCKS:
 
 ## Running:
 ### Running AI-ROCKS
-AI-ROCKS is currently run from Visual Studio in Windows. To run, do the following:
-```
+AI-ROCKS is currently run from Visual Studio in Windows.
 If doing obstacle detection (via LRF or Gazebo):
+```
+Running obstacle detection via ROCKS-LRF:
 - Run ROCKS-LRF before running AI-ROCKS. Rever to ROCKS-LRF README. This will allow you to receive LRF data 
 over UDP.
 - You should see 'Waiting for handshake' in a console window. This will wait until ROCKS-LRF and AI-ROCKS have
@@ -81,7 +82,9 @@ completed a handshake before sending LRF data.
 - Run AI-ROCKS (below). 
 - Once AI-ROCKS is running, ROCKS-LRF should give output that the handshake has succeeded. Let ROCKS-LRF run
 in background.
-
+```
+To run AI-ROCKS:
+```
 Running AI-ROCKS:
 - Open `AI-ROCKS.sln` in Visual Studio (VS).
 - Ensure AI-ROCKS builds. Refer to 'Building' for details.
@@ -93,15 +96,15 @@ Running AI-ROCKS:
 ### Command line arguments
 The only required command line arg is for the LRF port, or `-l <port>` as shown below. All possible command line arguments 
 to AI-ROCKS are as follows:
-- `-l <port>`		- UDP port that AI-ROCKS communicates with ROCKS-LRF over. Default is 11000 and does not need to be 
+- `-l <port>`			- UDP port that AI-ROCKS communicates with ROCKS-LRF over. Default is 11000 and does not need to be 
 specified.
 	
-- `-d <state>`		- Initial `DriveState` to start AI-ROCKS in, according to `StateType` enum.
+- `-d <state>`			- Initial `DriveState` to start AI-ROCKS in, according to `StateType` enum.
 	
 	Note: 0 = `GPSDriveState`, 1 = `VisionDriveState`, and 2 = `ObstacleAvoidanceDriveState`.
 	The default `DriveState` is `GPSDriveState`.
 
-- `-g <address>`	- IP address to communicate to ROCKS over. 
+- `-g <address>`		- IP address to communicate to ROCKS over. 
 	
 	The default is loopback (127.0.0.1) as this is used	for communicating with Ascent. If no value is specified, loopback 
 	is used. If running AI-ROCKS remotely or using Gazebo for testing, specify the IP address of the computer running 
@@ -109,14 +112,14 @@ specified.
 	
 	Example: `-g 192.168.1.80`.
 
-- `-lat`			- Latitude of the GPS coordinates of the gate, in Degrees, Minutes, Seconds format.
+- `-lat <deg> <min> <sec>`	- Latitude of the GPS coordinates of the gate, in Degrees, Minutes, Seconds format.
 	
 	Note: the list is specified in `degrees` `minutes` `seconds`, separated by spaces. For latitude/longitude to be 
 	specified as a param, both latitude and longitude must be specified (by `-lat` and `-long`)
 	
 	Example: `-lat 43 4 17.9`
 
-- `-long`			- Longitude of the GPS coordinates of the gate, in Degrees, Minutes, Seconds format.
+- `-long <deg> <min> <sec>`	- Longitude of the GPS coordinates of the gate, in Degrees, Minutes, Seconds format.
 	
 	Note: the list is specified in `degrees` `minutes` `seconds`, separated by spaces. For latitude/longitude to be 
 	specified as a param, both latitude and longitude must be specified (by `-lat` and `-long`)
@@ -130,6 +133,11 @@ parameters via `-lat` or `-long`, or wait to receive from the base station).
 	
 - `-t`				- Test mode for LRF data. This flag will not try a handshake with ROCKS-LRF and no obstacle avoidance
 code will run.
+
+- `-h <duration>`		- 'Hail Mary' timer. This signifies the amount of time AI-ROCKS will run before going into 
+'Hail Mary' mode, which will immediately take Ascent as close as possible to the gate using just GPS.
+
+	Note: this is in milliseconds, so a 30 second timer would be `-h 30000`.   
 
 ## Necessary installations:
 
@@ -189,6 +197,8 @@ EmguCV is the C# wrapper of OpenCV:
 Download: https://sourceforge.net/projects/emgucv/.
 
 Version we use: 3.1.0.2504.
+
+NOTE: we will transition to the NuGet package manager once it has an adequate version of EmguCV for us.
 
 Install:
 ```
